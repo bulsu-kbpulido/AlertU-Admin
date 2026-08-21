@@ -5,7 +5,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { Eye, EyeOff, Lock, ShieldCheck, X, Loader2, Mail, KeyRound, ArrowLeft } from 'lucide-react';
 import useAuditLog from '../useAuditLog'; // Adjust path if needed
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'https://alertu-server.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'https://alertu-server-production.up.railway.app';
 
 export default function Settings() {
   const fileInputRef = useRef(null);

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { getAuth } from 'firebase/auth';
 import { useReportStore } from './useReportStore'; // Adjust path if needed
 
-const RENDER_BACKEND_API = 'https://alertu-server.onrender.com/api';
+const RAILWAY_BACKEND_API = 'https://alertu-server-production.up.railway.app/api';
 
 /**
  * Standardizes Citizen ID input into CID format (e.g., '00000001' or 1 -> 'CID00000001')
@@ -99,13 +99,13 @@ const getFreshAuthToken = async () => {
 };
 
 /**
- * Custom hook to dispatch admin action/movement logs to the Render backend audit API.
+ * Custom hook to dispatch admin action/movement logs to the Railway backend audit API.
  */
 export const useAuditLog = ({
   adminId = 'ADMIN-004',
   adminName = 'System Admin',
   authToken = '',
-  apiBaseUrl = RENDER_BACKEND_API,
+  apiBaseUrl = RAILWAY_BACKEND_API,
 } = {}) => {
   const {
     selectedReport,

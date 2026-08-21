@@ -31,8 +31,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// Updated API URL pointing to the live Render deployment
-const API_BASE_URL = 'https://alertu-server.onrender.com/api';
+// Updated API URL pointing to the live Railway deployment
+const API_BASE_URL = 'https://alertu-server-production.up.railway.app';
 
 /**
  * Format street and barangay helper for resolved addresses

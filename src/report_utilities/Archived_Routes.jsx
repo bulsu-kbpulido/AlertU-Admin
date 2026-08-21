@@ -35,7 +35,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-const RAW_SERVER_URL = import.meta.env.VITE_API_URL || 'https://resqwave-backend.onrender.com';
+const RAW_SERVER_URL = import.meta.env.VITE_API_URL || 'https://alertu-server-production.up.railway.app';
 const CLEAN_SERVER_URL = RAW_SERVER_URL.replace(/\/+$/, '');
 const API_BASE_URL = CLEAN_SERVER_URL.endsWith('/api')
   ? CLEAN_SERVER_URL
@@ -224,9 +224,9 @@ export default function Archived_Routes({ cachedData = null, onDataFetched }) {
           if (fallbackData) {
             archiveCacheRef.current = fallbackData;
             setArchivedReports(fallbackData);
-            setError('Connected using cached records. Render backend is waking up.');
+            setError('Connected using cached records. Railway backend is waking up.');
           } else {
-            setError('Render server is waking up or unavailable. Please retry shortly.');
+            setError('Railway server is waking up or unavailable. Please retry shortly.');
           }
         }
       }

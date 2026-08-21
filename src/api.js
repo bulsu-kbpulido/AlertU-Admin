@@ -1,14 +1,19 @@
 import { auth } from './firebase';
 
-const DEFAULT_RENDER_BASE_URL = 'https://alertu-server.onrender.com';
+const DEFAULT_API_BASE_URL =
+  'https://alertu-server-production.up.railway.app';
 
-// Accept either:
-//   VITE_API_URL=https://alertu-server.onrender.com
-//   VITE_API_URL=https://alertu-server.onrender.com/api
+// Accept:
+//   VITE_API_URL=https://alertu-server-production.up.railway.app
+//   VITE_API_URL=https://alertu-server-production.up.railway.app/api
 //   VITE_API_URL=/api
 // and normalize the API prefix exactly once.
-const configuredBaseUrl = (import.meta.env?.VITE_API_URL || DEFAULT_RENDER_BASE_URL).trim();
+const configuredBaseUrl = (
+  import.meta.env?.VITE_API_URL || DEFAULT_API_BASE_URL
+).trim();
+
 const withoutTrailingSlashes = configuredBaseUrl.replace(/\/+$/, '');
+
 const BASE_URL = /\/api$/i.test(withoutTrailingSlashes)
   ? withoutTrailingSlashes
   : `${withoutTrailingSlashes}/api`;
@@ -30,12 +35,14 @@ const waitForAuthInit = () => {
 const normalizeEndpoint = (endpoint) => {
   const value = String(endpoint || '').trim();
   const withoutLeadingSlashes = value.replace(/^\/+/, '');
+
   // Callers may pass either `/citizens` or `/api/citizens`.
   return withoutLeadingSlashes.replace(/^api\//i, '');
 };
 
 const getFirebaseToken = async (forceRefresh = false) => {
   const user = auth.currentUser || (await waitForAuthInit());
+
   if (!user) {
     return null;
   }
@@ -67,8 +74,12 @@ export const fetchFromBackend = async (endpoint, options = {}) => {
   });
 
   // Refresh once if Firebase returned an expired token.
-  if ((response.status === 401 || response.status === 403) && auth.currentUser) {
+  if (
+    (response.status === 401 || response.status === 403) &&
+    auth.currentUser
+  ) {
     const refreshedToken = await getFirebaseToken(true);
+
     if (refreshedToken) {
       response = await fetch(url, {
         ...options,
@@ -86,6 +97,7 @@ export const fetchFromBackend = async (endpoint, options = {}) => {
     }
 
     let detail = '';
+
     try {
       const body = await response.json();
       detail = body?.message || body?.error || '';
@@ -94,7 +106,9 @@ export const fetchFromBackend = async (endpoint, options = {}) => {
     }
 
     throw new Error(
-      `HTTP ${response.status}: ${detail || response.statusText || 'Request failed'}`,
+      `HTTP ${response.status}: ${
+        detail || response.statusText || 'Request failed'
+      }`,
     );
   }
 

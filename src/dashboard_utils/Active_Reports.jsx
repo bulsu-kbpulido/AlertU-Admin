@@ -3,8 +3,8 @@ import { motion, useSpring, useTransform } from 'framer-motion';
 import { io } from 'socket.io-client';
 import { CheckCircle2, Loader2, Wifi } from 'lucide-react';
 
-// Live Render backend base URL
-const SOCKET_SERVER_URL = 'https://alertu-server.onrender.com';
+// Live Railway backend base URL
+const SOCKET_SERVER_URL = 'https://alertu-server-production.up.railway.app';
 const API_BASE_URL = `${SOCKET_SERVER_URL}/api`;
 
 // --- Shadcn UI Card Components ---
@@ -55,7 +55,7 @@ export default function Active_Reports() {
     fetchActiveCount();
     const interval = setInterval(fetchActiveCount, 30000);
 
-    // Socket.IO Realtime Listener Setup with Render backend
+    // Socket.IO Realtime Listener Setup with Railway backend
     const socket = io(SOCKET_SERVER_URL, {
       transports: ['websocket', 'polling'],
       reconnectionAttempts: 5,

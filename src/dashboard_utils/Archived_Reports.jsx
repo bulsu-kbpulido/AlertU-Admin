@@ -3,8 +3,8 @@ import { motion, useSpring, useTransform } from 'framer-motion';
 import { io } from 'socket.io-client';
 import { Archive, Loader2, Wifi } from 'lucide-react';
 
-// Live Render backend base URL
-const SOCKET_SERVER_URL = 'https://alertu-server.onrender.com';
+// Live Railway backend base URL
+const SOCKET_SERVER_URL = 'https://alertu-server-production.up.railway.app';
 const API_BASE_URL = `${SOCKET_SERVER_URL}/api`;
 
 // --- Shadcn UI Card Components ---
@@ -39,7 +39,7 @@ export default function Archived_Reports() {
 
   const fetchArchivedCounts = async () => {
     try {
-      // Fetch both archived collections in parallel from Render API
+      // Fetch both archived collections in parallel from Railway API
       const [approvedRes, generalRes] = await Promise.all([
         fetch(`${API_BASE_URL}/archived-approved`),
         fetch(`${API_BASE_URL}/reports?view=archived`)
@@ -66,7 +66,7 @@ export default function Archived_Reports() {
     fetchArchivedCounts();
     const interval = setInterval(fetchArchivedCounts, 30000);
 
-    // Socket.IO Realtime Listener Setup with Render backend
+    // Socket.IO Realtime Listener Setup with Railway backend
     const socket = io(SOCKET_SERVER_URL, {
       transports: ['websocket', 'polling'],
       reconnectionAttempts: 5,

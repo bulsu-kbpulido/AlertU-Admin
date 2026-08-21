@@ -48,7 +48,7 @@ import {
 } from 'lucide-react';
 
 // 🌐 Dynamic Environment Configuration
-const RAW_SERVER_URL = import.meta.env.VITE_API_URL || 'https://alertu-server.onrender.com';
+const RAW_SERVER_URL = import.meta.env.VITE_API_URL || 'https://alertu-server-production.up.railway.app';
 const CLEAN_SERVER_URL = RAW_SERVER_URL.replace(/\/+$/, '');
 const API_BASE_URL = CLEAN_SERVER_URL.endsWith('/api')
   ? CLEAN_SERVER_URL

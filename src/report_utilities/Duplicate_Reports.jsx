@@ -35,8 +35,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// 🌐 Dynamic Environment Configuration for Render Backend
-const RAW_SERVER_URL = import.meta.env.VITE_API_URL || 'https://alertu-server.onrender.com';
+// 🌐 Dynamic Environment Configuration for Railway Backend
+const RAW_SERVER_URL = import.meta.env.VITE_API_URL || 'https://alertu-server-production.up.railway.app';
 const CLEAN_SERVER_URL = RAW_SERVER_URL.replace(/\/+$/, '');
 const API_BASE_URL = CLEAN_SERVER_URL.endsWith('/api')
   ? CLEAN_SERVER_URL
@@ -143,7 +143,7 @@ export default function Duplicate_Reports() {
   const [searchTerm, setSearchTerm] = useState('');
 
   /**
-   * Fetch duplicate reports with Caching and Render Auto-Retry / Warmup Support
+   * Fetch duplicate reports with Caching and Railway Auto-Retry / Warmup Support
    */
   const fetchDuplicateReports = useCallback(async (forceRefresh = false) => {
     // 1. Serve from cache directly if valid and not forced to refresh
@@ -197,10 +197,10 @@ export default function Duplicate_Reports() {
         console.warn(`Attempt ${attempt} to fetch duplicates failed:`, err.message);
 
         if (attempt < MAX_RETRIES) {
-          // Wait before retrying while Render boots up
+          // Wait before retrying while Railway boots up
           await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
         } else {
-          setError('Render server is waking up or unavailable. Please retry shortly.');
+          setError('Railway server is waking up or unavailable. Please retry shortly.');
         }
       }
     }

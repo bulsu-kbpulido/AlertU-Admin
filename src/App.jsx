@@ -40,11 +40,11 @@ import { MantineProvider } from '@mantine/core';
 // 🎵 MESSAGETONE HOOK IMPORT
 import { useMessagetone } from './useMessagetone';
 
-// Backend API URL Resolution (Defaults to live Render server)
+// Backend API URL
 const BACKEND_URL = 
   import.meta.env.VITE_SOCKET_URL || 
   import.meta.env.VITE_BACKEND_URL || 
-  'https://alertu-server.onrender.com';
+  'https://alertu-server-production.up.railway.app';
 
 function AdminDashboardShell({ 
   currentPage, 

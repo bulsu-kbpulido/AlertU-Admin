@@ -14,8 +14,8 @@ import Dashboard_BottomSection from './Dashboard_BottomSection';
 import Dashboard_LastSection from './Dashboard_LastSection';
 import View_Modal from '../dashboard_utils/View_Modal';
 
-// Live Render backend URL base
-const SOCKET_SERVER_URL = 'https://alertu-server.onrender.com';
+// Live Railway backend URL base
+const SOCKET_SERVER_URL = 'https://alertu-server-production.up.railway.app';
 const API_BASE_URL = `${SOCKET_SERVER_URL}/api`;
 
 const DASHBOARD_SECTION_MAP = {
@@ -60,7 +60,7 @@ export default function Dashboard() {
     }
   }, [location.pathname, loading]);
 
-  // Fetch all reports & resolved reports from live Render server
+  // Fetch all reports & resolved reports from live Railway server
   const fetchDashboardData = async () => {
     try {
       const [approvedRes, adminRes, resolvedRes] = await Promise.all([
@@ -99,7 +99,7 @@ export default function Dashboard() {
       setAllReports([...approvedList, ...adminList]);
       setResolvedReports(resolvedList);
     } catch (err) {
-      console.error("Failed to fetch dashboard reports from Render API:", err);
+      console.error("Failed to fetch dashboard reports from Railway API:", err);
     } finally {
       setLoading(false);
     }
@@ -110,7 +110,7 @@ export default function Dashboard() {
     fetchDashboardData();
     const interval = setInterval(fetchDashboardData, 30000);
 
-    // Socket.IO setup targeting Render server
+    // Socket.IO setup targeting Railway server
     const socket = io(SOCKET_SERVER_URL, {
       transports: ['websocket', 'polling'],
       reconnectionAttempts: 5,

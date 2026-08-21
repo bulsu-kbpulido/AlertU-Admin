@@ -1,18 +1,17 @@
 import { io } from 'socket.io-client';
 
-// 1. Resolve backend socket server URL (Defaults to Render live server)
-const RENDER_BACKEND_URL = 'https://alertu-server.onrender.com';
+const RAILWAY_BACKEND_URL = 'https://alertu-server-production.up.railway.app';
 
 const configuredSocketUrl = (
   import.meta.env.VITE_SOCKET_URL ||
   import.meta.env.VITE_BACKEND_URL ||
-  RENDER_BACKEND_URL
+  RAILWAY_BACKEND_URL
 ).trim();
 
 // Socket.IO must use the backend origin, without /api.
 const SOCKET_URL = configuredSocketUrl.replace(/\/+$/, '').replace(/\/api$/i, '');
 
-// 2. Instantiate singleton Socket.IO instance connected to Render
+// 2. Instantiate singleton Socket.IO instance connected to Railway
 export const socket = io(SOCKET_URL, {
   path: '/socket.io',
   autoConnect: true,
@@ -20,7 +19,7 @@ export const socket = io(SOCKET_URL, {
   reconnectionAttempts: 25,
   reconnectionDelay: 1000,
   transports: ['polling', 'websocket'],
-  upgrade: true, // Start through polling, then upgrade when Render permits WebSocket.
+  upgrade: true, // Start through polling, then upgrade when Railway permits WebSocket.
   withCredentials: true,
 });
 
@@ -355,7 +354,7 @@ export const emitCallEnded = (targetRoom, channelName) => {
 // ==========================================
 
 socket.on('connect', () => {
-  console.log(`⚡ Connected to AlertU Socket Server on Render (ID: ${socket.id})`);
+  console.log(`⚡ Connected to AlertU Socket Server on Railway (ID: ${socket.id})`);
 
   // Restore presence state
   if (cachedUserData) {

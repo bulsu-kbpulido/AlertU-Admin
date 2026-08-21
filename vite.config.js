@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
 
   const configuredBackend = (
     env.VITE_API_URL ||
-    'https://alertu-server.onrender.com'
+    'https://alertu-server-production.up.railway.app'
   ).trim();
 
   // Vite proxy receives /api from the browser, so its target must be the
@@ -17,6 +17,9 @@ export default defineConfig(({ mode }) => {
   const backendOrigin = configuredBackend
     .replace(/\/+$/, '')
     .replace(/\/api$/i, '');
+
+console.log('Configured backend:', configuredBackend);
+console.log('Backend origin:', backendOrigin);
 
   return {
     plugins: [react(), tailwindcss()],
