@@ -4,6 +4,21 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath, URL } from 'node:url';
 
+// 🔒 AST-level Babel plugin to strip all console.* calls from JSX/TSX in production builds
+const removeConsoleBabelPlugin = () => ({
+  visitor: {
+    CallExpression(path) {
+      const callee = path.get('callee');
+      if (
+        callee.isMemberExpression() &&
+        callee.get('object').isIdentifier({ name: 'console' })
+      ) {
+        path.remove();
+      }
+    },
+  },
+});
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
@@ -18,11 +33,17 @@ export default defineConfig(({ mode }) => {
     .replace(/\/+$/, '')
     .replace(/\/api$/i, '');
 
-console.log('Configured backend:', configuredBackend);
-console.log('Backend origin:', backendOrigin);
+  const isProd = mode === 'production';
 
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [
+      react({
+        babel: {
+          plugins: isProd ? [removeConsoleBabelPlugin] : [],
+        },
+      }),
+      tailwindcss(),
+    ],
 
     resolve: {
       alias: {

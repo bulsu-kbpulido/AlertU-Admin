@@ -15,8 +15,12 @@ import {
   Eye,
   EyeOff
 } from "lucide-react";
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 export default function ForgotPassword({ onBackToLogin }) {
+  // 🏷️ Dynamic Document Title
+  useDocumentTitle('Forgot Password – AlertU');
+
   // Step 1: Send OTP, Step 2: Verify & Reset, Step 3: Success
   const [step, setStep] = useState(1);
 

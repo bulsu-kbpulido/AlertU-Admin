@@ -13,6 +13,7 @@ import Dashboard_MidSection from './Dashboard_MidSection';
 import Dashboard_BottomSection from './Dashboard_BottomSection';
 import Dashboard_LastSection from './Dashboard_LastSection';
 import View_Modal from '../dashboard_utils/View_Modal';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 // Live Railway backend URL base
 const SOCKET_SERVER_URL = 'https://alertu-server-production.up.railway.app';
@@ -26,6 +27,8 @@ const DASHBOARD_SECTION_MAP = {
 };
 
 export default function Dashboard() {
+  useDocumentTitle('Dashboard – AlertU');
+
   const [allReports, setAllReports] = useState([]);
   const [resolvedReports, setResolvedReports] = useState([]);
   const [loading, setLoading] = useState(true);

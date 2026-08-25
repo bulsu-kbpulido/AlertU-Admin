@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { getAuth } from 'firebase/auth';
 import { motion, AnimatePresence } from 'framer-motion';
+import { fetchFromBackend } from '../api';
 import { 
   RotateCcw, 
   Trash2, 
@@ -30,10 +30,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-
-// Updated API URL pointing to the live Railway deployment
-const API_BASE_URL = 'https://alertu-server-production.up.railway.app';
 
 /**
  * Format street and barangay helper for archived addresses
@@ -63,33 +61,6 @@ const formatDateTime = (timestamp) => {
   return {
     date: dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
     time: dateObj.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }),
-  };
-};
-
-/**
- * Reusable helper to generate standard Authorization headers
- */
-const getAuthHeaders = async () => {
-  let token = null;
-  const auth = getAuth();
-
-  if (auth.currentUser) {
-    token = await auth.currentUser.getIdToken(/* forceRefresh */ true);
-    localStorage.setItem('token', token);
-  } else {
-    token = localStorage.getItem('token') || localStorage.getItem('adminToken');
-  }
-
-  if (!token) {
-    console.warn('⚠️ No active session or token found in localStorage.');
-    return { 'Content-Type': 'application/json' };
-  }
-
-  const cleanToken = token.replace(/^"(.*)"$/, '$1').trim();
-
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': cleanToken.startsWith('Bearer ') ? cleanToken : `Bearer ${cleanToken}`
   };
 };
 
@@ -133,11 +104,7 @@ export default function Archived_Approved({ onRestoreSuccess }) {
       setLoading(true);
       setError(null);
 
-      const headers = await getAuthHeaders();
-      const response = await fetch(`${API_BASE_URL}/archived-approved`, {
-        headers
-      });
-      const json = await response.json();
+      const json = await fetchFromBackend('/archived-approved');
       
       if (json && json.success) {
         const fetchedData = json.data || [];
@@ -151,7 +118,7 @@ export default function Archived_Approved({ onRestoreSuccess }) {
         setArchivedReports(fetchedData);
         setSelectedIds(new Set());
       } else {
-        throw new Error(json.message || 'Failed to fetch archived approved reports');
+        throw new Error(json?.message || 'Failed to fetch archived approved reports');
       }
     } catch (err) {
       console.error('Error fetching archived approved reports:', err);
@@ -258,28 +225,18 @@ export default function Archived_Approved({ onRestoreSuccess }) {
   
     try {
       setIsSubmitting(true);
-      const headers = await getAuthHeaders();
-
-      const response = await fetch(`${API_BASE_URL}/archived-approved/${selectedReportId}/restore`, {
-        method: 'POST',
-        headers: headers
+      const result = await fetchFromBackend(`/archived-approved/${selectedReportId}/restore`, {
+        method: 'POST'
       });
-      
-      const result = await response.json();
-  
-      if (response.status === 401) {
-        alert("Session expired or unauthorized. Please log in again.");
-        return;
-      }
 
-      if (response.ok && result.success) {
+      if (result && result.success) {
         // Optimistically remove from view and update cache
         updateLocalReportsAndCache([selectedReportId]);
         if (typeof onRestoreSuccess === 'function') {
           onRestoreSuccess();
         }
       } else {
-        alert(result.message || "Failed to restore report.");
+        alert(result?.message || "Failed to restore report.");
       }
     } catch (err) {
       console.error("Restore error:", err);
@@ -296,25 +253,16 @@ export default function Archived_Approved({ onRestoreSuccess }) {
 
     try {
       setIsSubmitting(true);
-      const headers = await getAuthHeaders();
-
-      const response = await fetch(`${API_BASE_URL}/archived-approved/${selectedReportId}`, {
-        method: 'DELETE',
-        headers: headers
+      const result = await fetchFromBackend(`/archived-approved/${selectedReportId}`, {
+        method: 'DELETE'
       });
-      const result = await response.json();
 
-      if (response.status === 401) {
-        alert("Session expired or unauthorized. Please log in again.");
-        return;
-      }
-
-      if (response.ok && result.success) {
+      if (result && result.success) {
         // Optimistically remove from view and update cache
         updateLocalReportsAndCache([selectedReportId]);
       } else {
-        console.error("Failed to delete report:", result.message);
-        alert(result.message || "Failed to delete report.");
+        console.error("Failed to delete report:", result?.message);
+        alert(result?.message || "Failed to delete report.");
       }
     } catch (err) {
       console.error("Delete error:", err);
@@ -334,31 +282,30 @@ export default function Archived_Approved({ onRestoreSuccess }) {
 
     try {
       setIsSubmitting(true);
-      const headers = await getAuthHeaders();
-
-      const restorePromises = idsArray.map((id) =>
-        fetch(`${API_BASE_URL}/archived-approved/${id}/restore`, { 
-          method: 'POST',
-          headers: headers
-        })
+      const results = await Promise.all(
+        idsArray.map((id) =>
+          fetchFromBackend(`/archived-approved/${id}/restore`, { 
+            method: 'POST'
+          })
+        )
       );
 
-      const responses = await Promise.all(restorePromises);
-      const hasUnauthorized = responses.some(res => res.status === 401);
-
-      if (hasUnauthorized) {
-        alert("Session expired or unauthorized. Please log in again.");
-        return;
-      }
+      const successfulIds = idsArray.filter((_, idx) => results[idx]?.success);
 
       setIsBatchRestoreOpen(false);
       
-      // Optimistically remove restored records from local state and cache
-      updateLocalReportsAndCache(idsArray);
-      setSelectedIds(new Set());
+      if (successfulIds.length > 0) {
+        // Optimistically remove restored records from local state and cache
+        updateLocalReportsAndCache(successfulIds);
+        setSelectedIds(new Set());
 
-      if (typeof onRestoreSuccess === 'function') {
-        onRestoreSuccess();
+        if (typeof onRestoreSuccess === 'function') {
+          onRestoreSuccess();
+        }
+      }
+      
+      if (successfulIds.length < idsArray.length) {
+        alert('Some selected records could not be restored.');
       }
     } catch (err) {
       console.error('Error restoring selected reports:', err);
@@ -375,28 +322,27 @@ export default function Archived_Approved({ onRestoreSuccess }) {
 
     try {
       setIsSubmitting(true);
-      const headers = await getAuthHeaders();
-
-      const deletePromises = idsArray.map((id) =>
-        fetch(`${API_BASE_URL}/archived-approved/${id}`, { 
-          method: 'DELETE',
-          headers: headers
-        })
+      const results = await Promise.all(
+        idsArray.map((id) =>
+          fetchFromBackend(`/archived-approved/${id}`, { 
+            method: 'DELETE'
+          })
+        )
       );
 
-      const responses = await Promise.all(deletePromises);
-      const hasUnauthorized = responses.some(res => res.status === 401);
-
-      if (hasUnauthorized) {
-        alert("Session expired or unauthorized. Please log in again.");
-        return;
-      }
+      const successfulIds = idsArray.filter((_, idx) => results[idx]?.success);
 
       setIsBatchDeleteOpen(false);
       
-      // Optimistically remove purged records from local state and cache
-      updateLocalReportsAndCache(idsArray);
-      setSelectedIds(new Set());
+      if (successfulIds.length > 0) {
+        // Optimistically remove purged records from local state and cache
+        updateLocalReportsAndCache(successfulIds);
+        setSelectedIds(new Set());
+      }
+
+      if (successfulIds.length < idsArray.length) {
+        alert('Some selected records could not be deleted.');
+      }
     } catch (err) {
       console.error('Error deleting selected reports:', err);
       alert('Failed to delete some selected records.');

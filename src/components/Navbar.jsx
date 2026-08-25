@@ -443,13 +443,13 @@ export default function Navbar({ onOpenMessages, onSelectSos }) {
   };
 
   return (
-    <header className="sticky top-0 z-30 w-full border-b border-slate-200/80 bg-white/90 px-5 sm:px-8 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90 transition-colors duration-200 font-sans">
-      <div className="flex h-20 items-center justify-between gap-6">
+    <header className="sticky top-0 z-30 w-full border-b border-slate-200/80 bg-white/90 px-4 sm:px-6 lg:px-8 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90 transition-colors duration-200 font-sans">
+      <div className="flex h-16 sm:h-20 items-center justify-between gap-3 sm:gap-4 lg:gap-6 min-w-0">
         
         {/* LEFT: REAL-TIME CONNECTED AVATAR, DATE & LIVE PHILIPPINE CLOCK */}
-        <div className="flex items-center gap-4 sm:gap-5 min-w-0">
-          <div className="flex items-center gap-3.5 cursor-pointer group shrink-0">
-            <div className="relative">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0 shrink">
+          <div className="flex items-center gap-3 cursor-pointer group shrink-0 min-w-0">
+            <div className="relative shrink-0">
               <Avatar className="ring-2 ring-blue-500/20 transition-transform group-hover:scale-105">
                 {adminProfile.avatar ? (
                   <AvatarImage src={adminProfile.avatar} alt={adminProfile.name} />
@@ -460,23 +460,23 @@ export default function Navbar({ onOpenMessages, onSelectSos }) {
               <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" />
             </div>
 
-            <div className="flex flex-col text-left">
-              <span className="text-base font-medium leading-snug text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+            <div className="hidden md:flex flex-col text-left min-w-0 max-w-[120px] lg:max-w-[180px]">
+              <span className="text-sm sm:text-base font-medium leading-snug text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
                 {adminProfile.name}
               </span>
-              <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-normal text-slate-500 dark:text-slate-400 truncate">
                 {adminProfile.department}
               </span>
             </div>
           </div>
 
-          <div className="h-7 w-px bg-slate-200 dark:bg-slate-800 shrink-0 hidden sm:block" />
+          <div className="h-7 w-px bg-slate-200 dark:bg-slate-800 shrink-0 hidden xl:block" />
 
           {/* DATE & MOVING TICKING CLOCK */}
-          <div className="hidden sm:flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-2 text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 truncate">
-            <span className="truncate">{formattedDate}</span>
-            <span className="hidden lg:inline text-slate-300 dark:text-slate-700">•</span>
-            <div className="inline-flex items-center gap-1.5 text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-950/50 px-2.5 py-1 rounded-md border border-blue-200/60 dark:border-blue-900/40">
+          <div className="hidden xl:flex items-center gap-1.5 lg:gap-2 text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 truncate">
+            <span className="truncate hidden 2xl:inline">{formattedDate}</span>
+            <span className="hidden 2xl:inline text-slate-300 dark:text-slate-700">•</span>
+            <div className="inline-flex items-center gap-1.5 text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-950/50 px-2.5 py-1 rounded-md border border-blue-200/60 dark:border-blue-900/40 shrink-0">
               <Clock className="h-3.5 w-3.5 shrink-0 animate-pulse" />
               <SmoothClockDisplay timeString={formattedTimeString} />
               <span className="text-[10px] font-bold tracking-wider text-blue-500/80 dark:text-blue-400/80 uppercase ml-0.5">
@@ -487,19 +487,20 @@ export default function Navbar({ onOpenMessages, onSelectSos }) {
         </div>
 
         {/* RIGHT: SOS HISTORY, NOTIFICATIONS & MESSAGES */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           
           {/* 🚨 SOS HISTORY DROPDOWN */}
-          <div className="relative">
+          <div className="relative shrink-0">
             <button 
               type="button" 
               onClick={toggleSosPopover}
-              className="group relative inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-700 px-3.5 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition-all active:scale-[0.98] cursor-pointer outline-none border border-orange-500/50"
+              className="group relative inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl bg-orange-600 hover:bg-orange-700 px-2.5 sm:px-3.5 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition-all active:scale-[0.98] cursor-pointer outline-none border border-orange-500/50 shrink-0"
+              title="SOS Emergency Broadcast History"
             >
               <Radio className="h-4 w-4 shrink-0 animate-pulse" />
-              <span>SOS History</span>
+              <span className="whitespace-nowrap">SOS History</span>
               {unreadSosCount > 0 && (
-                <span className="ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white/20 px-1.5 text-xs font-bold text-white">
+                <span className="ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white/20 px-1.5 text-xs font-bold text-white shrink-0">
                   {unreadSosCount}
                 </span>
               )}
@@ -616,16 +617,17 @@ export default function Navbar({ onOpenMessages, onSelectSos }) {
           </div>
 
           {/* 🔔 SHADCN POPOVER NOTIFICATIONS DROPDOWN */}
-          <div className="relative">
+          <div className="relative shrink-0">
             <button 
               type="button" 
               onClick={togglePopover}
-              className="group relative inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs sm:text-sm font-medium text-slate-800 shadow-xs transition-all hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 cursor-pointer outline-none"
+              className="group relative inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl border border-slate-200 bg-white px-2.5 sm:px-3.5 py-2 text-xs sm:text-sm font-medium text-slate-800 shadow-xs transition-all hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 cursor-pointer outline-none shrink-0"
+              title="Notifications"
             >
               <Bell className="h-4 w-4 text-slate-600 dark:text-slate-400 shrink-0 transition-transform group-hover:scale-105" />
-              <span>Notifications</span>
+              <span className="hidden md:inline whitespace-nowrap">Notifications</span>
               {unreadCount > 0 && (
-                <span className="ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500/10 px-1.5 text-xs font-semibold text-rose-600 ring-1 ring-inset ring-rose-500/20 dark:bg-rose-500/20 dark:text-rose-300">
+                <span className="ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500/10 px-1.5 text-xs font-semibold text-rose-600 ring-1 ring-inset ring-rose-500/20 dark:bg-rose-500/20 dark:text-rose-300 shrink-0">
                   {unreadCount}
                 </span>
               )}
@@ -747,11 +749,12 @@ export default function Navbar({ onOpenMessages, onSelectSos }) {
           <button 
             type="button" 
             onClick={onOpenMessages}
-            className="group relative inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-3.5 py-2 text-xs sm:text-sm font-medium text-white shadow-xs transition-all hover:bg-blue-700 active:scale-[0.98] dark:bg-blue-600 dark:hover:bg-blue-500 cursor-pointer outline-none"
+            className="group relative inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl bg-blue-600 px-2.5 sm:px-3.5 py-2 text-xs sm:text-sm font-medium text-white shadow-xs transition-all hover:bg-blue-700 active:scale-[0.98] dark:bg-blue-600 dark:hover:bg-blue-500 cursor-pointer outline-none shrink-0"
+            title="Messages"
           >
             <MessageSquare className="h-4 w-4 shrink-0 transition-transform group-hover:scale-105" />
-            <span>Messages</span>
-            <span className="ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white/20 px-1.5 text-xs font-semibold text-white">
+            <span className="hidden md:inline whitespace-nowrap">Messages</span>
+            <span className="ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white/20 px-1.5 text-xs font-semibold text-white shrink-0">
               <NumberTicker value={unreadMessageCount} className="text-white font-semibold" />
             </span>
           </button>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { getAuth } from 'firebase/auth';
 import { motion, AnimatePresence } from 'framer-motion';
+import { fetchFromBackend } from '../api';
 import { 
   RotateCcw,
   ChevronLeft, 
@@ -29,10 +30,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-
-// Updated API URL pointing to the live Railway deployment
-const API_BASE_URL = 'https://alertu-server-production.up.railway.app';
 
 /**
  * Format street and barangay helper for resolved addresses
@@ -62,33 +61,6 @@ const formatDateTime = (timestamp) => {
   return {
     date: dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
     time: dateObj.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }),
-  };
-};
-
-/**
- * Reusable helper to generate standard Authorization headers
- */
-const getAuthHeaders = async () => {
-  let token = null;
-  const auth = getAuth();
-
-  if (auth.currentUser) {
-    token = await auth.currentUser.getIdToken(/* forceRefresh */ true);
-    localStorage.setItem('token', token);
-  } else {
-    token = localStorage.getItem('token') || localStorage.getItem('adminToken');
-  }
-
-  if (!token) {
-    console.warn('⚠️ No active session or token found in localStorage.');
-    return { 'Content-Type': 'application/json' };
-  }
-
-  const cleanToken = token.replace(/^"(.*)"$/, '$1').trim();
-
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': cleanToken.startsWith('Bearer ') ? cleanToken : `Bearer ${cleanToken}`
   };
 };
 
@@ -130,9 +102,7 @@ export default function Resolved_Incidents({ onRestoreSuccess }) {
       setLoading(true);
       setError(null);
 
-      const headers = await getAuthHeaders();
-      const response = await fetch(`${API_BASE_URL}/resolved-incidents`, { headers });
-      const json = await response.json();
+      const json = await fetchFromBackend('/resolved-incidents');
       
       if (json && json.success) {
         const fetchedData = json.data || [];
@@ -146,7 +116,7 @@ export default function Resolved_Incidents({ onRestoreSuccess }) {
         setReports(fetchedData);
         setSelectedIds(new Set());
       } else {
-        throw new Error(json.message || 'Failed to fetch resolved incidents');
+        throw new Error(json?.message || 'Failed to fetch resolved incidents');
       }
     } catch (err) {
       console.error('Error fetching resolved incidents:', err);
@@ -248,28 +218,18 @@ export default function Resolved_Incidents({ onRestoreSuccess }) {
 
     try {
       setIsSubmitting(true);
-      const headers = await getAuthHeaders();
-
-      const response = await fetch(`${API_BASE_URL}/resolve/restore/${selectedReportId}`, {
-        method: 'POST',
-        headers: headers
+      const result = await fetchFromBackend(`/resolve/restore/${selectedReportId}`, {
+        method: 'POST'
       });
-      
-      const result = await response.json();
 
-      if (response.status === 401) {
-        alert("Session expired or unauthorized. Please log in again.");
-        return;
-      }
-
-      if (response.ok && result.success) {
+      if (result && result.success) {
         // Optimistically remove from view and clear cache entry
         updateLocalReportsAndCache([selectedReportId]);
         if (typeof onRestoreSuccess === 'function') {
           onRestoreSuccess();
         }
       } else {
-        alert(result.message || "Failed to restore incident.");
+        alert(result?.message || "Failed to restore incident.");
       }
     } catch (err) {
       console.error("Restore error:", err);
@@ -289,22 +249,12 @@ export default function Resolved_Incidents({ onRestoreSuccess }) {
 
     try {
       setIsSubmitting(true);
-      const headers = await getAuthHeaders();
-
-      const response = await fetch(`${API_BASE_URL}/resolve/batch-restore`, {
+      const result = await fetchFromBackend('/resolve/batch-restore', {
         method: 'POST',
-        headers: headers,
         body: JSON.stringify({ ids: idsArray })
       });
 
-      const result = await response.json();
-
-      if (response.status === 401) {
-        alert("Session expired or unauthorized. Please log in again.");
-        return;
-      }
-
-      if (response.ok && result.success) {
+      if (result && result.success) {
         setIsBatchRestoreOpen(false);
         
         // Optimistically remove batch from view and clear cache
@@ -315,7 +265,7 @@ export default function Resolved_Incidents({ onRestoreSuccess }) {
           onRestoreSuccess();
         }
       } else {
-        alert(result.message || 'Failed to restore selected records.');
+        alert(result?.message || 'Failed to restore selected records.');
       }
     } catch (err) {
       console.error('Error restoring selected incidents:', err);

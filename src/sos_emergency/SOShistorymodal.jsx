@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '../firebase';
 import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import socket, { joinSosRoom, leaveSosRoom, onSosLocationUpdated, onSosStatusUpdated } from '../socket';
@@ -203,10 +204,39 @@ export default function SOShistorymodal({
   const [currentLocation, setCurrentLocation] = useState(() => extractCoordinates(locationData));
   const [sosStatus, setSosStatus] = useState(status);
 
+  // Helper to calculate safe bottom-right docked position on viewport
+  const getSafeInitialPosition = useCallback(() => {
+    if (typeof window === 'undefined') return { x: 20, y: 20 };
+    const widgetWidth = 360;
+    const widgetHeight = 280;
+    const safeX = Math.max(12, window.innerWidth - widgetWidth - 24);
+    const safeY = Math.max(12, window.innerHeight - widgetHeight - 24);
+    return { x: safeX, y: safeY };
+  }, []);
+
   // MINIMIZE & DRAG STATES
   const [isMinimized, setIsMinimized] = useState(false);
-  const [position, setPosition] = useState({ x: 20, y: 20 });
+  const [position, setPosition] = useState(getSafeInitialPosition);
   const [isDragging, setIsDragging] = useState(false);
+
+  // Keep minimized widget safely clamped within viewport when window resizes/minimizes
+  useEffect(() => {
+    const handleWindowResize = () => {
+      setPosition((prev) => {
+        const widgetWidth = 360;
+        const widgetHeight = 280;
+        const maxX = Math.max(12, window.innerWidth - widgetWidth - 12);
+        const maxY = Math.max(12, window.innerHeight - widgetHeight - 12);
+        return {
+          x: Math.max(12, Math.min(prev.x, maxX)),
+          y: Math.max(12, Math.min(prev.y, maxY)),
+        };
+      });
+    };
+
+    window.addEventListener('resize', handleWindowResize);
+    return () => window.removeEventListener('resize', handleWindowResize);
+  }, []);
 
   const dragStartRef = useRef({ x: 0, y: 0 });
   const onCloseRef = useRef(onClose);
@@ -451,13 +481,13 @@ export default function SOShistorymodal({
 
   const isLiveActive = String(sosStatus).toUpperCase() === 'ACTIVE';
 
-  return (
+  const modalContent = (
     <AnimatePresence>
       <div
         className={
           isMinimized
-            ? 'fixed z-50 touch-none select-none'
-            : 'fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/70 backdrop-blur-sm text-slate-800 font-sans antialiased overflow-y-auto'
+            ? 'fixed z-[9999] touch-none select-none'
+            : 'fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-slate-900/70 backdrop-blur-sm text-slate-800 font-sans antialiased overflow-y-auto'
         }
         style={
           isMinimized
@@ -702,4 +732,8 @@ export default function SOShistorymodal({
       </div>
     </AnimatePresence>
   );
+
+  return typeof document !== 'undefined'
+    ? createPortal(modalContent, document.body)
+    : modalContent;
 }

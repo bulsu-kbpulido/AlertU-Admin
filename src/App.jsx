@@ -261,6 +261,30 @@ function AppRoutes() {
     }
   }, [location.pathname, currentPage]);
 
+  // 🏷️ Dynamic Browser Tab Title Listener
+  useEffect(() => {
+    const path = location.pathname;
+    if (path === '/') {
+      if (isAuthenticated) {
+        document.title = 'Dashboard – AlertU';
+      }
+    } else if (path.startsWith('/admin/create-reports')) {
+      document.title = 'Create Reports – AlertU';
+    } else if (path.startsWith('/admin/send-reports')) {
+      document.title = 'Send Reports – AlertU';
+    } else if (path.startsWith('/admin/report-management')) {
+      document.title = 'Manage Reports – AlertU';
+    } else if (path.startsWith('/admin/citizen-management')) {
+      document.title = 'Manage Citizens – AlertU';
+    } else if (path.startsWith('/admin/settings')) {
+      document.title = 'Profile Settings – AlertU';
+    } else if (path.startsWith('/admin/dashboard')) {
+      document.title = 'Dashboard – AlertU';
+    } else if (path.startsWith('/report/')) {
+      document.title = 'Emergency Report – AlertU';
+    }
+  }, [location.pathname, isAuthenticated]);
+
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');

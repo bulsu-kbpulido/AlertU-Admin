@@ -4,6 +4,7 @@ import { fetchFromBackend } from '../api';
 import { socket, joinSocketRoom } from '../socket';
 import { useCitizenStore } from '../citizen_utilities/useCitizenStore';
 import { useAuditLog } from '../useAuditLog';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 // Lucide React Icons
 import { 
@@ -183,6 +184,8 @@ const StatusToggleAlertDialog = ({ isOpen, citizen, isCurrentlyActive, loading, 
 };
 
 const CitizenManagement = () => {
+  useDocumentTitle('Manage Citizens – AlertU');
+
   const setAccountDisabledState = useCitizenStore((state) => state.setAccountDisabledState);
   const disabledCitizens = useCitizenStore((state) => state.disabledCitizens);
 

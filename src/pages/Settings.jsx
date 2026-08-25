@@ -4,10 +4,13 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { Eye, EyeOff, Lock, ShieldCheck, X, Loader2, Mail, KeyRound, ArrowLeft } from 'lucide-react';
 import useAuditLog from '../useAuditLog'; // Adjust path if needed
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'https://alertu-server-production.up.railway.app';
 
 export default function Settings() {
+  useDocumentTitle('Profile Settings – AlertU');
+
   const fileInputRef = useRef(null);
   const isEditingRef = useRef(false);
 

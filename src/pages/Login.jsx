@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { auth, db } from '../firebase'; // Update path if necessary
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import useAuditLog from '../useAuditLog'; // Adjust path if needed
 
 // Component Import
 import ForgotPassword from './ForgotPassword';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 // shadcn UI components
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,9 @@ export default function Login({ onLoginSuccess }) {
   // New States: Show/Hide Password & View Toggle
   const [showPassword, setShowPassword] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+
+  // 🏷️ Dynamic Document Title
+  useDocumentTitle(showForgotPassword ? 'Forgot Password – AlertU' : 'Login – AlertU');
 
   // Audit Log hook instantiation
   const { logMovement } = useAuditLog();
@@ -80,6 +84,16 @@ export default function Login({ onLoginSuccess }) {
             loggedInAt: new Date().toISOString()
           }
         });
+
+        // Update admin last login timestamp in Firestore
+        try {
+          await updateDoc(adminDocRef, {
+            lastLogin: serverTimestamp(),
+            lastLoginAt: new Date().toISOString(),
+          });
+        } catch (updateErr) {
+          console.warn('Could not update lastLogin on admin doc:', updateErr);
+        }
 
         if (onLoginSuccess) {
           onLoginSuccess({ ...adminData, token: idToken });

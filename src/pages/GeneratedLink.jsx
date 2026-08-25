@@ -11,6 +11,7 @@ import {
   ExternalLink 
 } from 'lucide-react';
 import { getAuth } from 'firebase/auth';
+import { fetchFromBackend } from '../api';
 import { useAuditLog } from '../useAuditLog'; // Adjust import path if needed
 
 /**
@@ -55,20 +56,11 @@ export default function GeneratedLink({
     setIsLoading(true);
     try {
       const incidentId = report.incidentId || report.id || report.reportID || report.reportId;
-      const auth = getAuth();
-      const user = auth.currentUser;
       
-      if (!user) {
-        throw new Error("Your login session expired. Please log in again.");
-      }
-      
-      const token = await user.getIdToken(true); 
-  
-      const response = await fetch(`http://localhost:3000/api/links/generate`, {
+      const result = await fetchFromBackend('/links/generate', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           incidentId: incidentId,
@@ -77,10 +69,8 @@ export default function GeneratedLink({
         })
       });
   
-      const result = await response.json();
-  
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || "Could not create the link.");
+      if (!result || !result.success) {
+        throw new Error(result?.message || "Could not create the link.");
       }
   
       const FRONTEND_URL = window.location.origin;

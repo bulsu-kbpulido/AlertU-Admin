@@ -154,21 +154,8 @@ export default function ReportedIncidentModal({
   };
 
   const handleClose = () => {
-    const reportIdentifier = selectedReport?.reportId || selectedReport?.reportID || selectedReport?.id;
-
     onClose?.();
-
-    if (reportIdentifier) {
-      void logAdminAction('CLOSE_VERIFY_MODAL', { reportId: reportIdentifier });
-    }
   };
-
-  useEffect(() => {
-    const reportIdentifier = selectedReport?.reportId || selectedReport?.reportID || selectedReport?.id;
-    if (isOpen && reportIdentifier) {
-      logAdminAction('OPEN_VERIFY_MODAL', { reportId: reportIdentifier });
-    }
-  }, [isOpen, selectedReport?.id, selectedReport?.reportId, selectedReport?.reportID]);
 
   useEffect(() => {
     if (isOpen && selectedReport) {

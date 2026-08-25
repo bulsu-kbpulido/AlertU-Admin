@@ -28,6 +28,7 @@ import SetAgenciesModal from '@/create_utilities/SetAgencies';
 
 // Custom Hooks
 import { useAuditLog } from '../useAuditLog';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 // Paombong / Bulacan coordinates & boundaries
 const BULACAN_INITIAL = { lat: 14.8436, lng: 120.7876 };
@@ -43,6 +44,8 @@ const SEVERITY_LEVELS = ['Low', 'Medium', 'High'];
 const INCIDENT_TYPES = ['Fire', 'Flood', 'Accident', 'Others'];
 
 export default function Create_Reports() {
+  useDocumentTitle('Create Reports – AlertU');
+
   // Active Admin / Dispatcher Session (Replace with Auth context if available)
   const currentAdminId = "ADMIN-004";
   const currentAdminName = "Dispatch Admin";
