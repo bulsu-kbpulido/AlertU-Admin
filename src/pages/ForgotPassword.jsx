@@ -17,6 +17,14 @@ import {
 } from "lucide-react";
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
+// Same pattern used everywhere else in this app (see Settings.jsx) — call the
+// Railway backend directly instead of a relative '/api/...' path. A relative
+// path resolves against whatever domain the page is served from, which on
+// Vercel is the Vercel domain itself, not the backend. Since vercel.json
+// rewrites every unmatched path to index.html, those calls never reach the
+// real API — this was the actual cause of the 404 / connection errors.
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'https://alertu-server-production.up.railway.app';
+
 // Safely extract a human-readable error message regardless of whether the
 // backend sends a string or an error object (prevents "[object Object]").
 const extractErrorMessage = (data, fallback) => {
@@ -111,7 +119,7 @@ export default function ForgotPassword({ onBackToLogin }) {
     setLoadingStatus('Sending code...');
 
     try {
-      const response = await fetchWithAutoRetry('/api/auth/send-admin-reset-otp', {
+      const response = await fetchWithAutoRetry(`${API_BASE_URL}/api/auth/send-admin-reset-otp`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -167,7 +175,7 @@ export default function ForgotPassword({ onBackToLogin }) {
     setLoadingStatus('Updating password...');
 
     try {
-      const response = await fetchWithAutoRetry('/api/auth/reset-admin-password', {
+      const response = await fetchWithAutoRetry(`${API_BASE_URL}/api/auth/reset-admin-password`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -209,7 +217,7 @@ export default function ForgotPassword({ onBackToLogin }) {
     setLoadingStatus('Resending code...');
 
     try {
-      const response = await fetchWithAutoRetry('/api/auth/send-admin-reset-otp', {
+      const response = await fetchWithAutoRetry(`${API_BASE_URL}/api/auth/send-admin-reset-otp`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
