@@ -17,6 +17,17 @@ import {
 } from "lucide-react";
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
+// Safely extract a human-readable error message regardless of whether the
+// backend sends a string or an error object (prevents "[object Object]").
+const extractErrorMessage = (data, fallback) => {
+  const raw = data?.message ?? data?.error ?? fallback;
+  if (typeof raw === 'string') return raw;
+  if (raw && typeof raw === 'object') {
+    return raw.message || raw.error || JSON.stringify(raw);
+  }
+  return fallback;
+};
+
 export default function ForgotPassword({ onBackToLogin }) {
   // 🏷️ Dynamic Document Title
   useDocumentTitle('Forgot Password – AlertU');
@@ -112,7 +123,7 @@ export default function ForgotPassword({ onBackToLogin }) {
       const data = await parseResponse(response);
 
       if (!response.ok || !data.success) {
-        throw new Error(data.message || data.error || 'Failed to send verification code.');
+        throw new Error(extractErrorMessage(data, 'Failed to send verification code.'));
       }
 
       setSuccessMsg('A 6-digit verification code has been sent to your email.');
@@ -172,7 +183,7 @@ export default function ForgotPassword({ onBackToLogin }) {
       const data = await parseResponse(response);
 
       if (!response.ok || !data.success) {
-        throw new Error(data.message || data.error || 'Failed to reset password.');
+        throw new Error(extractErrorMessage(data, 'Failed to reset password.'));
       }
 
       setStep(3);
@@ -210,7 +221,7 @@ export default function ForgotPassword({ onBackToLogin }) {
       const data = await parseResponse(response);
 
       if (!response.ok || !data.success) {
-        throw new Error(data.message || data.error || 'Failed to resend code.');
+        throw new Error(extractErrorMessage(data, 'Failed to resend code.'));
       }
 
       setSuccessMsg('A new verification code has been sent.');
