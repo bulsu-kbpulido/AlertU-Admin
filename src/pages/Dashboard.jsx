@@ -247,20 +247,26 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="w-full h-[calc(100vh-theme(spacing.24))] relative overflow-hidden box-border p-0 m-0">
+    <div className="w-full h-[calc(100dvh-6.75rem)] relative overflow-hidden box-border p-0 m-0">
       <Dashboard_Wrapper ref={wrapperRef}>
         
         {/* OVERVIEW PANEL (0) */}
-        <div className="w-full max-w-full h-full flex flex-col gap-4 md:gap-6 box-border animate-in fade-in duration-500 overflow-y-auto xl:overflow-hidden pb-4">
-          <MetricsGrid 
-            metrics={metrics} 
-            onRefresh={triggerRefresh} 
-            isLoading={loading}
-            reports={processedReports} 
-          />
+        <div className="w-full max-w-full h-full flex flex-col gap-4 lg:gap-5 box-border animate-in fade-in duration-500 overflow-y-auto min-h-0 pr-1 pb-8
+          [&::-webkit-scrollbar]:w-[6px] 
+          [&::-webkit-scrollbar-track]:bg-transparent 
+          [&::-webkit-scrollbar-thumb]:bg-slate-200 dark:[&::-webkit-scrollbar-thumb]:bg-slate-800 [&::-webkit-scrollbar-thumb]:rounded-full"
+        >
+          <div className="shrink-0">
+            <MetricsGrid 
+              metrics={metrics} 
+              onRefresh={triggerRefresh} 
+              isLoading={loading}
+              reports={processedReports} 
+            />
+          </div>
 
-          <div className="grid grid-cols-1 gap-4 md:gap-6 xl:grid-cols-12 items-stretch flex-1 min-h-0">
-            <div className="xl:col-span-8 w-full h-[400px] xl:h-full">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5 items-stretch min-h-0">
+            <div className="lg:col-span-7 xl:col-span-8 w-full h-[520px] sm:h-[560px] lg:h-[580px] 2xl:h-[620px] flex flex-col">
               <DashboardMap 
                 liveReports={processedReports} 
                 selectedReport={selectedReport}
@@ -269,21 +275,23 @@ export default function Dashboard() {
               />
             </div>
 
-            <div className="xl:col-span-4 w-full h-full flex flex-col gap-4 md:gap-6 min-h-0 xl:overflow-y-auto">
-              <Dashboard_Searchbar
-                searchTerminalQuery={searchTerminalQuery}
-                setSearchTerminalQuery={setSearchTerminalQuery}
-                filterSeverity={filterSeverity}
-                setFilterSeverity={setFilterSeverity}
-                filterIncidentType={filterIncidentType}
-                setFilterIncidentType={setFilterIncidentType}
-                filterHazardType={filterHazardType}
-                setFilterHazardType={setFilterHazardType}
-                filterAgency={filterAgency}
-                setFilterAgency={setFilterAgency}
-                onLocationSelect={(coords) => setMapTargetCoords(coords)}
-                onResetFilters={handleResetFilters}
-              />
+            <div className="lg:col-span-5 xl:col-span-4 w-full h-[520px] sm:h-[560px] lg:h-[580px] 2xl:h-[620px] flex flex-col gap-3 min-h-0">
+              <div className="shrink-0">
+                <Dashboard_Searchbar
+                  searchTerminalQuery={searchTerminalQuery}
+                  setSearchTerminalQuery={setSearchTerminalQuery}
+                  filterSeverity={filterSeverity}
+                  setFilterSeverity={setFilterSeverity}
+                  filterIncidentType={filterIncidentType}
+                  setFilterIncidentType={setFilterIncidentType}
+                  filterHazardType={filterHazardType}
+                  setFilterHazardType={setFilterHazardType}
+                  filterAgency={filterAgency}
+                  setFilterAgency={setFilterAgency}
+                  onLocationSelect={(coords) => setMapTargetCoords(coords)}
+                  onResetFilters={handleResetFilters}
+                />
+              </div>
               
               <ReportDetailsPanel 
                 reportsList={processedReports} 
@@ -297,7 +305,11 @@ export default function Dashboard() {
         </div>
 
         {/* MID STATISTICS PANEL (1) */}
-        <div className="w-full max-w-full h-full box-border overflow-y-auto py-2">
+        <div className="w-full max-w-full h-full box-border overflow-y-auto min-h-0 pr-1 pb-8
+          [&::-webkit-scrollbar]:w-[6px] 
+          [&::-webkit-scrollbar-track]:bg-transparent 
+          [&::-webkit-scrollbar-thumb]:bg-slate-200 dark:[&::-webkit-scrollbar-thumb]:bg-slate-800 [&::-webkit-scrollbar-thumb]:rounded-full"
+        >
           <Dashboard_MidSection 
             activeTab={activeTab}
             setActiveTab={setActiveTab}

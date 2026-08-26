@@ -66,14 +66,14 @@ function ReportItem({ report, selectedReport, setSelectedReport, onViewClick }) 
           />
         </div>
         
-        <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4">
+        <div className="flex-1 min-w-0 flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-0.5 2xl:gap-2">
           <span 
-            className="text-[13px] font-bold uppercase tracking-wider shrink-0"
+            className="text-xs sm:text-[13px] font-bold uppercase tracking-wider shrink-0 truncate"
             style={{ color: theme.text }}
           >
             {rawType}
           </span>
-          <p className="text-[13px] font-medium text-slate-500 dark:text-slate-400 line-clamp-1 leading-normal sm:text-right flex-1 min-w-0">
+          <p className="text-xs sm:text-[13px] font-medium text-slate-500 dark:text-slate-400 truncate leading-normal 2xl:text-right flex-1 min-w-0">
             {compactAddress}
           </p>
         </div>
@@ -82,7 +82,7 @@ function ReportItem({ report, selectedReport, setSelectedReport, onViewClick }) 
       <div className="shrink-0 pl-1">
         <Button
           size="sm"
-          className="h-7 text-[11px] font-semibold px-3.5 bg-blue-900 hover:bg-blue-800 dark:bg-blue-800 dark:hover:bg-blue-700 text-white rounded-lg shadow-sm border-0 transition-colors"
+          className="h-7 text-[11px] font-semibold px-3 bg-blue-900 hover:bg-blue-800 dark:bg-blue-800 dark:hover:bg-blue-700 text-white rounded-lg shadow-sm border-0 transition-colors cursor-pointer"
           onClick={(e) => {
             e.stopPropagation(); 
             if (onViewClick) onViewClick(report); 
@@ -113,7 +113,7 @@ export default function ReportDetailsPanel({
   }, [reportsList, filterAgency]);
 
   return (
-    <div className="h-full max-h-[510px] w-full flex flex-col border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-xl font-sans">
+    <div className="flex-1 min-h-0 w-full flex flex-col border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-xl font-sans">
       
       <div className="h-14 px-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2.5 text-slate-800 dark:text-slate-200">

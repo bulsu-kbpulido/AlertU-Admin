@@ -246,7 +246,7 @@ export default function DashAction_Buttons({ onRefresh, isLoading, reports = [] 
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800/60 p-4 flex flex-col justify-between h-full transition-colors duration-200">
+    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col justify-between h-full transition-colors duration-200 shadow-sm">
       <div className="min-w-0 flex flex-col justify-center">
         <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
           Control Panel
@@ -260,19 +260,19 @@ export default function DashAction_Buttons({ onRefresh, isLoading, reports = [] 
         <Button
           onClick={handleRefresh}
           disabled={isLoading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center justify-center gap-2"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center justify-center gap-2 text-xs sm:text-sm h-9 sm:h-10 truncate cursor-pointer"
         >
-          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-          {isLoading ? 'Loading...' : 'Refresh Data'}
+          <RefreshCw className={`h-4 w-4 shrink-0 ${isLoading ? 'animate-spin' : ''}`} />
+          <span className="truncate">{isLoading ? 'Loading...' : 'Refresh Data'}</span>
         </Button>
 
         <Popover>
           <PopoverTrigger 
             disabled={isLoading || isExporting}
-            className="w-full font-semibold border border-slate-200 dark:border-slate-800 flex items-center justify-center gap-2 text-slate-700 dark:text-slate-300 h-10 px-4 py-2 text-sm rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:pointer-events-none transition-colors"
+            className="w-full font-semibold border border-slate-200 dark:border-slate-800 flex items-center justify-center gap-2 text-slate-700 dark:text-slate-300 h-9 sm:h-10 px-3 sm:px-4 text-xs sm:text-sm rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:pointer-events-none transition-colors truncate cursor-pointer"
           >
-            <Download className="h-4 w-4" />
-            {isExporting ? 'Saving...' : 'Export Logs'}
+            <Download className="h-4 w-4 shrink-0" />
+            <span className="truncate">{isExporting ? 'Saving...' : 'Export Logs'}</span>
           </PopoverTrigger>
           
           <PopoverContent className="w-64 p-2 flex flex-col gap-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-md">

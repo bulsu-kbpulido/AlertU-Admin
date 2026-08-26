@@ -654,17 +654,18 @@ export default function Weekly_ReportCharts({
   };
 
   return (
-    <div className="w-full bg-white rounded-xl border border-slate-200/80 p-6 shadow-sm dark:bg-slate-900 dark:border-slate-800 flex flex-col justify-between h-[420px]">
-      <div className="flex items-start justify-between mb-4 z-20">
+    <div className="w-full bg-white rounded-xl border border-slate-200/80 p-4 sm:p-5 lg:p-6 shadow-sm dark:bg-slate-900 dark:border-slate-800 flex flex-col justify-between min-h-[480px] h-full">
+      {/* Card Header: 2-Tier Stacked Layout for 100% Visibility with Zero Overlap */}
+      <div className="flex flex-col gap-3 mb-4 z-20">
         
-        {/* Title Block & Live Connectivity Stream Indicator */}
-        <div className="flex flex-col gap-1">
+        {/* Row 1: Title Block */}
+        <div className="flex flex-col gap-0.5 w-full">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 tracking-wide uppercase">
+            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 tracking-wide uppercase whitespace-nowrap">
               Weekly Report Charts
             </h3>
             <span
-              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide border ${
+              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide border shrink-0 ${
                 isLive
                   ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'
@@ -674,23 +675,23 @@ export default function Weekly_ReportCharts({
               {isLive ? 'LIVE' : 'SYNC'}
             </span>
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
             Combined active vs resolved metrics visualization.
           </p>
         </div>
 
-        {/* Toolbar Controls */}
-        <div className="flex items-center gap-2">
+        {/* Row 2: Toolbar Controls - Full Dedicated Row, Never Overlapping Title */}
+        <div className="flex flex-wrap items-center gap-2 w-full">
           
           <Popover>
             <PopoverTrigger asChild>
               <Button 
                 size="sm" 
                 disabled={isExporting || filteredReports.length === 0 || loading}
-                className="h-8 gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm border-0"
+                className="h-8 gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm border-0 cursor-pointer rounded-lg px-2.5 sm:px-3"
               >
                 {isExporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-                Export
+                <span>Export</span>
               </Button>
             </PopoverTrigger>
             
@@ -701,7 +702,7 @@ export default function Weekly_ReportCharts({
                   handleExportExcel();
                 }}
                 variant="ghost"
-                className="w-full justify-start gap-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium text-xs h-9"
+                className="w-full justify-start gap-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium text-xs h-9 cursor-pointer rounded-md"
               >
                 <FileSpreadsheet className="h-4 w-4 text-emerald-600 dark:text-emerald-500" />
                 Export as Excel
@@ -713,7 +714,7 @@ export default function Weekly_ReportCharts({
                   handleExportPDF();
                 }}
                 variant="ghost"
-                className="w-full justify-start gap-2 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-600 dark:hover:text-rose-400 font-medium text-xs h-9"
+                className="w-full justify-start gap-2 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-600 dark:hover:text-rose-400 font-medium text-xs h-9 cursor-pointer rounded-md"
               >
                 <FileText className="h-4 w-4 text-rose-600 dark:text-rose-500" />
                 Export as PDF
@@ -722,7 +723,7 @@ export default function Weekly_ReportCharts({
           </Popover>
 
           <select 
-            className="text-xs bg-slate-50 border border-slate-200 rounded px-2 py-1 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 h-8 outline-none"
+            className="text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-200 font-medium h-8 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer"
             value={pickerType}
             onChange={(e) => {
               const type = e.target.value;
@@ -737,10 +738,10 @@ export default function Weekly_ReportCharts({
 
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 gap-2 text-xs border-slate-200">
-                <CalendarIcon className="h-3.5 w-3.5 text-slate-500" />
-                <span className="truncate max-w-[120px]">{getDropdownLabel()}</span>
-                <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+              <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs font-medium bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors cursor-pointer px-2.5">
+                <CalendarIcon className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+                <span className="truncate max-w-[95px] sm:max-w-[130px]">{getDropdownLabel()}</span>
+                <ChevronDown className="h-3.5 w-3.5 opacity-50 shrink-0" />
               </Button>
             </DropdownMenuTrigger>
             
@@ -767,14 +768,20 @@ export default function Weekly_ReportCharts({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600" onClick={handleReset}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-center cursor-pointer shrink-0" 
+            onClick={handleReset}
+            title="Refresh Data"
+          >
             <RefreshCw className="h-3.5 w-3.5" />
           </Button>
         </div>
       </div>
 
       {/* Render chart area canvas */}
-      <div className="relative w-full flex-1 min-h-0 z-10" style={{ height: '360px' }}>
+      <div className="relative w-full flex-1 min-h-[280px] z-10">
         {loading ? (
           <div className="w-full h-full flex items-center justify-center gap-2 text-slate-400 text-sm font-medium">
             <Loader2 className="h-5 w-5 animate-spin text-blue-600" />

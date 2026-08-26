@@ -12,7 +12,6 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertCircle, ArrowRight, Eye, EyeOff } from "lucide-react";
 
@@ -20,8 +19,7 @@ export default function Login({ onLoginSuccess }) {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    department: 'barangay',
-    rememberMe: false
+    department: 'barangay'
   });
 
   const [error, setError] = useState('');
@@ -42,13 +40,6 @@ export default function Login({ onLoginSuccess }) {
     setFormData((prev) => ({
       ...prev,
       [name]: value
-    }));
-  };
-
-  const handleCheckboxChange = (checked) => {
-    setFormData((prev) => ({
-      ...prev,
-      rememberMe: checked
     }));
   };
 
@@ -80,7 +71,6 @@ export default function Login({ onLoginSuccess }) {
             email: user.email,
             role: adminData.role || 'Admin',
             department: adminData.department || formData.department,
-            rememberMe: formData.rememberMe,
             loggedInAt: new Date().toISOString()
           }
         });
@@ -254,24 +244,8 @@ export default function Login({ onLoginSuccess }) {
               </div>
             </div>
 
-            {/* Aligned Row: Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between pt-1">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="rememberMe"
-                  checked={formData.rememberMe}
-                  onCheckedChange={handleCheckboxChange}
-                  disabled={loading}
-                  className="rounded border-slate-300 data-[state=checked]:bg-blue-700 data-[state=checked]:border-blue-700"
-                />
-                <Label
-                  htmlFor="rememberMe"
-                  className="text-sm font-normal text-slate-600 select-none cursor-pointer"
-                >
-                  Remember this device for 30 days
-                </Label>
-              </div>
-
+            {/* Forgot Password Link */}
+            <div className="flex items-center justify-end pt-1">
               <button 
                 type="button"
                 onClick={() => setShowForgotPassword(true)}

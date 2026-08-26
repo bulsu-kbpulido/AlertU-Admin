@@ -81,14 +81,14 @@ const Dashboard_Wrapper = forwardRef(({ children }, ref) => {
   return (
     <div 
       {...bind()} 
-      className="w-full h-screen overflow-hidden bg-transparent text-slate-800 touch-none select-none"
+      className="w-full h-full overflow-hidden bg-transparent text-slate-800 touch-none select-none"
     >
       <animated.div 
-        style={{ transform: styles.y.to(y => `translateY(${y}vh)`) }}
+        style={{ transform: styles.y.to(y => `translateY(${y}%)`) }}
         className="w-full h-full flex flex-col m-0 p-0"
       >
         {React.Children.map(children, (child) => (
-          <div className="w-full h-screen h-[100vh] flex-shrink-0 overflow-hidden box-border">
+          <div className="w-full h-full flex-shrink-0 overflow-hidden box-border">
             {child}
           </div>
         ))}

@@ -338,12 +338,12 @@ export default function ReportsTableFeed({
 
   return (
     <Card className="border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm rounded-xl overflow-hidden font-sans w-full">
-      <CardHeader className="py-3 px-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/40 dark:bg-slate-900/30">
-        <div className="flex items-baseline gap-2 md:flex-col md:items-start md:gap-0">
-          <CardTitle className="text-sm font-bold tracking-tight text-slate-900 dark:text-slate-50 uppercase">
+      <CardHeader className="py-3 px-4 sm:px-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/40 dark:bg-slate-900/30">
+        <div className="flex items-baseline gap-2 sm:flex-col sm:items-start sm:gap-0 min-w-0">
+          <CardTitle className="text-sm font-bold tracking-tight text-slate-900 dark:text-slate-50 uppercase truncate">
             Incident Reports Feed
           </CardTitle>
-          <CardDescription className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 hidden sm:block">
+          <CardDescription className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 hidden sm:block truncate">
             Real-time feed filtered by active criteria and tab context
           </CardDescription>
         </div>
@@ -355,11 +355,12 @@ export default function ReportsTableFeed({
             setSelectedReport?.(null); 
             setPagination((prev) => ({ ...prev, pageIndex: 0 })); 
           }}
+          className="shrink-0"
         >
           <TabsList className="h-8 p-0.5 bg-slate-200/60 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg flex items-center gap-0.5">
             <TabsTrigger 
               value="active" 
-              className="text-[11px] font-medium px-3 py-1 rounded-md data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm transition-all flex items-center gap-1.5"
+              className="text-[11px] font-medium px-3 py-1 rounded-md data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <span>Active Incidents</span>
               <span className="bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-bold px-1.5 py-0.2 rounded-full text-[10px]">
@@ -369,7 +370,7 @@ export default function ReportsTableFeed({
             
             <TabsTrigger 
               value="resolved" 
-              className="text-[11px] font-medium px-3 py-1 rounded-md data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm transition-all flex items-center gap-1.5"
+              className="text-[11px] font-medium px-3 py-1 rounded-md data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <span>Resolved Log</span>
               <span className="bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold px-1.5 py-0.2 rounded-full text-[10px]">
@@ -380,8 +381,12 @@ export default function ReportsTableFeed({
         </Tabs>
       </CardHeader>
       
-      <CardContent className="p-0 pt-0 w-full overflow-x-auto">
-        <Table className="w-full text-left table-auto border-collapse">
+      <CardContent className="p-0 pt-0 w-full overflow-x-auto
+        [&::-webkit-scrollbar]:h-[6px] 
+        [&::-webkit-scrollbar-track]:bg-transparent 
+        [&::-webkit-scrollbar-thumb]:bg-slate-200 dark:[&::-webkit-scrollbar-thumb]:bg-slate-800 [&::-webkit-scrollbar-thumb]:rounded-full"
+      >
+        <Table className="w-full text-left table-auto border-collapse min-w-[750px]">
           <TableHeader>
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id} className="bg-slate-100/60 dark:bg-slate-900/60 border-b border-slate-200/80 dark:border-slate-800 hover:bg-transparent">
@@ -428,7 +433,7 @@ export default function ReportsTableFeed({
         </Table>
 
         {totalReports > 0 && (
-          <div className="flex items-center justify-between border-t border-slate-200/80 dark:border-slate-800 px-5 py-3 bg-slate-50/50 dark:bg-slate-950 w-full">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-200/80 dark:border-slate-800 px-4 sm:px-5 py-3 bg-slate-50/50 dark:bg-slate-950 w-full">
             <span className="text-xs text-slate-500 dark:text-slate-400">
               Showing <span className="font-semibold text-slate-800 dark:text-slate-200">{startIndex + 1}</span> – <span className="font-semibold text-slate-800 dark:text-slate-200">{startIndex + visibleCount}</span> of <span className="font-semibold text-slate-800 dark:text-slate-200">{totalReports}</span> entries
             </span>

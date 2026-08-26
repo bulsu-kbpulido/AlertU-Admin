@@ -202,7 +202,15 @@ export default function DashboardMap({ selectedReport, setSelectedReport, mapTar
 
     setTimeout(() => map.updateSize(), 100);
 
+    const resizeObserver = new ResizeObserver(() => {
+      map.updateSize();
+    });
+    if (mapRef.current) {
+      resizeObserver.observe(mapRef.current);
+    }
+
     return () => {
+      resizeObserver.disconnect();
       if (map) map.setTarget(undefined);
     };
   }, [setSelectedReport]);
@@ -385,7 +393,7 @@ export default function DashboardMap({ selectedReport, setSelectedReport, mapTar
   };
 
   return (
-    <div className="relative w-full h-[590px] min-h-[590px] rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xl overflow-hidden bg-slate-900 group">
+    <div className="relative w-full h-full min-h-0 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xl overflow-hidden bg-slate-900 group">
       {/* Map Engine Viewport */}
       <div ref={mapRef} className="w-full h-full bg-slate-100 dark:bg-slate-950" />
 

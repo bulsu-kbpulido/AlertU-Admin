@@ -9,7 +9,7 @@ import DashAction_Buttons from './DashAction_Buttons';
 export default function MetricsGrid({ metrics, onRefresh, isLoading, reports = [] }) {
   
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5 items-stretch">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3.5 sm:gap-4 lg:gap-4 2xl:gap-5 items-stretch">
       {/* Dynamic Active Incident Metric Card Node */}
       <Active_Reports />
 
