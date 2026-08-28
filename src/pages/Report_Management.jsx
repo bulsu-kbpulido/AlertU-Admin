@@ -274,6 +274,7 @@ export default function Report_Management() {
     };
 
     if (socketRef.current?.connected) {
+      socketRef.current.emit('ADMIN_ACTION_EVENT', payload);
       socketRef.current.emit('admin_action_event', payload);
     }
 
@@ -313,6 +314,7 @@ export default function Report_Management() {
     setSelectedViewReport(null);
   };
 
+  // 1️⃣ OPEN VERIFICATION WORKFLOW (Trigger "Under Review" banner/notification)
   const openVerifyWorkflow = (report) => {
     if (!report) return;
   
@@ -322,6 +324,16 @@ export default function Report_Management() {
       report.customId || 
       (report.id && !isNaN(report.id) ? `RID${String(report.id).padStart(8, '0')}` : report.id);
   
+    const targetUserId =
+      report.userId ||
+      report.citizenId ||
+      report.reportedBy ||
+      report.authUid ||
+      report.uid ||
+      report.user?.uid ||
+      report.user?.id ||
+      '';
+
     const normalizedReport = {
       ...report,
       reportID: reportIdentifier,
@@ -366,14 +378,25 @@ export default function Report_Management() {
     
     setVerifyModalOpen(true);
 
-    // ⚡ Notify Flutter citizen app that review has started
-    if (socketRef.current) {
-      socketRef.current.emit('ADMIN_ACTION_EVENT', {
-        action: 'OPEN_VERIFY_MODAL',
-        target: reportIdentifier,
-        reportId: reportIdentifier,
-        timestamp: new Date().toISOString(),
-      });
+    // ⚡ Payload containing user IDs for room resolution
+    const reviewPayload = {
+      action: 'REPORT_UNDER_REVIEW',
+      status: 'UNDER_REVIEW',
+      target: reportIdentifier,
+      reportId: reportIdentifier,
+      reportID: reportIdentifier,
+      userId: targetUserId,
+      citizenId: targetUserId,
+      timestamp: new Date().toISOString(),
+      eventId: `review_${reportIdentifier}_${Date.now()}`
+    };
+
+    logAdminAction('OPEN_VERIFY_MODAL', `Report_#${reportIdentifier}`, reviewPayload);
+
+    // ⚡ Emit to all socket channels monitored by Flutter app
+    if (socketRef.current?.connected) {
+      socketRef.current.emit('ADMIN_ACTION_EVENT', reviewPayload);
+      socketRef.current.emit('CITIZEN_REPORT_UPDATED', reviewPayload);
     }
   };
 
@@ -381,8 +404,7 @@ export default function Report_Management() {
     const reportIdentifier = selectedReport?.reportID || selectedReport?.id;
     
     if (reportIdentifier) {
-      // ⚡ Notify Flutter citizen app that review was closed/cancelled
-      if (socketRef.current) {
+      if (socketRef.current?.connected) {
         socketRef.current.emit('ADMIN_ACTION_EVENT', {
           action: 'CLOSE_VERIFY_MODAL',
           target: reportIdentifier,
@@ -403,6 +425,7 @@ export default function Report_Management() {
     handleStepChange(3, 'forward');
   };
 
+  // 2️⃣ FINAL VERIFICATION SUBMIT (Trigger "Verified/Dispatched" banner/notification)
   const handleFinalSubmit = async () => {
     const sourceDocumentId =
       selectedReport?.id ||
@@ -418,11 +441,12 @@ export default function Report_Management() {
     const reportIdentifier = selectedReport?.reportID || sourceDocumentId;
     const verifiedReportID = generateVerifiedReportID(selectedReport);
 
-    // Extract target citizen user ID for room routing
     const targetUserId =
       selectedReport?.userId ||
       selectedReport?.citizenId ||
       selectedReport?.reportedBy ||
+      selectedReport?.authUid ||
+      selectedReport?.uid ||
       selectedReport?.user?.uid ||
       selectedReport?.user?.id ||
       '';
@@ -460,14 +484,13 @@ export default function Report_Management() {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        // ⚡ Prepare complete payload for Flutter client socket listener
         const realtimeSocketPayload = {
-          action: 'REPORT_VERIFIED',             // Matches Flutter isApprovedAction
-          status: 'APPROVED',                    // Fallback status match
+          action: 'REPORT_VERIFIED',
+          status: 'APPROVED',
           reportId: reportIdentifier,
           reportID: reportIdentifier,
           verifiedReportID: verifiedReportID,
-          userId: targetUserId,                  // Crucial for backend routing to citizen room
+          userId: targetUserId,
           citizenId: targetUserId,
           title: reportTitle,
           severity: verifiedSeverity,
@@ -483,16 +506,13 @@ export default function Report_Management() {
           realtimeSocketPayload
         );
 
-        // ⚡ Emit across all real-time channels Flutter listens to
-        if (socketRef.current) {
+        if (socketRef.current?.connected) {
           socketRef.current.emit('ADMIN_ACTION_EVENT', realtimeSocketPayload);
           socketRef.current.emit('DISPATCH_VERIFIED_INCIDENT', realtimeSocketPayload);
           socketRef.current.emit('CITIZEN_REPORT_UPDATED', realtimeSocketPayload);
         }
 
         reportCacheRef.current[activeTab] = null;
-
-        // 🛑 Unmount/reset modal ONLY AFTER emitting socket events
         resetModalState();
       } else {
         alert("Failed to save report: " + result.message);
@@ -509,6 +529,7 @@ export default function Report_Management() {
     logAdminAction('OPEN_REJECT_DIALOG', `Report_#${reportId}`, { reportId });
   };
 
+  // 3️⃣ HANDLE REJECTION (Trigger "Rejected" banner/notification)
   const handleReject = async () => {
     if (!reportToReject) return;
     
@@ -538,32 +559,37 @@ export default function Report_Management() {
           report?.reportId,
         ].some((value) => String(value ?? '') === String(reportToReject)));
 
+        const targetUserId = 
+          rejectedReport?.userId ||
+          rejectedReport?.authUid ||
+          rejectedReport?.uid ||
+          rejectedReport?.reportedBy ||
+          rejectedReport?.citizenID ||
+          rejectedReport?.citizenId ||
+          rejectedReport?.user?.uid ||
+          '';
+
         const rejectionPayload = {
           action: 'REPORT_REJECTED',
           status: 'REJECTED',
           reportId: reportToReject,
           reportID: reportToReject,
-          userId: rejectedReport?.userId ||
-            rejectedReport?.authUid ||
-            rejectedReport?.uid ||
-            rejectedReport?.reportedBy ||
-            rejectedReport?.user?.uid ||
-            '',
-          citizenId: rejectedReport?.citizenID ||
-            rejectedReport?.citizenId ||
-            rejectedReport?.CID ||
-            '',
+          userId: targetUserId,
+          citizenId: targetUserId,
           rejectedAt: new Date().toISOString(),
           eventId: `rejected_${reportToReject}_${Date.now()}`,
         };
 
-        // Use the authenticated backend relay so the server resolves the citizen
-        // rooms and forwards ADMIN_ACTION_EVENT/CITIZEN_REPORT_UPDATED safely.
         await logAdminAction(
           'REPORT_REJECTED',
           `Report_#${reportToReject}`,
           rejectionPayload,
         );
+
+        if (socketRef.current?.connected) {
+          socketRef.current.emit('ADMIN_ACTION_EVENT', rejectionPayload);
+          socketRef.current.emit('CITIZEN_REPORT_UPDATED', rejectionPayload);
+        }
 
         reportCacheRef.current[activeTab] = null;
         setIsRejectDialogOpen(false);
