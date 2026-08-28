@@ -157,21 +157,6 @@ export default function ReportedIncidentModal({
     onClose?.();
   };
 
-  // Inside ReportedIncidentModal.jsx
-useEffect(() => {
-  if (isOpen && currentStep === 1 && selectedReport) {
-    const reportId = selectedReport?.id || selectedReport?._id || selectedReport?.reportID;
-    
-    // ⚡ Notify Flutter clients that the report is under review
-    socket.emit('ADMIN_ACTION_EVENT', {
-      action: 'OPEN_VERIFY_MODAL',
-      status: 'UNDER_REVIEW',
-      reportId: reportId,
-      timestamp: new Date().toISOString()
-    });
-  }
-}, [isOpen, currentStep, selectedReport]);
-
   useEffect(() => {
     if (isOpen && selectedReport) {
       const initialType = selectedReport?.verifiedIncidentType || selectedReport?.incidentType || selectedReport?.hazard || 'Fire';
