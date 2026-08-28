@@ -56,7 +56,7 @@ const API_BASE_URL = CLEAN_SERVER_URL.endsWith('/api')
   : `${CLEAN_SERVER_URL}/api`;
 const SOCKET_SERVER_URL = CLEAN_SERVER_URL.replace(/\/api$/, '');
 
-const REPORT_LIMIT = 100; // Cache & query payload limit per active tab
+const REPORT_LIMIT = 100;
 
 const formatStreetAndBarangay = (fullAddress) => {
   if (!fullAddress || fullAddress === 'No location specified' || fullAddress === 'Location unavailable') {
@@ -83,18 +83,12 @@ const formatDateTime = (timestamp) => {
   };
 };
 
-/**
- * Helper to extract numeric value from Report ID strings (e.g. "RID00000009" -> 9)
- */
 const parseReportIdNumber = (idStr) => {
   if (!idStr) return 0;
   const match = String(idStr).match(/\d+/);
   return match ? parseInt(match[0], 10) : 0;
 };
 
-/**
- * Enhanced Shadcn Skeleton Loader for Table Rows
- */
 const TableSkeletonLoader = () => (
   <motion.div 
     initial={{ opacity: 0 }}
@@ -128,14 +122,12 @@ export default function Report_Management() {
 
   const socketRef = useRef(null);
   
-  // Cache Ref for reports by tab type
   const reportCacheRef = useRef({
     active: null,
     duplicate: null,
     archived: null,
   });
 
-  // Global State for Verification Workflow
   const {
     isVerifyModalOpen,
     currentStep,
@@ -162,27 +154,23 @@ export default function Report_Management() {
     resetModalState,
   } = useReportStore();
 
-  // Modal & Dialog States
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedViewReport, setSelectedViewReport] = useState(null);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [reportToReject, setReportToReject] = useState(null);
   const [isRejecting, setIsRejecting] = useState(false);
 
-  // Data & Refetch Loading States
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('active'); // 'active' | 'duplicate' | 'archived'
+  const [activeTab, setActiveTab] = useState('active');
 
-  // Filtering & Pagination
   const [searchQuery, setSearchQuery] = useState('');
   const [severityFilter, setSeverityFilter] = useState('ALL');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  // 🔥 FIRESTORE REAL-TIME LISTENER FOR ACTIVE & DUPLICATE TABS 🔥
   useEffect(() => {
     if (activeTab === 'archived') return;
 
@@ -208,7 +196,6 @@ export default function Report_Management() {
           ...doc.data(),
         }));
 
-        // Client-side filtering ensures both boolean flags and status fields work cleanly
         if (activeTab === 'active') {
           fetchedReports = fetchedReports.filter(r => !r.isDuplicate && r.status !== 'duplicate');
         } else if (activeTab === 'duplicate') {
@@ -238,7 +225,6 @@ export default function Report_Management() {
     }, 750);
   };
 
-  // Socket Connection
   useEffect(() => {
     socketRef.current = io(SOCKET_SERVER_URL, {
       transports: ['websocket'],
@@ -263,12 +249,25 @@ export default function Report_Management() {
 
   const logAdminAction = async (action, target, metadata = {}) => {
     const reportIdentifier = selectedReport?.reportID || selectedReport?.id;
+    const targetUserId =
+      metadata?.userId ||
+      selectedReport?.userId ||
+      selectedReport?.citizenId ||
+      selectedReport?.authUid ||
+      selectedReport?.uid ||
+      '';
+
     const payload = {
       action,
       target: target || (reportIdentifier ? `Report_#${reportIdentifier}` : 'Report_Management'),
-      adminName: 'Admin User',
-      adminId: 'usr_admin',
-      metadata,
+      adminName: auth.currentUser?.displayName || 'Admin Operator',
+      adminId: auth.currentUser?.uid || 'usr_admin',
+      metadata: {
+        ...metadata,
+        reportId: reportIdentifier || metadata?.reportId,
+        authUid: targetUserId,
+        citizenID: selectedReport?.citizenID || selectedReport?.cid || metadata?.citizenID,
+      },
       targetRoom: 'super_admins',
       timestamp: new Date().toISOString()
     };
@@ -314,8 +313,8 @@ export default function Report_Management() {
     setSelectedViewReport(null);
   };
 
-  // 1️⃣ OPEN VERIFICATION WORKFLOW (Trigger "Under Review" banner/notification)
-  const openVerifyWorkflow = (report) => {
+  // 1️⃣ OPEN VERIFICATION WORKFLOW (Step 1 - Under Review)
+  const openVerifyWorkflow = async (report) => {
     if (!report) return;
   
     const reportIdentifier = 
@@ -378,26 +377,19 @@ export default function Report_Management() {
     
     setVerifyModalOpen(true);
 
-    // ⚡ Payload containing user IDs for room resolution
     const reviewPayload = {
-      action: 'REPORT_UNDER_REVIEW',
+      action: 'OPEN_VERIFY_MODAL',
       status: 'UNDER_REVIEW',
       target: reportIdentifier,
       reportId: reportIdentifier,
       reportID: reportIdentifier,
       userId: targetUserId,
-      citizenId: targetUserId,
+      citizenID: report.citizenID || report.cid,
       timestamp: new Date().toISOString(),
       eventId: `review_${reportIdentifier}_${Date.now()}`
     };
 
-    logAdminAction('OPEN_VERIFY_MODAL', `Report_#${reportIdentifier}`, reviewPayload);
-
-    // ⚡ Emit to all socket channels monitored by Flutter app
-    if (socketRef.current?.connected) {
-      socketRef.current.emit('ADMIN_ACTION_EVENT', reviewPayload);
-      socketRef.current.emit('CITIZEN_REPORT_UPDATED', reviewPayload);
-    }
+    await logAdminAction('OPEN_VERIFY_MODAL', `Report_#${reportIdentifier}`, reviewPayload);
   };
 
   const closeVerifyModal = async () => {
@@ -416,8 +408,24 @@ export default function Report_Management() {
     resetModalState();
   };
 
-  const handleStepChange = (targetStep, direction = 'forward') => {
+  // 2️⃣ STEP TRANSITIONS (Step 2 - Spatial Verification)
+  const handleStepChange = async (targetStep, direction = 'forward') => {
     setCurrentStep(targetStep);
+    
+    const reportIdentifier = selectedReport?.reportID || selectedReport?.id;
+    if (reportIdentifier && direction === 'forward') {
+      const stepPayload = {
+        action: targetStep === 2 ? 'VERIFY_STEP_ADVANCE' : 'VERIFY_STEP_TITLE',
+        currentStep: targetStep,
+        status: 'UNDER_REVIEW',
+        reportId: reportIdentifier,
+        reportID: reportIdentifier,
+        userId: selectedReport?.userId || selectedReport?.authUid,
+        timestamp: new Date().toISOString()
+      };
+
+      await logAdminAction(stepPayload.action, `Report_#${reportIdentifier}`, stepPayload);
+    }
   };
 
   const handleProceedToTitle = (status, spatialData) => {
@@ -425,7 +433,7 @@ export default function Report_Management() {
     handleStepChange(3, 'forward');
   };
 
-  // 2️⃣ FINAL VERIFICATION SUBMIT (Trigger "Verified/Dispatched" banner/notification)
+  // 3️⃣ FINAL VERIFICATION SUBMIT (Step 3 - Dispatched)
   const handleFinalSubmit = async () => {
     const sourceDocumentId =
       selectedReport?.id ||
@@ -491,7 +499,7 @@ export default function Report_Management() {
           reportID: reportIdentifier,
           verifiedReportID: verifiedReportID,
           userId: targetUserId,
-          citizenId: targetUserId,
+          citizenID: selectedReport?.citizenID || selectedReport?.cid,
           title: reportTitle,
           severity: verifiedSeverity,
           agencies: selectedAgencies,
@@ -501,16 +509,10 @@ export default function Report_Management() {
         };
 
         await logAdminAction(
-          'VERIFIED_REPORT_DISPATCH',
+          'REPORT_VERIFIED',
           `Report_#${reportIdentifier}`,
           realtimeSocketPayload
         );
-
-        if (socketRef.current?.connected) {
-          socketRef.current.emit('ADMIN_ACTION_EVENT', realtimeSocketPayload);
-          socketRef.current.emit('DISPATCH_VERIFIED_INCIDENT', realtimeSocketPayload);
-          socketRef.current.emit('CITIZEN_REPORT_UPDATED', realtimeSocketPayload);
-        }
 
         reportCacheRef.current[activeTab] = null;
         resetModalState();
@@ -529,7 +531,7 @@ export default function Report_Management() {
     logAdminAction('OPEN_REJECT_DIALOG', `Report_#${reportId}`, { reportId });
   };
 
-  // 3️⃣ HANDLE REJECTION (Trigger "Rejected" banner/notification)
+  // 4️⃣ HANDLE REJECTION
   const handleReject = async () => {
     if (!reportToReject) return;
     
@@ -575,7 +577,7 @@ export default function Report_Management() {
           reportId: reportToReject,
           reportID: reportToReject,
           userId: targetUserId,
-          citizenId: targetUserId,
+          citizenID: rejectedReport?.citizenID || rejectedReport?.cid,
           rejectedAt: new Date().toISOString(),
           eventId: `rejected_${reportToReject}_${Date.now()}`,
         };
@@ -585,11 +587,6 @@ export default function Report_Management() {
           `Report_#${reportToReject}`,
           rejectionPayload,
         );
-
-        if (socketRef.current?.connected) {
-          socketRef.current.emit('ADMIN_ACTION_EVENT', rejectionPayload);
-          socketRef.current.emit('CITIZEN_REPORT_UPDATED', rejectionPayload);
-        }
 
         reportCacheRef.current[activeTab] = null;
         setIsRejectDialogOpen(false);
@@ -605,7 +602,6 @@ export default function Report_Management() {
     }
   };
 
-  // Filter & Pagination Logic (Active Tab)
   const filteredReports = useMemo(() => {
     const result = reports.filter((report) => {
       const title = (report.reportTitle || report.incidentType || report.hazard || '').toLowerCase();
@@ -649,7 +645,6 @@ export default function Report_Management() {
   return (
     <div className="w-full p-6 font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200">
       
-      {/* Header */}
       <header className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Report Management</h1>
@@ -669,10 +664,8 @@ export default function Report_Management() {
         </div>
       </header>
 
-      {/* Main Card Wrapper */}
       <div className="w-full rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
         
-        {/* Navigation Tabs */}
         <div className="flex border-b border-slate-200 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900/50 px-6">
           <button
             onClick={() => { setActiveTab('active'); setCurrentPage(1); }}
@@ -721,7 +714,6 @@ export default function Report_Management() {
           </button>
         </div>
 
-        {/* Toolbar Controls (Active Tab Only) */}
         {activeTab === 'active' && (
           <div className="flex flex-col gap-4 border-b border-slate-200 dark:border-slate-800 p-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative flex-1 max-w-lg">
@@ -765,7 +757,6 @@ export default function Report_Management() {
           </div>
         )}
 
-        {/* Table Content & Dynamic Transitions */}
         <AnimatePresence mode="wait">
           {activeTab === 'archived' ? (
             <Archived_Routes key="archived-tab" cachedData={reportCacheRef.current.archived} onDataFetched={(data) => { reportCacheRef.current.archived = data; }} />
@@ -878,7 +869,6 @@ export default function Report_Management() {
                                 </div>
                               </td>
 
-                              {/* Action Buttons */}
                               <td className="px-6 py-4 text-right">
                                 <div className="inline-flex items-center justify-end gap-2">
                                   <button
@@ -915,7 +905,6 @@ export default function Report_Management() {
           )}
         </AnimatePresence>
 
-        {/* Pagination Controls (Active Tab Only) */}
         {activeTab === 'active' && !loading && !isRefreshing && filteredReports.length > 0 && (
           <div className="flex flex-col sm:flex-row items-center justify-between border-t border-slate-200 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900/50 px-6 py-4 gap-3">
             <div className="text-xs text-slate-500 dark:text-slate-400">
@@ -949,7 +938,6 @@ export default function Report_Management() {
         )}
       </div>
 
-      {/* 1️⃣ VIEW REPORT MODAL */}
       {isViewModalOpen && selectedViewReport && (
         <View_Reports
           isOpen={isViewModalOpen}
@@ -958,7 +946,6 @@ export default function Report_Management() {
         />
       )}
 
-      {/* 2️⃣ VERIFICATION WORKFLOW MODALS */}
       {isVerifyModalOpen && (
         <>
           {currentStep === 1 && (
@@ -1025,7 +1012,6 @@ export default function Report_Management() {
         </>
       )}
 
-      {/* REJECT CONFIRMATION DIALOG */}
       <AlertDialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
