@@ -31,7 +31,13 @@ const extractErrorMessage = (data, fallback) => {
   const raw = data?.message ?? data?.error ?? fallback;
   if (typeof raw === 'string') return raw;
   if (raw && typeof raw === 'object') {
-    return raw.message || raw.error || JSON.stringify(raw);
+    const nested = raw.message || raw.error;
+    if (typeof nested === 'string') return nested;
+    try {
+      return JSON.stringify(raw);
+    } catch {
+      return fallback;
+    }
   }
   return fallback;
 };
