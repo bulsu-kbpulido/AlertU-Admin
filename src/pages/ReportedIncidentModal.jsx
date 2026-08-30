@@ -102,7 +102,8 @@ export default function ReportedIncidentModal({
 }) {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
-  
+  const reviewEventKeyRef = useRef(null);
+
   const [isMapChangerOpen, setIsMapChangerOpen] = useState(false);
   const [selectionMode, setSelectionMode] = useState('Fire'); 
   const [customName, setCustomName] = useState('');
@@ -117,11 +118,18 @@ export default function ReportedIncidentModal({
       try {
         const auth = getAuth();
         if (auth?.currentUser) {
-          token = await auth.currentUser.getIdToken();
+          token = await auth.currentUser.getIdToken(true);
         }
       } catch (e) {
-        // Fallback to local storage if custom auth is used
-        token = localStorage.getItem('authToken') || localStorage.getItem('token');
+        console.warn('⚠️ Firebase token lookup failed:', e.message);
+      }
+
+      // Fallback when Firebase Auth is not ready or a custom auth flow is used.
+      if (!token) {
+        token =
+          localStorage.getItem('authToken') ||
+          localStorage.getItem('token') ||
+          localStorage.getItem('adminToken');
       }
 
       const reportIdentifier = 
@@ -130,24 +138,31 @@ export default function ReportedIncidentModal({
         selectedReport?.id || 
         'Unknown_Report';
 
-      await axios.post(
+            const response = await axios.post(
         `${API_BASE_URL}/admin-actions/log`,
         {
           action,
           target: reportIdentifier,
           adminName: 'System Admin',
           adminId: 'admin_123',
-          metadata,
+          metadata: {
+            ...metadata,
+            reportId: metadata.reportId || reportIdentifier,
+            reportID: metadata.reportID || reportIdentifier,
+          },
           targetRoom: 'super_admins',
         },
-        { 
+        {
           headers: {
             'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {})
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
-          withCredentials: true 
-        }
+          withCredentials: true,
+        },
       );
+
+      console.log('[ReportedIncidentModal] Admin action relayed:', response.data);
+
     } catch (err) {
       console.warn(`⚠️ Action log warning (${action}):`, err.response?.data?.message || err.message);
     }
@@ -173,6 +188,56 @@ export default function ReportedIncidentModal({
       }
     }
   }, [isOpen, selectedReport, setVerifiedIncidentType]);
+
+  // Opening this modal is the start of the review workflow. Send exactly one
+  // targeted event for the currently opened report.
+  useEffect(() => {
+    if (!isOpen || !selectedReport) {
+      if (!isOpen) reviewEventKeyRef.current = null;
+      return;
+    }
+
+    const reportIdentifier =
+      selectedReport.reportId ||
+      selectedReport.reportID ||
+      selectedReport.id;
+
+    if (!reportIdentifier) {
+      console.warn('[ReportedIncidentModal] Cannot notify review: report ID is missing.');
+      return;
+    }
+
+    const authUid =
+      selectedReport.authUid ||
+      selectedReport.userId ||
+      selectedReport.uid ||
+      selectedReport.reportedBy ||
+      selectedReport.user?.uid ||
+      '';
+
+    const citizenID =
+      selectedReport.citizenID ||
+      selectedReport.citizenId ||
+      selectedReport.CID ||
+      selectedReport.cid ||
+      '';
+
+    const eventKey = `${reportIdentifier}|${authUid}|${citizenID}`;
+    if (reviewEventKeyRef.current === eventKey) return;
+    reviewEventKeyRef.current = eventKey;
+
+    void logAdminAction('OPEN_VERIFY_MODAL', {
+      reportId: reportIdentifier,
+      reportID: reportIdentifier,
+      authUid,
+      userId: authUid,
+      uid: authUid,
+      citizenID,
+      citizenId: citizenID,
+      CID: citizenID,
+      eventId: `review_${reportIdentifier}_${Date.now()}`,
+    });
+  }, [isOpen, selectedReport]);
 
   if (!isOpen || !selectedReport) return null;
 
