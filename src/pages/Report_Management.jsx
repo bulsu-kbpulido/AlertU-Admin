@@ -14,7 +14,6 @@ import VerifyIncidentModal from './VerifyIncidentModal';
 import ReportTitle from './ReportTitle'; 
 import Archived_Routes from '@/report_utilities/Archived_Routes';
 import DuplicateReports from '@/report_utilities/Duplicate_Reports';
-import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 // Shadcn UI Skeleton & Dialog Components
 import { Skeleton } from "@/components/ui/skeleton";
@@ -49,7 +48,7 @@ import {
 } from 'lucide-react';
 
 // 🌐 Dynamic Environment Configuration
-const RAW_SERVER_URL = import.meta.env.VITE_API_URL || 'https://alertu-server-production.up.railway.app';
+const RAW_SERVER_URL = import.meta.env.VITE_API_URL || 'https://alertu-server.onrender.com';
 const CLEAN_SERVER_URL = RAW_SERVER_URL.replace(/\/+$/, '');
 const API_BASE_URL = CLEAN_SERVER_URL.endsWith('/api')
   ? CLEAN_SERVER_URL
@@ -124,8 +123,6 @@ const TableSkeletonLoader = () => (
 );
 
 export default function Report_Management() {
-  useDocumentTitle('Manage Reports – AlertU');
-
   const socketRef = useRef(null);
   
   // Cache Ref for reports by tab type
@@ -366,67 +363,46 @@ export default function Report_Management() {
     
     setVerifyModalOpen(true);
 
-        // Route review notifications through the authenticated backend relay.
-    // The backend resolves the citizen's auth UID/CID and emits only to that citizen.
-    void logAdminAction(
-      'OPEN_VERIFY_MODAL',
-      `Report_#${reportIdentifier}`,
-      {
+    // ⚡ Notify Flutter citizen app that review has started
+    if (socketRef.current) {
+      socketRef.current.emit('ADMIN_ACTION_EVENT', {
+        action: 'OPEN_VERIFY_MODAL',
+        target: reportIdentifier,
         reportId: reportIdentifier,
-        reportID: reportIdentifier,
-        userId:
-          report.userId ||
-          report.authUid ||
-          report.uid ||
-          report.reportedBy ||
-          report.user?.uid ||
-          '',
-        authUid: report.authUid || report.userId || report.user?.uid || '',
-        citizenID: report.citizenID || report.citizenId || report.CID || '',
-        eventId: `review_${reportIdentifier}_${Date.now()}`,
-      },
-    );
+        timestamp: new Date().toISOString(),
+      });
+    }
 
+    logAdminAction('START_VERIFY_WORKFLOW', `Report_#${reportIdentifier}`, { reportId: reportIdentifier });
   };
 
   const closeVerifyModal = async () => {
     const reportIdentifier = selectedReport?.reportID || selectedReport?.id;
     
     if (reportIdentifier) {
-            // Route close/cancel notifications through the authenticated backend relay.
-      await logAdminAction(
-        'CLOSE_VERIFY_MODAL',
-        `Report_#${reportIdentifier}`,
-        {
+      // ⚡ Notify Flutter citizen app that review was closed/cancelled
+      if (socketRef.current) {
+        socketRef.current.emit('ADMIN_ACTION_EVENT', {
+          action: 'CLOSE_VERIFY_MODAL',
+          target: reportIdentifier,
           reportId: reportIdentifier,
-          reportID: reportIdentifier,
-          userId:
-            selectedReport?.userId ||
-            selectedReport?.authUid ||
-            selectedReport?.uid ||
-            selectedReport?.reportedBy ||
-            selectedReport?.user?.uid ||
-            '',
-          authUid:
-            selectedReport?.authUid ||
-            selectedReport?.userId ||
-            selectedReport?.user?.uid ||
-            '',
-          citizenID:
-            selectedReport?.citizenID ||
-            selectedReport?.citizenId ||
-            selectedReport?.CID ||
-            '',
-          eventId: `close_review_${reportIdentifier}_${Date.now()}`,
-        },
-      );
+          timestamp: new Date().toISOString(),
+        });
+      }
 
+      await logAdminAction('CLOSE_VERIFY_MODAL', `Report_#${reportIdentifier}`, { 
+        reportId: reportIdentifier,
+        abandonedAtStep: currentStep 
+      });
     }
     resetModalState();
   };
 
   const handleStepChange = (targetStep, direction = 'forward') => {
+    const reportIdentifier = selectedReport?.reportID || selectedReport?.id;
     setCurrentStep(targetStep);
+    let actionName = targetStep === 1 ? 'FIRST_STEPMODAL' : targetStep === 2 ? 'SECOND_STEPMODAL' : 'THIRD_STEPMODAL';
+    logAdminAction(actionName, `Report_#${reportIdentifier}`, { reportId: reportIdentifier, step: targetStep, navigation: direction });
   };
 
   const handleProceedToTitle = (status, spatialData) => {
@@ -449,20 +425,13 @@ export default function Report_Management() {
     const reportIdentifier = selectedReport?.reportID || sourceDocumentId;
     const verifiedReportID = generateVerifiedReportID(selectedReport);
 
-    // Extract both identifiers separately. A citizen ID is not necessarily
-    // the same value as the Firebase Auth UID used for socket rooms.
-    const targetAuthUid =
-      selectedReport?.authUid ||
+    // Extract target citizen user ID for room routing
+    const targetUserId =
       selectedReport?.userId ||
-      selectedReport?.uid ||
+      selectedReport?.citizenId ||
       selectedReport?.reportedBy ||
       selectedReport?.user?.uid ||
       selectedReport?.user?.id ||
-      '';
-    const targetCitizenId =
-      selectedReport?.citizenID ||
-      selectedReport?.citizenId ||
-      selectedReport?.CID ||
       '';
 
     try {
@@ -505,11 +474,8 @@ export default function Report_Management() {
           reportId: reportIdentifier,
           reportID: reportIdentifier,
           verifiedReportID: verifiedReportID,
-                    userId: targetAuthUid,
-          authUid: targetAuthUid,
-          citizenID: targetCitizenId,
-          citizenId: targetCitizenId,
-
+          userId: targetUserId,                  // Crucial for backend routing to citizen room
+          citizenId: targetUserId,
           title: reportTitle,
           severity: verifiedSeverity,
           agencies: selectedAgencies,
@@ -524,11 +490,12 @@ export default function Report_Management() {
           realtimeSocketPayload
         );
 
-                // The awaited logAdminAction() call above is the single authoritative
-        // notification relay. Do not emit the same approval event directly from
-        // the admin browser because that creates duplicates and bypasses routing.
-
-
+        // ⚡ Emit across all real-time channels Flutter listens to
+        if (socketRef.current) {
+          socketRef.current.emit('ADMIN_ACTION_EVENT', realtimeSocketPayload);
+          socketRef.current.emit('DISPATCH_VERIFIED_INCIDENT', realtimeSocketPayload);
+          socketRef.current.emit('CITIZEN_REPORT_UPDATED', realtimeSocketPayload);
+        }
 
         reportCacheRef.current[activeTab] = null;
 
@@ -589,21 +556,10 @@ export default function Report_Management() {
             rejectedReport?.reportedBy ||
             rejectedReport?.user?.uid ||
             '',
-                    authUid: rejectedReport?.authUid ||
-            rejectedReport?.userId ||
-            rejectedReport?.uid ||
-            rejectedReport?.reportedBy ||
-            rejectedReport?.user?.uid ||
-            '',
-          citizenID: rejectedReport?.citizenID ||
-            rejectedReport?.citizenId ||
-            rejectedReport?.CID ||
-            '',
           citizenId: rejectedReport?.citizenID ||
             rejectedReport?.citizenId ||
             rejectedReport?.CID ||
             '',
-
           rejectedAt: new Date().toISOString(),
           eventId: `rejected_${reportToReject}_${Date.now()}`,
         };
