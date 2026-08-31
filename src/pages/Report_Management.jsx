@@ -425,13 +425,21 @@ export default function Report_Management() {
     const reportIdentifier = selectedReport?.reportID || sourceDocumentId;
     const verifiedReportID = generateVerifiedReportID(selectedReport);
 
-    // Extract target citizen user ID for room routing
-    const targetUserId =
+    // Resolve the Firebase UID and citizen ID separately. The Flutter
+    // notification socket normally joins the Firebase UID room.
+    const targetAuthUid =
+      selectedReport?.authUid ||
+      selectedReport?.uid ||
       selectedReport?.userId ||
-      selectedReport?.citizenId ||
       selectedReport?.reportedBy ||
       selectedReport?.user?.uid ||
-      selectedReport?.user?.id ||
+      '';
+
+    const targetCitizenId =
+      selectedReport?.citizenID ||
+      selectedReport?.citizenId ||
+      selectedReport?.CID ||
+      selectedReport?.cid ||
       '';
 
     try {
@@ -474,8 +482,9 @@ export default function Report_Management() {
           reportId: reportIdentifier,
           reportID: reportIdentifier,
           verifiedReportID: verifiedReportID,
-          userId: targetUserId,                  // Crucial for backend routing to citizen room
-          citizenId: targetUserId,
+          userId: targetAuthUid,                  // Firebase UID room
+          authUid: targetAuthUid,
+          citizenID: targetCitizenId,              // Legacy citizenID room
           title: reportTitle,
           severity: verifiedSeverity,
           agencies: selectedAgencies,
@@ -550,15 +559,27 @@ export default function Report_Management() {
           status: 'REJECTED',
           reportId: reportToReject,
           reportID: reportToReject,
-          userId: rejectedReport?.userId ||
-            rejectedReport?.authUid ||
+          userId: rejectedReport?.authUid ||
             rejectedReport?.uid ||
+            rejectedReport?.userId ||
             rejectedReport?.reportedBy ||
             rejectedReport?.user?.uid ||
+            '',
+          authUid: rejectedReport?.authUid ||
+            rejectedReport?.uid ||
+            rejectedReport?.userId ||
+            rejectedReport?.reportedBy ||
+            rejectedReport?.user?.uid ||
+            '',
+          citizenID: rejectedReport?.citizenID ||
+            rejectedReport?.citizenId ||
+            rejectedReport?.CID ||
+            rejectedReport?.cid ||
             '',
           citizenId: rejectedReport?.citizenID ||
             rejectedReport?.citizenId ||
             rejectedReport?.CID ||
+            rejectedReport?.cid ||
             '',
           rejectedAt: new Date().toISOString(),
           eventId: `rejected_${reportToReject}_${Date.now()}`,
