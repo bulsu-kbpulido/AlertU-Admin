@@ -54,7 +54,7 @@ export default function GeneratedLink({
   const generateSecureLink = async () => {
     setIsLoading(true);
     try {
-      const incidentId = report.incidentId || report.id || report.reportID || report.reportId;
+      const incidentId = report.id || report.incidentId || report.reportID || report.reportId || report.verifiedReportId || report.verifiedreportID;
       
       const result = await fetchFromBackend('/links/generate', {
         method: 'POST',
@@ -105,7 +105,7 @@ export default function GeneratedLink({
     setIsCopied(true);
 
     // 🚨 Audit Log Movement: Record copying link to clipboard
-    const incidentId = report.incidentId || report.id || report.reportID || report.reportId;
+    const incidentId = report.id || report.incidentId || report.reportID || report.reportId || report.verifiedReportId || report.verifiedreportID;
     logCopySharedLink(shortLink, target, incidentId);
 
     setTimeout(() => setIsCopied(false), 2000);
