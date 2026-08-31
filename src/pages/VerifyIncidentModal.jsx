@@ -407,7 +407,7 @@ export default function VerifyIncidentModal({
           </div>
 
           <div className="flex items-center gap-4 justify-between sm:justify-end">
-            <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
               <FiClock className="text-slate-400 w-3.5 h-3.5" />
               <span>{reportTimestamp}</span>
             </div>
@@ -452,20 +452,20 @@ export default function VerifyIncidentModal({
           </div>
 
           {/* Right Control & Settings Panel */}
-          <aside className="w-full lg:w-[380px] shrink-0 bg-white dark:bg-slate-900 p-5 flex flex-col justify-between overflow-y-auto space-y-5 border-l border-slate-100 dark:border-slate-800">
+          <aside className="w-full lg:w-[380px] shrink-0 bg-white dark:bg-slate-900 p-5 flex flex-col justify-between overflow-y-auto scrollbar-thin scrollbar-thumb-slate-400 dark:scrollbar-thumb-slate-700 scrollbar-track-slate-100 dark:scrollbar-track-slate-950 space-y-5 border-l border-slate-100 dark:border-slate-800">
             
             <div className="space-y-5">
               
               {/* Incident Profile Info Header */}
-              <div className="space-y-3 pb-4 border-b border-slate-100">
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center justify-between">
+              <div className="space-y-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+                <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center justify-between">
                   <span>Incident Type</span>
-                  <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1.5">
+                  <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1.5">
                     <FiLock className="w-3 h-3 text-blue-500" />
                     {incidentType}
                   </span>
                 </h4>
-                <p className="text-xs text-slate-500 leading-relaxed">
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                   Mapping options are configured based on the verified incident type.
                 </p>
               </div>
@@ -480,12 +480,12 @@ export default function VerifyIncidentModal({
                       <span className="text-xs font-bold text-slate-800 dark:text-slate-100">
                         Route Line Points
                       </span>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-100 text-blue-700">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300">
                         {clickedPoints.length} / 2 Points Selected
                       </span>
                     </div>
 
-                    <p className="text-xs text-slate-600 leading-relaxed">
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                       {clickedPoints.length === 0 && 'Click start point on map.'}
                       {clickedPoints.length === 1 && 'Click end point on map.'}
                       {clickedPoints.length === 2 && '✓ Route created between points.'}
@@ -494,7 +494,7 @@ export default function VerifyIncidentModal({
                     {clickedPoints.length > 0 && (
                       <button
                         onClick={handleResetWorkspace}
-                        className="w-full py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95"
+                        className="w-full py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95"
                       >
                         <FiRefreshCw className="w-3.5 h-3.5 text-slate-500" />
                         <span>Clear Map Points</span>
@@ -510,7 +510,7 @@ export default function VerifyIncidentModal({
                       <label className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
                         <FiSliders className="w-3.5 h-3.5 text-blue-600" /> Containment Radius
                       </label>
-                      <span className="font-mono font-bold text-xs text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">
+                      <span className="font-mono font-bold text-xs text-rose-600 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 px-2.5 py-1 rounded-lg border border-rose-200 dark:border-rose-800">
                         {radius} m
                       </span>
                     </div>
@@ -524,9 +524,9 @@ export default function VerifyIncidentModal({
                         step="10"
                         value={radius}
                         onChange={(e) => setRadius(Number(e.target.value))}
-                        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none"
+                        className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none"
                       />
-                      <div className="flex justify-between text-[10px] text-slate-400 font-medium">
+                      <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 font-medium">
                         <span>10m</span>
                         <span>500m</span>
                         <span>1000m</span>
@@ -538,7 +538,7 @@ export default function VerifyIncidentModal({
                 {/* Others Drawing Mode Switcher */}
                 {isOthers && (
                   <div className="bg-slate-50 dark:bg-slate-800/70 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
-                    <label className="text-xs font-bold text-slate-700 block">
+                    <label className="text-xs font-bold text-slate-700 dark:text-slate-200 block">
                       Select Mapping Style
                     </label>
                     <div className="grid grid-cols-2 gap-2">
@@ -552,7 +552,7 @@ export default function VerifyIncidentModal({
                           className={`py-2 text-xs font-bold capitalize rounded-lg transition-all border ${
                             othersMode === m
                               ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                              : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
                           }`}
                         >
                           {m === 'radius' ? 'Area Radius' : 'Road Route'}
@@ -566,11 +566,11 @@ export default function VerifyIncidentModal({
 
             {/* Target Location Metadata Box */}
             <div className="p-3.5 bg-slate-50 dark:bg-slate-800/70 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
-              <span className="font-bold text-slate-800 flex items-center gap-1.5">
+              <span className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
                 <FiMapPin className="text-blue-600 w-3.5 h-3.5" /> Target Coordinates
               </span>
-              <p className="text-slate-600 font-medium truncate">{activeAddress}</p>
-              <p className="text-slate-400 font-mono text-[11px]">
+              <p className="text-slate-600 dark:text-slate-300 font-medium truncate">{activeAddress}</p>
+              <p className="text-slate-400 dark:text-slate-500 font-mono text-[11px]">
                 {activeLat.toFixed(5)}°, {activeLng.toFixed(5)}°
               </p>
             </div>
@@ -579,8 +579,8 @@ export default function VerifyIncidentModal({
         </div>
 
         {/* Modal Action Footer */}
-        <footer className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
-          <div className="hidden sm:flex items-center gap-2 text-xs text-slate-600 font-medium">
+        <footer className="px-6 py-4 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+          <div className="hidden sm:flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 font-medium">
             <FiCheckCircle className="text-emerald-600 w-4 h-4" />
             <span>Ready for final report dispatch verification</span>
           </div>
@@ -591,7 +591,7 @@ export default function VerifyIncidentModal({
                 setActiveStep(1);
                 setCurrentStep(1);
               }}
-              className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl transition-all shadow-sm active:scale-95 flex items-center gap-1.5"
+              className="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 rounded-xl transition-all shadow-sm active:scale-95 flex items-center gap-1.5"
             >
               <FiArrowLeft className="w-3.5 h-3.5" />
               <span>Back</span>
@@ -602,7 +602,7 @@ export default function VerifyIncidentModal({
               onClick={handleConfirm}
               className={`px-5 py-2 text-xs font-bold uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center gap-2 active:scale-95 ${
                 loadingRoute || clickedPoints.length === 1
-                  ? 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed'
+                  ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-300 dark:border-slate-700 cursor-not-allowed'
                   : 'bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-600'
               }`}
             >
