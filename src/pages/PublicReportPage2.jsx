@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import 'ol/ol.css';
 import { Map, View } from 'ol';
@@ -57,8 +57,6 @@ const getIncidentBadgeStyle = (incidentType) => {
 
 export default function PublicReportPage() {
   const { id } = useParams();
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get('auth_token') || searchParams.get('token');
 
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -71,32 +69,40 @@ export default function PublicReportPage() {
 
   useEffect(() => {
     const fetchSharedTelemetry = async () => {
+      if (!id) {
+        setError('Missing link validation key.');
+        setLoading(false);
+        return;
+      }
+
       try {
-        const response = await fetch(`http://localhost:3000/api/links/verify/${id}/?auth_token=${encodeURIComponent(token || '')}`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        });
-        
+        // Use the same-origin API path. Vercel rewrites /api/* to Railway
+        // in production, and Vite proxies /api/* during development.
+        const response = await fetch(
+          `/api/links/verify/${encodeURIComponent(id)}`,
+          {
+            method: 'GET',
+            headers: { Accept: 'application/json' },
+          }
+        );
+
         const result = await response.json();
         if (!response.ok || !result.success) {
-          throw new Error(result.message || 'Access authorization has expired or is invalid.');
+          throw new Error(
+            result.message || 'Access authorization has expired or is invalid.'
+          );
         }
-        
+
         setReport(result.report);
       } catch (err) {
-        setError(err.message);
+        setError(err.message || 'Unable to load the shared report.');
       } finally {
         setLoading(false);
       }
     };
 
-    if (id && token) {
-      fetchSharedTelemetry();
-    } else {
-      setError("Missing link validation parameters.");
-      setLoading(false);
-    }
-  }, [id, token]);
+    fetchSharedTelemetry();
+  }, [id]);
 
   useEffect(() => {
     if (loading || error || !report || !mapRef.current) return;
