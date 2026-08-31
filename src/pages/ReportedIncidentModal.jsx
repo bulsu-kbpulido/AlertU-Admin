@@ -344,7 +344,7 @@ export default function ReportedIncidentModal({
         </header>
 
         {/* Modal Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/30 dark:bg-slate-950/20">
+        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-400 dark:scrollbar-thumb-slate-700 scrollbar-track-slate-100 dark:scrollbar-track-slate-950 p-6 space-y-6 bg-slate-50/30 dark:bg-slate-950/20">
           
           {/* Main Grid: Evidence & Location */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -396,7 +396,7 @@ export default function ReportedIncidentModal({
                     )}
                   </div>
                 ) : (
-                  <div className="p-6 border border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center text-center text-xs text-slate-400 dark:text-slate-500 font-medium h-56 bg-slate-50">
+                  <div className="p-6 border border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center text-center text-xs text-slate-400 dark:text-slate-500 font-medium h-56 bg-slate-50 dark:bg-slate-800/70">
                     <FiFileText className="w-8 h-8 text-slate-300 mb-2" />
                     <span>No image or video submitted</span>
                   </div>
@@ -429,7 +429,7 @@ export default function ReportedIncidentModal({
               {/* Audio Stream Player */}
               {hasValidAudio && (
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl space-y-2 shadow-sm">
-                  <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-100">
                     <FiVolume2 className="text-blue-600 w-4 h-4" />
                     <span>Voice Note Attachment</span>
                   </div>
@@ -446,7 +446,7 @@ export default function ReportedIncidentModal({
                 </h4>
                 <button 
                   onClick={() => setIsMapChangerOpen(true)}
-                  className="px-3 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white hover:bg-slate-50 border border-slate-300 transition-all shadow-sm active:scale-95 flex items-center gap-1.5"
+                  className="px-3 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 transition-all shadow-sm active:scale-95 flex items-center gap-1.5"
                 >
                   <FiCompass className="text-blue-600 w-3.5 h-3.5" />
                   <span>Change Location</span>
@@ -459,7 +459,7 @@ export default function ReportedIncidentModal({
                   <span className="font-medium text-slate-800 dark:text-slate-200 break-words">{currentAddress}</span>
                 </div>
 
-                <div className="relative rounded-xl overflow-hidden border border-slate-200 h-56">
+                <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 h-56">
                   <div ref={mapRef} className="w-full h-full bg-slate-100" />
                   <a 
                     href={liveGoogleMapsLink} 
@@ -484,8 +484,8 @@ export default function ReportedIncidentModal({
               </h4>
 
               <div className="space-y-1.5">
-                <span className="text-xs font-semibold text-slate-500 block">Reported Hazard Category:</span>
-                <div className="text-xs font-bold text-slate-900 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 px-3 py-2 rounded-xl inline-flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block">Reported Hazard Category:</span>
+                <div className="text-xs font-bold text-slate-900 dark:text-slate-100 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 px-3 py-2 rounded-xl inline-flex items-center gap-2">
                   <FiAlertTriangle className="w-4 h-4 text-amber-600" />
                   <span>{originalHazard}</span>
                 </div>
@@ -529,7 +529,7 @@ export default function ReportedIncidentModal({
                     <select 
                       value={selectionMode} 
                       onChange={(e) => handleSelectionChange(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 appearance-none font-semibold text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 appearance-none font-semibold text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
                     >
                       <option value="Fire">Fire</option>
                       <option value="Flood">Flood</option>
@@ -554,7 +554,7 @@ export default function ReportedIncidentModal({
                         className={`py-2 rounded-xl text-xs font-bold transition-all border ${
                           verifiedSeverity === sev 
                             ? 'bg-blue-600 border-blue-600 text-white shadow-sm' 
-                            : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                            : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'
                         }`}
                       >
                         {sev}
@@ -586,7 +586,7 @@ export default function ReportedIncidentModal({
                   placeholder="Enter notes or instructions for response teams..." 
                   value={adminNotes}
                   onChange={(e) => setAdminNotes(e.target.value)}
-                  className="w-full h-20 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-xs font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-none"
+                  className="w-full h-20 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-xs font-medium text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-none"
                 />
               </div>
             </div>
@@ -594,7 +594,7 @@ export default function ReportedIncidentModal({
         </div>
 
         {/* Modal Action Footer */}
-        <footer className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
+        <footer className="px-6 py-4 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
           <div className="hidden sm:flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 font-medium">
             <FiCheckCircle className="text-emerald-600 w-4 h-4" />
             <span>Ready for step 2 spatial mapping</span>
@@ -603,7 +603,7 @@ export default function ReportedIncidentModal({
           <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
             <button 
               onClick={handleClose} 
-              className="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl transition-all shadow-sm active:scale-95"
+              className="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 rounded-xl transition-all shadow-sm active:scale-95"
             >
               Cancel
             </button>
