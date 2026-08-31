@@ -268,51 +268,51 @@ export default function View_Reports({
   }, [isOpen, currentReportLat, currentReportLng]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/70 backdrop-blur-sm text-slate-800 font-sans antialiased overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/70 backdrop-blur-sm text-slate-800 dark:text-slate-100 font-sans antialiased overflow-y-auto scrollbar-thin scrollbar-thumb-slate-400 dark:scrollbar-thumb-slate-700 scrollbar-track-slate-100 dark:scrollbar-track-slate-950">
       
       {/* Outer Modal Container */}
-      <div className="relative w-full max-w-6xl max-h-[90vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200">
+      <div className="relative w-full max-w-6xl max-h-[90vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
         
         {/* MagicUI BorderBeam Integration */}
         <BorderBeam size={250} duration={12} delay={9} colorFrom="#3b82f6" colorTo="#6366f1" />
 
         {/* Modal Header */}
-        <header className="px-6 py-4 border-b border-slate-200 bg-slate-50/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+        <header className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 shrink-0">
+            <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 shrink-0">
               <FiShield className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
                   Incident Record Overview
                 </span>
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border capitalize ${
                   rawStatus === 'verified' || rawStatus === 'dispatched'
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
                     : rawStatus === 'rejected'
-                    ? 'bg-rose-50 text-rose-700 border-rose-200'
-                    : 'bg-amber-50 text-amber-700 border-amber-200'
+                    ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800'
+                    : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
                 }`}>
                   <FiTag className="w-3 h-3 mr-1" />
                   {rawStatus}
                 </span>
               </div>
-              <h3 className="text-base font-bold text-slate-900 tracking-tight mt-0.5 flex items-center gap-2">
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight mt-0.5 flex items-center gap-2">
                 Report #{formattedReportId}
               </h3>
             </div>
           </div>
 
           <div className="flex items-center gap-4 justify-between sm:justify-end">
-            <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium bg-white px-3 py-1.5 rounded-lg border border-slate-200">
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
               <FiClock className="text-slate-400 w-3.5 h-3.5" />
               <span>{reportTimestamp}</span>
             </div>
             
             <button 
               onClick={handleClose} 
-              className="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-all shadow-sm active:scale-95 z-10"
+              className="w-8 h-8 flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-all shadow-sm active:scale-95 z-10"
               aria-label="Close dialog"
             >
               <FiX className="w-4 h-4" />
@@ -321,7 +321,7 @@ export default function View_Reports({
         </header>
 
         {/* Modal Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/30">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/30 dark:bg-slate-950/20">
           
           {/* Main Grid: Evidence & Location */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -329,13 +329,13 @@ export default function View_Reports({
             {/* Media Evidence Column */}
             <div className="space-y-3 flex flex-col">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-2">
                   <FiFileText className="text-blue-600 w-4 h-4" /> Media Attachments
                 </h4>
               </div>
 
               {/* Visual Media Showcase */}
-              <div className="flex-1 bg-white border border-slate-200 rounded-2xl p-3 shadow-sm flex flex-col justify-between">
+              <div className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 shadow-sm flex flex-col justify-between">
                 {mediaUrl ? (
                   <div className="relative rounded-xl overflow-hidden bg-slate-950 flex flex-col justify-between h-56 group">
                     {mediaUrl.toLowerCase().includes('.mp4') ? (
@@ -373,17 +373,17 @@ export default function View_Reports({
                     )}
                   </div>
                 ) : (
-                  <div className="p-6 border border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center text-center text-xs text-slate-400 font-medium h-56 bg-slate-50">
+                  <div className="p-6 border border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex flex-col items-center justify-center text-center text-xs text-slate-400 dark:text-slate-500 font-medium h-56 bg-slate-50 dark:bg-slate-800/70">
                     <FiFileText className="w-8 h-8 text-slate-300 mb-2" />
                     <span>No image or video submitted</span>
                   </div>
                 )}
 
                 {/* Sensitive Media Toggle Control */}
-                <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between bg-slate-50 px-3 py-2 rounded-xl">
+                <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/70 px-3 py-2 rounded-xl">
                   <div className="flex items-center gap-2">
                     {isSensitive ? <FiEyeOff className="text-rose-500 w-4 h-4" /> : <FiEye className="text-slate-500 w-4 h-4" />}
-                    <span className="text-xs font-semibold text-slate-700">Sensitive Content Blur</span>
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">Sensitive Content Blur</span>
                   </div>
                   <button
                     type="button"
@@ -405,8 +405,8 @@ export default function View_Reports({
 
               {/* Audio Stream Player */}
               {hasValidAudio && (
-                <div className="bg-white border border-slate-200 p-4 rounded-2xl space-y-2 shadow-sm">
-                  <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl space-y-2 shadow-sm">
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-100">
                     <FiVolume2 className="text-blue-600 w-4 h-4" />
                     <span>Voice Note Attachment</span>
                   </div>
@@ -418,19 +418,19 @@ export default function View_Reports({
             {/* Geographical Location Column */}
             <div className="space-y-3 flex flex-col">
               <div className="flex justify-between items-center">
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-2">
                   <FiMapPin className="text-blue-600 w-4 h-4" /> Incident Location
                 </h4>
-                <div className="px-3 py-1 rounded-lg text-xs font-semibold text-slate-500 bg-slate-100 border border-slate-200 flex items-center gap-1.5">
+                <div className="px-3 py-1 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center gap-1.5">
                   <FiCompass className="text-slate-400 w-3.5 h-3.5" />
                   <span>Read-Only View</span>
                 </div>
               </div>
 
-              <div className="flex-1 bg-white border border-slate-200 rounded-2xl p-3 shadow-sm flex flex-col justify-between space-y-3">
-                <div className="text-xs bg-slate-50 p-3 rounded-xl border border-slate-100 text-slate-700 flex items-start gap-2">
+              <div className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 shadow-sm flex flex-col justify-between space-y-3">
+                <div className="text-xs bg-slate-50 dark:bg-slate-800/70 p-3 rounded-xl border border-slate-100 dark:border-slate-700 text-slate-700 dark:text-slate-200 flex items-start gap-2">
                   <FiMapPin className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
-                  <span className="font-medium text-slate-800 break-words">{currentAddress}</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200 break-words">{currentAddress}</span>
                 </div>
 
                 <div className="relative rounded-xl overflow-hidden border border-slate-200 h-56">
@@ -439,7 +439,7 @@ export default function View_Reports({
                     href={liveGoogleMapsLink} 
                     target="_blank" 
                     rel="noopener noreferrer" 
-                    className="absolute bottom-3 right-3 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-md backdrop-blur-md transition-all active:scale-95"
+                    className="absolute bottom-3 right-3 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-md backdrop-blur-md transition-all active:scale-95"
                   >
                     <FcGoogle className="text-base" /> <span>Open in Google Maps</span>
                   </a>
@@ -452,41 +452,41 @@ export default function View_Reports({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
             {/* Left: Reported Information & Submitter Profile */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-              <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+              <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2">
                 Reported Details & Description
               </h4>
 
               <div className="space-y-1.5">
-                <span className="text-xs font-semibold text-slate-500 block">Incident Category / Title:</span>
-                <div className="text-xs font-bold text-slate-900 bg-amber-50 text-amber-800 border border-amber-200 px-3 py-2 rounded-xl inline-flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block">Incident Category / Title:</span>
+                <div className="text-xs font-bold text-slate-900 dark:text-slate-100 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 px-3 py-2 rounded-xl inline-flex items-center gap-2">
                   <FiAlertTriangle className="w-4 h-4 text-amber-600" />
                   <span>{displayTitle}</span>
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <span className="text-xs font-semibold text-slate-500 block">Incident Overview:</span>
-                <div className="text-xs text-slate-700 bg-slate-50 border border-slate-200 p-3 rounded-xl leading-relaxed whitespace-pre-line">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block">Incident Overview:</span>
+                <div className="text-xs text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 p-3 rounded-xl leading-relaxed whitespace-pre-line">
                   {description}
                 </div>
               </div>
 
               {/* Submitter / Citizen Details Card */}
               <div className="space-y-2 pt-1 border-t border-slate-100">
-                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider block">
                   Reporter Information
                 </span>
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">
-                  <div className="flex items-center gap-2.5 text-xs text-slate-800 font-semibold">
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 rounded-xl space-y-2.5">
+                  <div className="flex items-center gap-2.5 text-xs text-slate-800 dark:text-slate-100 font-semibold">
                     <FiUser className="w-4 h-4 text-blue-600 shrink-0" />
                     <span className="truncate">{reporterName}</span>
                   </div>
-                  <div className="flex items-center gap-2.5 text-xs text-slate-600 font-medium">
+                  <div className="flex items-center gap-2.5 text-xs text-slate-600 dark:text-slate-300 font-medium">
                     <FiMail className="w-4 h-4 text-slate-400 shrink-0" />
                     <span className="truncate">{reporterEmail}</span>
                   </div>
-                  <div className="flex items-center gap-2.5 text-xs text-slate-600 font-medium">
+                  <div className="flex items-center gap-2.5 text-xs text-slate-600 dark:text-slate-300 font-medium">
                     <FiPhone className="w-4 h-4 text-slate-400 shrink-0" />
                     <span className="truncate">{reporterPhone}</span>
                   </div>
@@ -495,23 +495,23 @@ export default function View_Reports({
             </div>
 
             {/* Right: Read-Only Verification Summary & Admin Remarks */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-              <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+              <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2">
                 Assessment Summary
               </h4>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Verified Severity Display */}
                 <div className="space-y-1.5">
-                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider block">
                     Severity Priority
                   </span>
                   <div className={`px-3 py-2 rounded-xl text-xs font-bold capitalize border inline-flex items-center gap-1.5 w-full ${
                     rawSeverity === 'high' || rawSeverity === 'critical'
-                      ? 'bg-rose-50 border-rose-200 text-rose-700'
+                      ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300'
                       : rawSeverity === 'medium'
-                      ? 'bg-amber-50 border-amber-200 text-amber-700'
-                      : 'bg-blue-50 border-blue-200 text-blue-700'
+                      ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300'
+                      : 'bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
                   }`}>
                     <FiAlertTriangle className="w-3.5 h-3.5" />
                     <span>{rawSeverity} Priority</span>
@@ -520,15 +520,15 @@ export default function View_Reports({
 
                 {/* Status Display */}
                 <div className="space-y-1.5">
-                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider block">
                     Incident Status
                   </span>
                   <div className={`px-3 py-2 rounded-xl text-xs font-bold capitalize border inline-flex items-center gap-1.5 w-full ${
                     rawStatus === 'verified' || rawStatus === 'dispatched'
-                      ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                      ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'
                       : rawStatus === 'rejected'
-                      ? 'bg-rose-50 border-rose-200 text-rose-700'
-                      : 'bg-slate-100 border-slate-200 text-slate-700'
+                      ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300'
+                      : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200'
                   }`}>
                     <FiTag className="w-3.5 h-3.5" />
                     <span>{rawStatus}</span>
@@ -538,10 +538,10 @@ export default function View_Reports({
 
               {/* Admin Remarks Read-Only Box */}
               <div className="space-y-1.5 pt-2">
-                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider block">
                   Verification Remarks / Dispatch Notes
                 </span>
-                <div className="w-full h-28 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-medium text-slate-800 leading-relaxed overflow-y-auto">
+                <div className="w-full h-28 bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-xs font-medium text-slate-800 dark:text-slate-200 leading-relaxed overflow-y-auto scrollbar-thin scrollbar-thumb-slate-400 dark:scrollbar-thumb-slate-700 scrollbar-track-slate-100 dark:scrollbar-track-slate-950">
                   {adminNotes ? adminNotes : <span className="text-slate-400 italic">No admin notes recorded for this report.</span>}
                 </div>
               </div>
@@ -550,8 +550,8 @@ export default function View_Reports({
         </div>
 
         {/* Modal Action Footer */}
-        <footer className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
-          <div className="hidden sm:flex items-center gap-2 text-xs text-slate-600 font-medium">
+        <footer className="px-6 py-4 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+          <div className="hidden sm:flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 font-medium">
             <FiShield className="text-blue-600 w-4 h-4" />
             <span>Viewing Record Mode</span>
           </div>
@@ -559,7 +559,7 @@ export default function View_Reports({
           <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
             <button 
               onClick={handleClose} 
-              className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl transition-all shadow-sm active:scale-95"
+              className="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 rounded-xl transition-all shadow-sm active:scale-95"
             >
               Close Details
             </button>
