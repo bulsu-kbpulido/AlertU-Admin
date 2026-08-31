@@ -124,6 +124,7 @@ const TableSkeletonLoader = () => (
 
 export default function Report_Management() {
   const socketRef = useRef(null);
+  const auditDebounceTimersRef = useRef(new Map());
   
   // Cache Ref for reports by tab type
   const reportCacheRef = useRef({
@@ -298,6 +299,19 @@ export default function Report_Management() {
     return `VRID-${Date.now().toString().slice(-8)}`;
   };
 
+  const scheduleAdminActionLog = (action, target, metadata = {}, delay = 250) => {
+    const key = `${action}:${target}`;
+    const existingTimer = auditDebounceTimersRef.current.get(key);
+    if (existingTimer) clearTimeout(existingTimer);
+
+    const timer = setTimeout(() => {
+      auditDebounceTimersRef.current.delete(key);
+      void logAdminAction(action, target, metadata);
+    }, delay);
+
+    auditDebounceTimersRef.current.set(key, timer);
+  };
+
   const handleOpenViewModal = (report) => {
     const reportIdentifier = report.reportID || report.id;
     setSelectedViewReport(report);
@@ -373,29 +387,23 @@ export default function Report_Management() {
       });
     }
 
-    logAdminAction('START_VERIFY_WORKFLOW', `Report_#${reportIdentifier}`, { reportId: reportIdentifier });
+    scheduleAdminActionLog('START_VERIFY_WORKFLOW', `Report_#${reportIdentifier}`, { reportId: reportIdentifier });
   };
 
-  const closeVerifyModal = async () => {
+  const closeVerifyModal = () => {
     const reportIdentifier = selectedReport?.reportID || selectedReport?.id;
-    
-    if (reportIdentifier) {
-      // ⚡ Notify Flutter citizen app that review was closed/cancelled
-      if (socketRef.current) {
-        socketRef.current.emit('ADMIN_ACTION_EVENT', {
-          action: 'CLOSE_VERIFY_MODAL',
-          target: reportIdentifier,
-          reportId: reportIdentifier,
-          timestamp: new Date().toISOString(),
-        });
-      }
+    const abandonedAtStep = currentStep;
 
-      await logAdminAction('CLOSE_VERIFY_MODAL', `Report_#${reportIdentifier}`, { 
-        reportId: reportIdentifier,
-        abandonedAtStep: currentStep 
-      });
-    }
+    // Reset immediately. The audit request must never block the modal UI.
     resetModalState();
+
+    if (reportIdentifier) {
+      scheduleAdminActionLog(
+        'CLOSE_VERIFY_MODAL',
+        `Report_#${reportIdentifier}`,
+        { reportId: reportIdentifier, abandonedAtStep },
+      );
+    }
   };
 
   const handleStepChange = (targetStep, direction = 'forward') => {
