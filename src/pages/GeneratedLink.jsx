@@ -54,7 +54,7 @@ export default function GeneratedLink({
   const generateSecureLink = async () => {
     setIsLoading(true);
     try {
-      const incidentId = report.incidentId || report.id || report.reportID || report.reportId;
+      const incidentId = report.id || report.incidentId || report.reportID || report.reportId || report.verifiedReportId || report.verifiedreportID;
       const auth = getAuth();
       const user = auth.currentUser;
       
@@ -64,29 +64,40 @@ export default function GeneratedLink({
       
       const token = await user.getIdToken(true); 
   
-      const response = await fetch(`http://localhost:3000/api/links/generate`, {
+      // Use the same-origin Vercel path in production. Vercel rewrites
+      // /api/* to Railway, while Vite proxies /api/* during local development.
+      const response = await fetch('/api/links/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          incidentId: incidentId,
-          target: target,
+          incidentId,
+          target,
           incidentType: report.incidentType || report.type
         })
       });
-  
+
       const result = await response.json();
-  
+
       if (!response.ok || !result.success) {
-        throw new Error(result.message || "Could not create the link.");
+        throw new Error(result.message || 'Could not create the link.');
       }
-  
-      const FRONTEND_URL = window.location.origin;
+
+      if (!result.linkKey) {
+        throw new Error('The server did not return a link key.');
+      }
+
+      // Vite config controls development proxying; it does not provide the
+      // public production URL. Keep the deployed Vercel origin explicit.
+      const frontendOrigin = (
+        import.meta.env.VITE_PUBLIC_APP_URL ||
+        'https://alert-u-admin.vercel.app'
+      ).replace(/\/+$/, '');
       const pathSegment = target === 'citizen' ? 'report/public' : 'report';
-      const customizedSecureLink = `${FRONTEND_URL}/${pathSegment}/${incidentId}?auth_token=${result.secureLink.split('auth_token=')[1]}`;
-  
+      const customizedSecureLink = `${frontendOrigin}/${pathSegment}/${encodeURIComponent(result.linkKey)}`;
+
       setShortLink(customizedSecureLink);
 
       // 🚨 Audit Log Movement: Record link generation
@@ -112,7 +123,7 @@ export default function GeneratedLink({
     setIsCopied(true);
 
     // 🚨 Audit Log Movement: Record copying link to clipboard
-    const incidentId = report.incidentId || report.id || report.reportID || report.reportId;
+    const incidentId = report.id || report.incidentId || report.reportID || report.reportId || report.verifiedReportId || report.verifiedreportID;
     logCopySharedLink(shortLink, target, incidentId);
 
     setTimeout(() => setIsCopied(false), 2000);
