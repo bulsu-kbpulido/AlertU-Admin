@@ -19,18 +19,11 @@ import {
   AlertTriangle, 
   ExternalLink, 
   Play, 
-  Volume2, 
   Calendar, 
   Tag,
   Shield,
   CornerDownRight,
-  PhoneCall,
-  MessageSquare,
-  User,
-  Mail,
-  Phone,
-  Building2,
-  FileText
+  PhoneCall
 } from 'lucide-react';
 
 import { DashRing } from "@/components/dash-ring";
@@ -291,30 +284,12 @@ export default function PublicReportPage() {
 
   const resolvedMediaUrl = report.mediaUrl || report.media?.url || null;
   const resolvedMediaType = report.mediaType || report.media?.type || '';
-  const resolvedAudioUrl = report.audioUrl || report.voicenoteUrl || report.voiceNoteUrl || report.audio?.url || null;
   
   const finalLat = Number(report.location?.latitude || report.latitude || 0);
   const finalLng = Number(report.location?.longitude || report.longitude || 0);
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${finalLat},${finalLng}`;
   const displayId = report.verifiedReportId || report.verifiedreportID || report.id || '';
 
-  // Submitter information resolution
-  const submitterName = report.submitterName || report.userName || report.reporterName || report.user?.name || null;
-  const submitterEmail = report.submitterEmail || report.userEmail || report.reporterEmail || report.user?.email || null;
-  const submitterPhone = report.submitterPhone || report.userPhone || report.phoneNumber || report.contactNumber || report.user?.phone || null;
-
-  // Agencies list resolution
-  const agenciesList = Array.isArray(report.selectedAgencies) 
-    ? report.selectedAgencies 
-    : Array.isArray(report.agencies) 
-    ? report.agencies 
-    : typeof report.agencies === 'string' 
-    ? [report.agencies] 
-    : [];
-
-  // Notes resolution (checks Firestore 'notes' field and fallback aliases)
-  const citizenNotesText = report.notes || report.citizenNotes || report.citizenComment || report.citizenRemarks || null;
-  const adminNotesText = report.adminNotes || report.officialAdvisory || report.remarks || null;
 
   return (
     <motion.div 
@@ -445,101 +420,6 @@ export default function PublicReportPage() {
               </div>
             )}
 
-            {/* SUBMITTER INFORMATION CARD */}
-            {(submitterName || submitterEmail || submitterPhone) && (
-              <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-3">
-                <h3 className="text-xs font-bold tracking-wider text-slate-400 uppercase flex items-center gap-2">
-                  <User className="h-4 w-4 text-slate-500" />
-                  <span>Reported By</span>
-                </h3>
-                <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 space-y-2.5">
-                  {submitterName && (
-                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                      <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                      <span>{submitterName}</span>
-                    </div>
-                  )}
-                  {submitterEmail && (
-                    <div className="flex items-center gap-2 text-xs font-medium text-slate-600">
-                      <Mail className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                      <span>{submitterEmail}</span>
-                    </div>
-                  )}
-                  {submitterPhone && (
-                    <div className="flex items-center gap-2 text-xs font-medium text-slate-600">
-                      <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                      <span>{submitterPhone}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* AGENCIES INVOLVED */}
-            {agenciesList.length > 0 && (
-              <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-3">
-                <h3 className="text-xs font-bold tracking-wider text-slate-400 uppercase flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-blue-500" />
-                  <span>Responding Agencies</span>
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {agenciesList.map((agency, index) => {
-                    const agencyName = typeof agency === 'object' && agency !== null
-                      ? (agency.name || agency.label || agency.title || agency.id || JSON.stringify(agency))
-                      : String(agency);
-
-                    const agencyKey = typeof agency === 'object' && agency !== null && agency.id 
-                      ? agency.id 
-                      : index;
-
-                    return (
-                      <span 
-                        key={agencyKey}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200"
-                      >
-                        <Building2 className="h-3 w-3 text-slate-400" />
-                        {agencyName}
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* OFFICIAL ADVISORY (ADMIN NOTES) */}
-            {adminNotesText && (
-              <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-3">
-                <h3 className="text-xs font-bold tracking-wider text-slate-400 uppercase flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-blue-500" />
-                  <span>Official Advisory</span>
-                </h3>
-                <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
-                  <p className="text-sm text-slate-700 leading-relaxed font-medium whitespace-pre-line">
-                    {adminNotesText}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* CITIZEN NOTES (ALWAYS VISIBLE) */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-3">
-              <h3 className="text-xs font-bold tracking-wider text-slate-400 uppercase flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-slate-500" />
-                <span>Citizen Notes</span>
-              </h3>
-              <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
-                {citizenNotesText ? (
-                  <p className="text-sm text-slate-700 leading-relaxed font-medium whitespace-pre-line">
-                    {citizenNotesText}
-                  </p>
-                ) : (
-                  <p className="text-xs font-medium text-slate-400 italic">
-                    No citizen notes provided for this report.
-                  </p>
-                )}
-              </div>
-            </div>
-
           </div>
 
           {/* COLUMN RIGHT (7 Cols on Desktop) - Map Canvas & Media Assets */}
@@ -576,29 +456,7 @@ export default function PublicReportPage() {
               </div>
             </div>
 
-            {/* AUDIO DISPATCH LOGS */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-3">
-              <h3 className="text-xs font-bold tracking-wider text-slate-400 uppercase flex items-center gap-2">
-                <Volume2 className="h-4 w-4 text-purple-500" /> 
-                <span>Incident Audio Dispatch Logs</span>
-              </h3>
-              
-              {resolvedAudioUrl ? (
-                <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 flex items-center justify-between gap-4">
-                  <audio 
-                    src={resolvedAudioUrl} 
-                    controls 
-                    className="w-full h-8 accent-blue-600" 
-                  />
-                </div>
-              ) : (
-                <div className="bg-slate-50 py-4 px-4 text-center rounded-lg border border-dashed border-slate-200">
-                  <p className="text-xs font-medium text-slate-400 italic">
-                    Audio recording track is not available for this incident log.
-                  </p>
-                </div>
-              )}
-            </div>
+
 
           </div>
         </div>
