@@ -38,16 +38,19 @@ export default function CitizenOrDepartments({
   /**
    * Handles selection, dispatches audit movement log, and notifies parent callback
    */
-  const handleSelection = (targetDepartment) => {
-    // Open link generation immediately; audit logging runs in the background.
+  const handleSelection = async (targetDepartment) => {
+    // 🚨 Log movement: ADMIN-004 generated link for CITIZEN / DEPARTMENT
+    try {
+      await logGenerateSharedLink(report, {
+        target: targetDepartment,
+      });
+    } catch (err) {
+      console.error('Failed to log link generation audit movement:', err);
+    }
+
+    // Call parent handler & close modal
     onSelect(targetDepartment);
     onClose();
-
-    void logGenerateSharedLink(report, {
-      target: targetDepartment,
-    }).catch((err) => {
-      console.error('Failed to log link generation audit movement:', err);
-    });
   };
 
   return (
@@ -117,7 +120,7 @@ export default function CitizenOrDepartments({
 
             {/* DEPARTMENTS OPTION */}
             <button
-              onClick={() => handleSelection('department')}
+              onClick={() => handleSelection('departments')}
               className="flex items-center justify-between p-4 bg-slate-50 hover:bg-emerald-50/40 rounded-xl border border-slate-200 hover:border-emerald-400 group transition-all duration-200 active:scale-[0.99]"
             >
               <div className="flex items-center gap-3.5">
