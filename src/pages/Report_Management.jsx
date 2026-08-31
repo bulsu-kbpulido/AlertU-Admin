@@ -124,7 +124,6 @@ const TableSkeletonLoader = () => (
 
 export default function Report_Management() {
   const socketRef = useRef(null);
-  const auditDebounceTimersRef = useRef(new Map());
   
   // Cache Ref for reports by tab type
   const reportCacheRef = useRef({
@@ -299,19 +298,6 @@ export default function Report_Management() {
     return `VRID-${Date.now().toString().slice(-8)}`;
   };
 
-  const scheduleAdminActionLog = (action, target, metadata = {}, delay = 250) => {
-    const key = `${action}:${target}`;
-    const existingTimer = auditDebounceTimersRef.current.get(key);
-    if (existingTimer) clearTimeout(existingTimer);
-
-    const timer = setTimeout(() => {
-      auditDebounceTimersRef.current.delete(key);
-      void logAdminAction(action, target, metadata);
-    }, delay);
-
-    auditDebounceTimersRef.current.set(key, timer);
-  };
-
   const handleOpenViewModal = (report) => {
     const reportIdentifier = report.reportID || report.id;
     setSelectedViewReport(report);
@@ -387,18 +373,28 @@ export default function Report_Management() {
       });
     }
 
-    scheduleAdminActionLog('START_VERIFY_WORKFLOW', `Report_#${reportIdentifier}`, { reportId: reportIdentifier });
+    logAdminAction('START_VERIFY_WORKFLOW', `Report_#${reportIdentifier}`, { reportId: reportIdentifier });
   };
 
   const closeVerifyModal = () => {
     const reportIdentifier = selectedReport?.reportID || selectedReport?.id;
     const abandonedAtStep = currentStep;
 
-    // Reset immediately. The audit request must never block the modal UI.
+    // Preserve the close event and close the modal immediately.
+    if (reportIdentifier && socketRef.current) {
+      socketRef.current.emit('ADMIN_ACTION_EVENT', {
+        action: 'CLOSE_VERIFY_MODAL',
+        target: reportIdentifier,
+        reportId: reportIdentifier,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     resetModalState();
 
+    // Do not await audit logging; it must not block modal closing.
     if (reportIdentifier) {
-      scheduleAdminActionLog(
+      void logAdminAction(
         'CLOSE_VERIFY_MODAL',
         `Report_#${reportIdentifier}`,
         { reportId: reportIdentifier, abandonedAtStep },
