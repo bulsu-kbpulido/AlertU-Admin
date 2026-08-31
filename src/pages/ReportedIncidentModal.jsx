@@ -497,7 +497,7 @@ export default function ReportedIncidentModal({
                   Reporter Information
                 </span>
                 <div className="p-3 bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 rounded-xl space-y-2.5">
-                  <div className="flex items-center gap-2.5 text-xs text-slate-800 font-semibold">
+                  <div className="flex items-center gap-2.5 text-xs text-slate-800 dark:text-slate-100 font-semibold">
                     <FiUser className="w-4 h-4 text-blue-600 shrink-0" />
                     <span className="truncate">{reporterName}</span>
                   </div>
