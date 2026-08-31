@@ -10,7 +10,6 @@ import {
   ShieldCheck, 
   ExternalLink 
 } from 'lucide-react';
-import { getAuth } from 'firebase/auth';
 import { fetchFromBackend } from '../api';
 import { useAuditLog } from '../useAuditLog'; // Adjust import path if needed
 
@@ -73,18 +72,22 @@ export default function GeneratedLink({
         throw new Error(result?.message || "Could not create the link.");
       }
   
-      const FRONTEND_URL = window.location.origin;
-      const pathSegment = target === 'citizen' ? 'report/public' : 'report';
-      const customizedSecureLink = `${FRONTEND_URL}/${pathSegment}/${incidentId}?auth_token=${result.secureLink.split('auth_token=')[1]}`;
-  
-      setShortLink(customizedSecureLink);
+      if (!result?.secureLink) {
+        throw new Error(result?.message || 'The server did not return a shareable link.');
+      }
 
-      // 🚨 Audit Log Movement: Record link generation
-      await logGenerateSharedLink(report, {
-        target: target,
-        secureLink: customizedSecureLink,
-        linkKey: result.linkKey || result.key || 'N/A',
+      // Use the exact key-bearing URL returned by Railway. Do not reconstruct it
+      // with incidentId or an auth_token query parameter.
+      setShortLink(result.secureLink);
+
+      // Audit logging must not delay the user-facing link.
+      void logGenerateSharedLink(report, {
+        target,
+        secureLink: result.secureLink,
+        linkKey: result.linkKey || result.key || null,
         expiresAt: result.expiresAt || null,
+      }).catch((auditError) => {
+        console.error('Failed to log link generation:', auditError);
       });
       
     } catch (err) {
