@@ -38,19 +38,16 @@ export default function CitizenOrDepartments({
   /**
    * Handles selection, dispatches audit movement log, and notifies parent callback
    */
-  const handleSelection = async (targetDepartment) => {
-    // 🚨 Log movement: ADMIN-004 generated link for CITIZEN / DEPARTMENT
-    try {
-      await logGenerateSharedLink(report, {
-        target: targetDepartment,
-      });
-    } catch (err) {
-      console.error('Failed to log link generation audit movement:', err);
-    }
-
-    // Call parent handler & close modal
+  const handleSelection = (targetDepartment) => {
+    // Open link generation immediately; audit logging runs in the background.
     onSelect(targetDepartment);
     onClose();
+
+    void logGenerateSharedLink(report, {
+      target: targetDepartment,
+    }).catch((err) => {
+      console.error('Failed to log link generation audit movement:', err);
+    });
   };
 
   return (
