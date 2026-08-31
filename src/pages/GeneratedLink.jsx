@@ -54,7 +54,7 @@ export default function GeneratedLink({
   const generateSecureLink = async () => {
     setIsLoading(true);
     try {
-      const incidentId = report.id || report.incidentId || report.reportID || report.reportId || report.verifiedReportId || report.verifiedreportID;
+      const incidentId = report.firestoreDocId || report.id || report.incidentId || report.reportID || report.reportId || report.verifiedReportId || report.verifiedreportID;
       const auth = getAuth();
       const user = auth.currentUser;
       
@@ -123,7 +123,7 @@ export default function GeneratedLink({
     setIsCopied(true);
 
     // 🚨 Audit Log Movement: Record copying link to clipboard
-    const incidentId = report.id || report.incidentId || report.reportID || report.reportId || report.verifiedReportId || report.verifiedreportID;
+    const incidentId = report.firestoreDocId || report.id || report.incidentId || report.reportID || report.reportId || report.verifiedReportId || report.verifiedreportID;
     logCopySharedLink(shortLink, target, incidentId);
 
     setTimeout(() => setIsCopied(false), 2000);
