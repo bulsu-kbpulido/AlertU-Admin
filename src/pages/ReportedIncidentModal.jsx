@@ -314,7 +314,7 @@ export default function ReportedIncidentModal({
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 dark:text-blue-400">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
                   Verification Step 1
                 </span>
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
@@ -328,7 +328,7 @@ export default function ReportedIncidentModal({
           </div>
 
           <div className="flex items-center gap-4 justify-between sm:justify-end">
-            <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
               <FiClock className="text-slate-400 w-3.5 h-3.5" />
               <span>{reportTimestamp}</span>
             </div>
@@ -344,7 +344,7 @@ export default function ReportedIncidentModal({
         </header>
 
         {/* Modal Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/30 dark:bg-slate-950/20 dark:bg-slate-950/20">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/30 dark:bg-slate-950/20">
           
           {/* Main Grid: Evidence & Location */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -352,7 +352,7 @@ export default function ReportedIncidentModal({
             {/* Media Evidence Column */}
             <div className="space-y-3 flex flex-col">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-2">
                   <FiFileText className="text-blue-600 w-4 h-4" /> Media Attachments
                 </h4>
               </div>
@@ -396,17 +396,17 @@ export default function ReportedIncidentModal({
                     )}
                   </div>
                 ) : (
-                  <div className="p-6 border border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center text-center text-xs text-slate-400 font-medium h-56 bg-slate-50">
+                  <div className="p-6 border border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center text-center text-xs text-slate-400 dark:text-slate-500 font-medium h-56 bg-slate-50">
                     <FiFileText className="w-8 h-8 text-slate-300 mb-2" />
                     <span>No image or video submitted</span>
                   </div>
                 )}
 
                 {/* Sensitive Media Toggle Control */}
-                <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between bg-slate-50 px-3 py-2 rounded-xl">
+                <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/70 px-3 py-2 rounded-xl">
                   <div className="flex items-center gap-2">
                     {isSensitive ? <FiEyeOff className="text-rose-500 w-4 h-4" /> : <FiEye className="text-slate-500 w-4 h-4" />}
-                    <span className="text-xs font-semibold text-slate-700">Sensitive Content Blur</span>
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">Sensitive Content Blur</span>
                   </div>
                   <button
                     type="button"
@@ -428,7 +428,7 @@ export default function ReportedIncidentModal({
 
               {/* Audio Stream Player */}
               {hasValidAudio && (
-                <div className="bg-white border border-slate-200 p-4 rounded-2xl space-y-2 shadow-sm">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl space-y-2 shadow-sm">
                   <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
                     <FiVolume2 className="text-blue-600 w-4 h-4" />
                     <span>Voice Note Attachment</span>
@@ -441,12 +441,12 @@ export default function ReportedIncidentModal({
             {/* Geographical Location Column */}
             <div className="space-y-3 flex flex-col">
               <div className="flex justify-between items-center">
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-2">
                   <FiMapPin className="text-blue-600 w-4 h-4" /> Incident Location
                 </h4>
                 <button 
                   onClick={() => setIsMapChangerOpen(true)}
-                  className="px-3 py-1 rounded-lg text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 transition-all shadow-sm active:scale-95 flex items-center gap-1.5"
+                  className="px-3 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white hover:bg-slate-50 border border-slate-300 transition-all shadow-sm active:scale-95 flex items-center gap-1.5"
                 >
                   <FiCompass className="text-blue-600 w-3.5 h-3.5" />
                   <span>Change Location</span>
@@ -465,7 +465,7 @@ export default function ReportedIncidentModal({
                     href={liveGoogleMapsLink} 
                     target="_blank" 
                     rel="noopener noreferrer" 
-                    className="absolute bottom-3 right-3 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-md backdrop-blur-md transition-all active:scale-95"
+                    className="absolute bottom-3 right-3 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-md backdrop-blur-md transition-all active:scale-95"
                   >
                     <FcGoogle className="text-base" /> <span>Open in Google Maps</span>
                   </a>
@@ -485,15 +485,15 @@ export default function ReportedIncidentModal({
 
               <div className="space-y-1.5">
                 <span className="text-xs font-semibold text-slate-500 block">Reported Hazard Category:</span>
-                <div className="text-xs font-bold text-slate-900 bg-amber-50 text-amber-800 border border-amber-200 px-3 py-2 rounded-xl inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-slate-900 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 px-3 py-2 rounded-xl inline-flex items-center gap-2">
                   <FiAlertTriangle className="w-4 h-4 text-amber-600" />
                   <span>{originalHazard}</span>
                 </div>
               </div>
 
               {/* Submitter / Citizen Details Card */}
-              <div className="space-y-2 pt-1 border-t border-slate-100">
-                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+              <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider block">
                   Reporter Information
                 </span>
                 <div className="p-3 bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 rounded-xl space-y-2.5">
@@ -501,11 +501,11 @@ export default function ReportedIncidentModal({
                     <FiUser className="w-4 h-4 text-blue-600 shrink-0" />
                     <span className="truncate">{reporterName}</span>
                   </div>
-                  <div className="flex items-center gap-2.5 text-xs text-slate-600 font-medium">
+                  <div className="flex items-center gap-2.5 text-xs text-slate-600 dark:text-slate-300 font-medium">
                     <FiMail className="w-4 h-4 text-slate-400 shrink-0" />
                     <span className="truncate">{reporterEmail}</span>
                   </div>
-                  <div className="flex items-center gap-2.5 text-xs text-slate-600 font-medium">
+                  <div className="flex items-center gap-2.5 text-xs text-slate-600 dark:text-slate-300 font-medium">
                     <FiPhone className="w-4 h-4 text-slate-400 shrink-0" />
                     <span className="truncate">{reporterPhone}</span>
                   </div>
@@ -522,14 +522,14 @@ export default function ReportedIncidentModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Verified Incident Category */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
                     Verified Hazard
                   </label>
                   <div className="relative">
                     <select 
                       value={selectionMode} 
                       onChange={(e) => handleSelectionChange(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 appearance-none font-semibold text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 appearance-none font-semibold text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
                     >
                       <option value="Fire">Fire</option>
                       <option value="Flood">Flood</option>
@@ -542,7 +542,7 @@ export default function ReportedIncidentModal({
 
                 {/* Verified Severity Selector */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
                     Severity Level
                   </label>
                   <div className="grid grid-cols-3 gap-1.5">
@@ -566,27 +566,27 @@ export default function ReportedIncidentModal({
 
               {selectionMode === 'Others' && (
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Custom Category</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Custom Category</label>
                   <input 
                     type="text" 
                     placeholder="e.g. Earthquake, Landslide" 
                     value={customName}
                     onChange={(e) => handleCustomNameChange(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                   />
                 </div>
               )}
 
               {/* Admin Internal Remarks Input */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
                   Verification Remarks / Dispatch Notes
                 </label>
                 <textarea 
                   placeholder="Enter notes or instructions for response teams..." 
                   value={adminNotes}
                   onChange={(e) => setAdminNotes(e.target.value)}
-                  className="w-full h-20 bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-none"
+                  className="w-full h-20 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-xs font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-none"
                 />
               </div>
             </div>
@@ -595,7 +595,7 @@ export default function ReportedIncidentModal({
 
         {/* Modal Action Footer */}
         <footer className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
-          <div className="hidden sm:flex items-center gap-2 text-xs text-slate-600 font-medium">
+          <div className="hidden sm:flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 font-medium">
             <FiCheckCircle className="text-emerald-600 w-4 h-4" />
             <span>Ready for step 2 spatial mapping</span>
           </div>
@@ -603,7 +603,7 @@ export default function ReportedIncidentModal({
           <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
             <button 
               onClick={handleClose} 
-              className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl transition-all shadow-sm active:scale-95"
+              className="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl transition-all shadow-sm active:scale-95"
             >
               Cancel
             </button>
