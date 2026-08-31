@@ -58,7 +58,32 @@ import Resolved_Incidents from '../reportsapproved_utils/Resolved_Incidents';
 import { useAuditLog } from '../useAuditLog'; // Adjust import path if needed
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
-const ITEMS_PER_PAGE = 8; 
+const ITEMS_PER_PAGE = 8;
+
+const resolveMediaAsset = (report) => {
+  const candidate =
+    report?.mediaUrl ||
+    report?.imageUrl ||
+    (Array.isArray(report?.media) ? report.media[0] : report?.media) ||
+    (Array.isArray(report?.attachments) ? report.attachments[0] : report?.attachments) ||
+    null;
+
+  const url = typeof candidate === 'string'
+    ? candidate
+    : candidate?.url || candidate?.downloadURL || candidate?.src || null;
+
+  const type = typeof candidate === 'object'
+    ? (candidate?.type || candidate?.mimeType || candidate?.contentType || '')
+    : (report?.mediaType || report?.mimeType || report?.contentType || '');
+
+  const cleanUrl = String(url || '').split('?')[0].split('#')[0].toLowerCase();
+  const isVideo = String(type).toLowerCase().startsWith('video/') ||
+    /\.(mp4|webm|ogg|mov|m4v|avi|mpeg|mpg)$/i.test(cleanUrl) ||
+    /[\\/]video[\\/](upload|raw)[\\/]/i.test(String(url || ''));
+
+  return { url, type, isVideo };
+};
+ 
 
 // Helper to resolve the display ID (Prioritizes VRID over RID)
 const getDisplayId = (report) => {
@@ -408,8 +433,12 @@ export default function Send_Report() {
   }, [filteredReports, currentPage]);
 
   const handleOpenPreview = (report) => {
+    const media = resolveMediaAsset(report);
     const resolvedReport = {
       ...report,
+      mediaUrl: media.url || report.mediaUrl || null,
+      mediaType: media.type || report.mediaType || null,
+      isVideo: media.isVideo,
       selectedAgencies: report.selectedAgencies || report.assignedAgencies || []
     };
     setSelectedReport(resolvedReport);
