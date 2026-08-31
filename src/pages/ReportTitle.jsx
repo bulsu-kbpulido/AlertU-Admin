@@ -21,9 +21,8 @@ import { BorderBeam } from "@/components/ui/border-beam";
 
 // 🌐 Dynamic Environment & Server Configuration
 const RAW_SERVER_URL = 
-  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SOCKET_URL) ||
-  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || 
-  'https://alertu-server.onrender.com';
+  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_BACKEND_URL) ||
+  'https://alertu-server-production.up.railway.app';
 
 const CLEAN_SERVER_URL = RAW_SERVER_URL.replace(/\/+$/, '');
 // 🔌 Socket.io Base URL (Strips '/api' suffix if present)
