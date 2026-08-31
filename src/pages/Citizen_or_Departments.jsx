@@ -1,4 +1,4 @@
-mport React, { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { X, User, Shield, ArrowRight, Layers } from 'lucide-react';
 import { useAuditLog } from '../useAuditLog'; // Adjust import path if needed
 
