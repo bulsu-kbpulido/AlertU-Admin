@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+mport React, { useEffect } from 'react';
 import { X, User, Shield, ArrowRight, Layers } from 'lucide-react';
 import { useAuditLog } from '../useAuditLog'; // Adjust import path if needed
 
@@ -117,7 +117,7 @@ export default function CitizenOrDepartments({
 
             {/* DEPARTMENTS OPTION */}
             <button
-              onClick={() => handleSelection('departments')}
+              onClick={() => handleSelection('department')}
               className="flex items-center justify-between p-4 bg-slate-50 hover:bg-emerald-50/40 rounded-xl border border-slate-200 hover:border-emerald-400 group transition-all duration-200 active:scale-[0.99]"
             >
               <div className="flex items-center gap-3.5">
