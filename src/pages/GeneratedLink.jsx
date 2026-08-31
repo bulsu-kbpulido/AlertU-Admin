@@ -10,7 +10,7 @@ import {
   ShieldCheck, 
   ExternalLink 
 } from 'lucide-react';
-import { fetchFromBackend } from '../api';
+import { getAuth } from 'firebase/auth';
 import { useAuditLog } from '../useAuditLog'; // Adjust import path if needed
 
 /**
@@ -54,12 +54,21 @@ export default function GeneratedLink({
   const generateSecureLink = async () => {
     setIsLoading(true);
     try {
-      const incidentId = report.id || report.incidentId || report.reportID || report.reportId || report.verifiedReportId || report.verifiedreportID;
+      const incidentId = report.incidentId || report.id || report.reportID || report.reportId;
+      const auth = getAuth();
+      const user = auth.currentUser;
       
-      const result = await fetchFromBackend('/links/generate', {
+      if (!user) {
+        throw new Error("Your login session expired. Please log in again.");
+      }
+      
+      const token = await user.getIdToken(true); 
+  
+      const response = await fetch(`http://localhost:3000/api/links/generate`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           incidentId: incidentId,
@@ -68,26 +77,24 @@ export default function GeneratedLink({
         })
       });
   
-      if (!result || !result.success) {
-        throw new Error(result?.message || "Could not create the link.");
+      const result = await response.json();
+  
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Could not create the link.");
       }
   
-      if (!result?.secureLink) {
-        throw new Error(result?.message || 'The server did not return a shareable link.');
-      }
+      const FRONTEND_URL = window.location.origin;
+      const pathSegment = target === 'citizen' ? 'report/public' : 'report';
+      const customizedSecureLink = `${FRONTEND_URL}/${pathSegment}/${incidentId}?auth_token=${result.secureLink.split('auth_token=')[1]}`;
+  
+      setShortLink(customizedSecureLink);
 
-      // Use the exact key-bearing URL returned by Railway. Do not reconstruct it
-      // with incidentId or an auth_token query parameter.
-      setShortLink(result.secureLink);
-
-      // Audit logging must not delay the user-facing link.
-      void logGenerateSharedLink(report, {
-        target,
-        secureLink: result.secureLink,
-        linkKey: result.linkKey || result.key || null,
+      // 🚨 Audit Log Movement: Record link generation
+      await logGenerateSharedLink(report, {
+        target: target,
+        secureLink: customizedSecureLink,
+        linkKey: result.linkKey || result.key || 'N/A',
         expiresAt: result.expiresAt || null,
-      }).catch((auditError) => {
-        console.error('Failed to log link generation:', auditError);
       });
       
     } catch (err) {
@@ -105,7 +112,7 @@ export default function GeneratedLink({
     setIsCopied(true);
 
     // 🚨 Audit Log Movement: Record copying link to clipboard
-    const incidentId = report.id || report.incidentId || report.reportID || report.reportId || report.verifiedReportId || report.verifiedreportID;
+    const incidentId = report.incidentId || report.id || report.reportID || report.reportId;
     logCopySharedLink(shortLink, target, incidentId);
 
     setTimeout(() => setIsCopied(false), 2000);
