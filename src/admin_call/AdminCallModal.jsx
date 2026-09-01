@@ -15,8 +15,10 @@ import {
   User, 
   AlertCircle,
   Radio,
-  GripHorizontal,
+    GripHorizontal,
+  Video,
   VideoOff
+
 } from 'lucide-react';
 
 // Enable console logging for development debugging
@@ -32,7 +34,8 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
 
   // Core references
   const agoraClientRef = useRef(null);
-  const localTracksRef = useRef({ micTrack: null });
+    const localTracksRef = useRef({ micTrack: null, cameraTrack: null });
+
   const isInitializingRef = useRef(false);
   
   // Dynamic citizen info state
@@ -54,8 +57,12 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
 
   // State management
   const [remoteUser, setRemoteUser] = useState(null);
-  const [isMuted, setIsMuted] = useState(false);
+    const [isMuted, setIsMuted] = useState(false);
+  // Camera is off by default and is enabled only by explicit user action.
+  const [isVideoEnabled, setIsVideoEnabled] = useState(false);
+  const [isVideoBusy, setIsVideoBusy] = useState(false);
   const [isRemoteVideoMuted, setIsRemoteVideoMuted] = useState(false);
+
   const [callConnected, setCallConnected] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
 
@@ -111,12 +118,16 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
   // Clean up media tracks and unmount RTC client cleanly
   const leaveCallCleanup = useCallback(async () => {
     try {
-      const { micTrack } = localTracksRef.current;
+      const { micTrack, cameraTrack } = localTracksRef.current;
       if (micTrack) {
         micTrack.stop();
         micTrack.close();
       }
-      localTracksRef.current = { micTrack: null };
+      if (cameraTrack) {
+        cameraTrack.stop();
+        cameraTrack.close();
+      }
+      localTracksRef.current = { micTrack: null, cameraTrack: null };
 
       if (agoraClientRef.current) {
         agoraClientRef.current.removeAllListeners();
@@ -131,9 +142,12 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
     } catch (err) {
       console.error("❌ Error during Agora call cleanup:", err);
     } finally {
-      setCallConnected(false);
+            setCallConnected(false);
       setRemoteUser(null);
+      setIsVideoEnabled(false);
+      setIsVideoBusy(false);
       setIsRemoteVideoMuted(false);
+
     }
   }, []);
 
@@ -297,7 +311,9 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
           return;
         }
 
-        // 4. Create Microphone Track Only (Admin does not publish camera)
+                // 4. Create and publish microphone only. The admin camera remains
+        // disabled until the user explicitly enables it.
+
         let micTrack = null;
         try {
           micTrack = await AgoraRTC.createMicrophoneAudioTrack({ encoderConfig: "speech_low_quality" });
@@ -305,7 +321,7 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
           throw new Error("Microphone access denied. Check device permissions.");
         }
 
-        localTracksRef.current = { micTrack };
+        localTracksRef.current = { micTrack, cameraTrack: null };
 
         // 5. Publish Admin Mic Track
         if (micTrack) {
@@ -344,6 +360,44 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
       const nextState = !isMuted;
       await mic.setEnabled(!nextState);
       setIsMuted(nextState);
+    }
+  };
+
+  // Opt-in camera control. No camera track is created at call start.
+  const handleToggleVideo = async () => {
+    const client = agoraClientRef.current;
+    if (!client || !callConnected || isVideoBusy) return;
+
+    setIsVideoBusy(true);
+    try {
+      const cameraTrack = localTracksRef.current.cameraTrack;
+
+      if (cameraTrack) {
+        await client.unpublish(cameraTrack);
+        cameraTrack.stop();
+        cameraTrack.close();
+        localTracksRef.current.cameraTrack = null;
+        setIsVideoEnabled(false);
+        return;
+      }
+
+      const newCameraTrack = await AgoraRTC.createCameraVideoTrack({
+        encoderConfig: {
+          width: 640,
+          height: 360,
+          frameRate: 15,
+          bitrateMax: 400,
+        },
+      });
+
+      await client.publish(newCameraTrack);
+      localTracksRef.current.cameraTrack = newCameraTrack;
+      setIsVideoEnabled(true);
+    } catch (err) {
+      console.error('❌ Unable to toggle admin camera:', err);
+      setErrorMessage('Camera could not be enabled. Check browser camera permissions.');
+    } finally {
+      setIsVideoBusy(false);
     }
   };
 
@@ -564,8 +618,27 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
 
             {/* Centered Button Controls */}
             <div className="flex items-center justify-center gap-3 w-full sm:w-auto">
+                            {/* Admin Camera Toggle Button: disabled until explicitly enabled */}
+              <button
+                type="button"
+                onClick={handleToggleVideo}
+                disabled={isVideoBusy || !callConnected}
+                className={`inline-flex items-center justify-center font-bold transition-all rounded-xl shadow-sm border active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  isMinimized ? 'w-10 h-10 p-0' : 'px-4 py-2.5 text-xs'
+                } ${
+                  isVideoEnabled
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                }`}
+                title={isVideoEnabled ? 'Turn camera off' : 'Enable camera'}
+              >
+                {isVideoEnabled ? <Video className="w-4 h-4 text-emerald-600" /> : <VideoOff className="w-4 h-4 text-slate-600" />}
+                {!isMinimized && <span className="ml-2">{isVideoBusy ? 'Camera...' : isVideoEnabled ? 'Stop Video' : 'Enable Video'}</span>}
+              </button>
+
               {/* Mic Toggle Button */}
               <button
+
                 type="button"
                 onClick={handleToggleMute}
                 className={`inline-flex items-center justify-center font-bold transition-all rounded-xl shadow-sm border active:scale-95 ${
