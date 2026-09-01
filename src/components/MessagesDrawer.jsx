@@ -388,8 +388,14 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
                       </div>
 
                       {/* Messages within Date Group */}
-                      {msgGroup.map((msg, index) => {
+                                            {msgGroup.map((msg, index) => {
+                        const chronologicalIndex = messages.findIndex(
+                          (candidate) => candidate.id === msg.id
+                        );
+                        const alignRight = (chronologicalIndex >= 0 ? chronologicalIndex : index) % 2 === 1;
+
                         const isAdmin =
+
                           msg.senderRole === 'admin' ||
                           msg.senderId === (adminUser?.uid || adminUser?.id);
 
@@ -406,9 +412,10 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.15 }}
-                            className={`flex items-end gap-2.5 ${
-                              isAdmin ? 'flex-row-reverse' : 'flex-row'
+                                                        className={`flex items-end gap-2.5 ${
+                              alignRight ? 'flex-row-reverse' : 'flex-row'
                             }`}
+
                           >
                             {/* Avatar Badge Icon */}
                             <div
@@ -427,9 +434,10 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
 
                             {/* Chat Bubble Container */}
                             <div
-                              className={`group relative max-w-[80%] space-y-1.5 ${
-                                isAdmin ? 'items-end' : 'items-start'
+                                                            className={`group relative max-w-[80%] space-y-1.5 ${
+                                alignRight ? 'items-end' : 'items-start'
                               }`}
+
                             >
                               <div
                                 className={`rounded-2xl px-4 py-3 text-xs leading-relaxed font-medium shadow-xs ${
@@ -445,9 +453,10 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
 
                               {/* Message Metadata Tag */}
                               <div
-                                className={`flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 px-1 ${
-                                  isAdmin ? 'justify-end' : 'justify-start'
+                                                                className={`flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 px-1 ${
+                                  alignRight ? 'justify-end' : 'justify-start'
                                 }`}
+
                               >
                                 <span>{isAdmin ? 'Dispatch Officer' : citizenLabel}</span>
                                 <span>•</span>
