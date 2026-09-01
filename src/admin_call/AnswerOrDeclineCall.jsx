@@ -147,25 +147,25 @@ export default function AnswerOrDeclineCall({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 15 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
-          className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col"
+          className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col"
         >
           {/* Header Bar */}
-          <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+          <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-red-50 border border-red-200 text-red-600">
+              <div className="p-2 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400">
                 <ShieldAlert className="w-5 h-5" />
               </div>
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-red-600 block">
                   Emergency Alert
                 </span>
-                <h3 className="text-sm font-bold text-slate-900">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
                   Incoming Call Notification
                 </h3>
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 border border-red-200 text-red-700 text-xs font-semibold animate-pulse">
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-semibold animate-pulse">
               <Radio className="w-3.5 h-3.5 text-red-600" />
               <span>Live Alert</span>
             </div>
@@ -186,35 +186,35 @@ export default function AnswerOrDeclineCall({
 
             {/* Caller Information */}
             <div className="mt-4 max-w-full">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-medium mb-2">
-                <User className="w-3.5 h-3.5 text-slate-500" />
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium mb-2">
+                <User className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                 <span>Citizen Dispatch</span>
               </div>
               
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight truncate px-2">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight truncate px-2">
                 {resolvedCitizenName}
               </h2>
 
-              <div className="flex items-center justify-center gap-1.5 mt-2 text-xs font-mono font-medium text-slate-500 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg w-fit mx-auto">
+              <div className="flex items-center justify-center gap-1.5 mt-2 text-xs font-mono font-medium text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg w-fit mx-auto">
                 <Hash className="w-3.5 h-3.5 text-slate-400" />
                 <span>Channel: {channelName}</span>
               </div>
             </div>
 
             {/* Quick Informational Note */}
-            <p className="text-xs text-slate-500 mt-5 max-w-sm">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-5 max-w-sm">
               An emergency call requires immediate response. Answer to join the secure channel or end the request.
             </p>
           </div>
 
           {/* Action Control Buttons */}
-          <div className="px-6 py-5 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-4">
+          <div className="px-6 py-5 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between gap-4">
             
             {/* End Call / Decline Button */}
             <button
               onClick={handleDecline}
               type="button"
-              className="flex-1 py-3 px-4 rounded-xl bg-white hover:bg-rose-50 border border-rose-200 hover:border-rose-300 text-rose-600 font-bold text-sm shadow-sm transition-all duration-200 active:scale-95 flex items-center justify-center gap-2 group"
+              className="flex-1 py-3 px-4 rounded-xl bg-white dark:bg-slate-900 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-800 hover:border-rose-300 dark:hover:border-rose-700 text-rose-600 dark:text-rose-400 font-bold text-sm shadow-sm transition-all duration-200 active:scale-95 flex items-center justify-center gap-2 group"
             >
               <PhoneOff className="w-4 h-4 text-rose-600 group-hover:scale-110 transition-transform" />
               <span>End Call</span>
