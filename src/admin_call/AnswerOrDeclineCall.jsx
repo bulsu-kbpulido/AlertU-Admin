@@ -32,9 +32,25 @@ export default function AnswerOrDeclineCall({
   });
   
   const onDeclineRef = useRef(onDecline);
+  const actionHandledRef = useRef(false);
+  const auditLogTimerRef = useRef(null);
+
   useEffect(() => {
     onDeclineRef.current = onDecline;
   }, [onDecline]);
+
+  // Keep the UI action immediate and defer the non-critical audit request.
+  const scheduleAuditLog = (action, targetId, details) => {
+    // Do not cancel this timer during unmount: accepting/declining may
+    // immediately unmount this modal, but the audit entry must still run.
+    auditLogTimerRef.current = window.setTimeout(async () => {
+      try {
+        await logMovement(action, targetId, details);
+      } catch (err) {
+        console.error(`Audit log error for ${action}:`, err);
+      }
+    }, 250);
+  };
 
   useEffect(() => {
     if (!callData) return;
@@ -79,49 +95,48 @@ export default function AnswerOrDeclineCall({
   const resolvedCitizenName = callerName || citizenName || 'Emergency Citizen';
   const resolvedCitizenId = citizenId || channelName || 'UNKNOWN_CITIZEN';
 
-  const handleAnswer = async () => {
+  const handleAnswer = () => {
+    // Ignore duplicate clicks while the modal is being dismissed.
+    if (actionHandledRef.current) return;
+    actionHandledRef.current = true;
+
     stopRingtone();
 
-    // Audit Log for Answering Call
-    try {
-      await logMovement('ANSWER_EMERGENCY_CALL', resolvedCitizenId, {
-        citizenName: resolvedCitizenName,
-        channelName,
-        answeredAt: new Date().toISOString(),
-      });
-    } catch (err) {
-      console.error('Audit log error on answering call:', err);
-    }
-
+    // Open the call immediately. Do not await audit logging here.
     if (onAnswer) {
-      // Pass complete callData including resolved citizen info and citizenId
       onAnswer({
         ...callData,
         citizenId: resolvedCitizenId,
         citizenName: resolvedCitizenName,
       });
     }
+
+    scheduleAuditLog('ANSWER_EMERGENCY_CALL', resolvedCitizenId, {
+      citizenName: resolvedCitizenName,
+      channelName,
+      answeredAt: new Date().toISOString(),
+    });
   };
 
-  const handleDecline = async () => {
+  const handleDecline = () => {
+    // Ignore duplicate clicks while the modal is being dismissed.
+    if (actionHandledRef.current) return;
+    actionHandledRef.current = true;
+
     stopRingtone();
 
-    // Audit Log for Declining/Ending Call
-    try {
-      await logMovement('DECLINE_EMERGENCY_CALL', resolvedCitizenId, {
-        citizenName: resolvedCitizenName,
-        channelName,
-        declinedAt: new Date().toISOString(),
-      });
-    } catch (err) {
-      console.error('Audit log error on declining call:', err);
-    }
-    
+    // End and close the call immediately. Do not await audit logging here.
     if (channelName) {
       emitCallEnded('admins', channelName);
     }
 
     if (onDecline) onDecline();
+
+    scheduleAuditLog('DECLINE_EMERGENCY_CALL', resolvedCitizenId, {
+      citizenName: resolvedCitizenName,
+      channelName,
+      declinedAt: new Date().toISOString(),
+    });
   };
 
   return (
