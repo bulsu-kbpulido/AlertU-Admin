@@ -581,12 +581,18 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
 
                             {/* Admin Self-View Overlay: hidden until the admin enables video */}
               {isVideoEnabled && (
-                <div className="absolute right-4 top-4 z-20 w-28 sm:w-36 aspect-[3/4] overflow-hidden rounded-xl border-2 border-white/80 bg-slate-900 shadow-2xl ring-1 ring-black/30">
+                <div
+                  className={`absolute z-20 overflow-hidden rounded-xl border-2 border-white/80 bg-slate-900 shadow-2xl ring-1 ring-black/30 ${
+                    isMinimized
+                      ? 'right-2 bottom-2 w-24 aspect-[4/3] border'
+                      : 'right-4 top-4 w-28 sm:w-36 aspect-[3/4]'
+                  }`}
+                >
                   <div
                     ref={localVideoRef}
                     className="w-full h-full [&>div]:!w-full [&>div]:!h-full [&>video]:!w-full [&>video]:!h-full [&>video]:!object-cover"
                   />
-                  <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                  <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[9px] font-semibold text-white">
                     You
                   </span>
                 </div>
