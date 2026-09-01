@@ -31,6 +31,7 @@ const CALL_TIME_LIMIT_SECONDS = 120; // 5 Minutes Limit
  */
 export default function AdminCallModal({ targetRoom, citizenName: initialCitizenName, citizenId: initialCitizenId, adminId, adminName, onClose, backendUrl }) {
   const remoteVideoRef = useRef(null);
+  const localVideoRef = useRef(null);
 
   // Core references
   const agoraClientRef = useRef(null);
@@ -353,6 +354,14 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
     }
   }, [remoteUser, isRemoteVideoMuted]);
 
+  // Messenger-style self-view: show the admin's own camera only after it is enabled.
+  useEffect(() => {
+    const cameraTrack = localTracksRef.current.cameraTrack;
+    if (cameraTrack && localVideoRef.current && isVideoEnabled) {
+      cameraTrack.play(localVideoRef.current);
+    }
+  }, [isVideoEnabled]);
+
   // Handle Mute/Unmute Mic Toggle
   const handleToggleMute = async () => {
     const mic = localTracksRef.current.micTrack;
@@ -570,8 +579,22 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
                 }`}
               />
 
+                            {/* Admin Self-View Overlay: hidden until the admin enables video */}
+              {isVideoEnabled && (
+                <div className="absolute right-4 top-4 z-20 w-28 sm:w-36 aspect-[3/4] overflow-hidden rounded-xl border-2 border-white/80 bg-slate-900 shadow-2xl ring-1 ring-black/30">
+                  <div
+                    ref={localVideoRef}
+                    className="w-full h-full [&>div]:!w-full [&>div]:!h-full [&>video]:!w-full [&>video]:!h-full [&>video]:!object-cover"
+                  />
+                  <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                    You
+                  </span>
+                </div>
+              )}
+
               {/* Citizen Disabled Camera State Overlay */}
               {callConnected && isRemoteVideoMuted && !errorMessage && (
+
                 <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-900 text-slate-400 p-4 text-center">
                   <VideoOff className="w-10 h-10 text-slate-500 mb-2" />
                   <p className="text-xs font-semibold text-slate-300">Citizen Camera Disabled</p>
