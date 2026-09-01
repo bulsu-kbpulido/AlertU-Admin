@@ -240,7 +240,7 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
 
       {/* Main Drawer Panel */}
       <div
-        className={`relative z-10 flex h-full w-full sm:w-[480px] lg:w-[520px] flex-col bg-white shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] border-l border-slate-200 ${
+        className={`relative z-10 flex h-full w-full sm:w-[480px] lg:w-[520px] flex-col bg-white dark:bg-slate-950 shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] border-l border-slate-200 dark:border-slate-800 ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -248,18 +248,18 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
         <BorderBeam size={220} duration={14} delay={5} colorFrom="#3b82f6" colorTo="#6366f1" />
 
         {/* Modal Header */}
-        <header className="px-6 py-4 border-b border-slate-200 bg-slate-50/90 flex items-center justify-between gap-3 shrink-0">
+        <header className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-900/90 flex items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             {activeChat ? (
               <button
                 onClick={() => setActiveChat(null)}
-                className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all shadow-sm active:scale-95 shrink-0"
+                className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm active:scale-95 shrink-0"
                 aria-label="Back to conversations"
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
             ) : (
-              <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 shrink-0">
+              <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 shrink-0">
                 <ShieldAlert className="w-5 h-5" />
               </div>
             )}
@@ -270,12 +270,12 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
                   {activeChat ? 'Live Channel' : 'Dispatch Center'}
                 </span>
                 {activeChat?.unreadCountAdmin > 0 && (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
                     New Update
                   </span>
                 )}
               </div>
-              <h3 className="text-base font-bold text-slate-900 tracking-tight truncate mt-0.5">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate mt-0.5">
                 {getRoomTitle(activeChat)}
               </h3>
             </div>
@@ -283,7 +283,7 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
 
           <button 
             onClick={onClose} 
-            className="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-all shadow-sm active:scale-95 shrink-0"
+            className="w-8 h-8 flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm active:scale-95 shrink-0"
             aria-label="Close drawer"
           >
             <X className="w-4 h-4" />
@@ -292,9 +292,9 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
 
         {/* Dynamic View: Conversations List vs Message Stream */}
         {!activeChat ? (
-          <div className="flex-1 flex flex-col min-h-0 bg-slate-50/40">
+          <div className="flex-1 flex flex-col min-h-0 bg-slate-50/40 dark:bg-slate-900/40">
             {/* Search Input Bar */}
-            <div className="p-4 border-b border-slate-200/80 bg-white shrink-0">
+            <div className="p-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-950 shrink-0">
               <div className="relative flex items-center">
                 <Search className="absolute left-3.5 h-4 w-4 text-slate-400 pointer-events-none" />
                 <input
@@ -302,7 +302,7 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search citizen name, ID, or message text..."
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50/80 py-2.5 pl-10 pr-4 text-xs font-semibold text-slate-800 placeholder-slate-400 outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/80 py-2.5 pl-10 pr-4 text-xs font-semibold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 transition-all"
                 />
               </div>
             </div>
@@ -310,10 +310,10 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
             {/* Conversation Items List */}
             <div className="flex-1 overflow-y-auto p-3 space-y-2">
               {filteredConversations.length === 0 ? (
-                <div className="h-64 flex flex-col items-center justify-center text-center p-6 bg-white border border-dashed border-slate-200 rounded-2xl my-4">
+                <div className="h-64 flex flex-col items-center justify-center text-center p-6 bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl my-4">
                   <MessageSquare className="w-10 h-10 text-slate-300 mb-2" />
-                  <p className="text-sm font-bold text-slate-700">No active conversations found</p>
-                  <p className="text-xs text-slate-400 mt-1">Incoming emergency chat channels will appear here.</p>
+                  <p className="text-sm font-bold text-slate-700 dark:text-slate-200">No active conversations found</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Incoming emergency chat channels will appear here.</p>
                 </div>
               ) : (
                 filteredConversations.map((conv) => {
@@ -335,8 +335,8 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
                       onClick={() => handleSelectChat(conv)}
                       className={`group flex items-center gap-3.5 rounded-2xl p-4 transition-all cursor-pointer border ${
                         hasUnread 
-                          ? 'bg-blue-50/80 border-blue-200 shadow-sm' 
-                          : 'bg-white border-slate-200/80 hover:border-slate-300 hover:shadow-sm'
+                          ? 'bg-blue-50/80 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800 shadow-sm' 
+                          : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm'
                       }`}
                     >
                       {/* Avatar Initials Badge */}
@@ -344,29 +344,29 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
                         <div className={`h-11 w-11 rounded-xl flex items-center justify-center font-bold text-sm border shadow-xs ${
                           hasUnread 
                             ? 'bg-blue-600 text-white border-blue-500' 
-                            : 'bg-slate-100 text-slate-700 border-slate-200'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700'
                         }`}>
                           {avatarLabel}
                         </div>
                         {hasUnread && (
-                          <span className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-blue-600 ring-2 ring-white animate-pulse" />
+                          <span className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-blue-600 ring-2 ring-white dark:ring-slate-950 animate-pulse" />
                         )}
                       </div>
 
                       {/* Conversation Content Summary */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <h4 className="text-xs font-bold text-slate-900 truncate pr-2">
+                          <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate pr-2">
                             {getRoomTitle(conv)}
                           </h4>
-                          <span className="text-[11px] font-semibold text-slate-400 shrink-0 flex items-center gap-1">
+                          <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 shrink-0 flex items-center gap-1">
                             <Clock className="w-3 h-3 text-slate-400" />
                             {conv.lastMessageTimestamp
                               ? dayjs(conv.lastMessageTimestamp).format('h:mm A')
                               : ''}
                           </span>
                         </div>
-                        <p className="text-xs font-medium text-slate-600 truncate">
+                        <p className="text-xs font-medium text-slate-600 dark:text-slate-300 truncate">
                           {conv.lastMessage || 'No recent communications'}
                         </p>
                       </div>
@@ -378,13 +378,13 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
           </div>
         ) : (
           /* Active Chat Feed & Input Form */
-          <div className="flex-1 flex flex-col min-h-0 bg-slate-50/30">
+          <div className="flex-1 flex flex-col min-h-0 bg-slate-50/30 dark:bg-slate-900/30">
             {/* Scrollable Message List */}
             <div className="flex-1 overflow-y-auto p-4 space-y-6">
               <AnimatePresence initial={false}>
                 {Object.keys(groupedMessages).length === 0 ? (
                   <div className="text-center py-12">
-                    <p className="text-xs font-semibold text-slate-400">No messages in this emergency channel yet.</p>
+                    <p className="text-xs font-semibold text-slate-400 dark:text-slate-500">No messages in this emergency channel yet.</p>
                   </div>
                 ) : (
                   Object.entries(groupedMessages).map(([dateLabel, msgGroup]) => (
@@ -393,10 +393,10 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
                       {/* Dayjs Date Segregator Header */}
                       <div className="relative flex items-center justify-center my-4">
                         <div className="absolute inset-0 flex items-center">
-                          <div className="w-full border-t border-slate-200" />
+                          <div className="w-full border-t border-slate-200 dark:border-slate-800" />
                         </div>
-                        <div className="relative bg-white px-3 py-1 rounded-full border border-slate-200 shadow-2xs">
-                          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                        <div className="relative bg-white dark:bg-slate-900 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700 shadow-2xs">
+                          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                             <Clock className="w-3 h-3 text-blue-600" />
                             {dateLabel} Chats
                           </span>
@@ -433,7 +433,7 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
                               className={`h-8 w-8 rounded-xl shrink-0 flex items-center justify-center text-xs font-bold border shadow-2xs ${
                                 isAdmin
                                   ? 'bg-blue-600 text-white border-blue-500'
-                                  : 'bg-white text-slate-700 border-slate-200'
+                                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700'
                               }`}
                             >
                               {isAdmin ? (
@@ -454,7 +454,7 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
                                 className={`rounded-2xl px-4 py-3 text-xs leading-relaxed font-medium shadow-xs ${
                                   isAdmin
                                     ? 'bg-blue-600 text-white rounded-br-xs border border-blue-500'
-                                    : 'bg-white text-slate-900 rounded-bl-xs border border-slate-200'
+                                    : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-bl-xs border border-slate-200 dark:border-slate-700'
                                 }`}
                               >
                                 <p className="whitespace-pre-wrap break-words text-xs leading-relaxed font-medium">
@@ -464,7 +464,7 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
 
                               {/* Message Metadata Tag */}
                               <div
-                                className={`flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 px-1 ${
+                                className={`flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 dark:text-slate-500 px-1 ${
                                   isAdmin ? 'justify-end' : 'justify-start'
                                 }`}
 
@@ -488,7 +488,7 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
             </div>
 
             {/* Sticky Dispatch Message Input Form */}
-            <div className="p-4 border-t border-slate-200 bg-white shrink-0">
+            <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shrink-0">
               <form onSubmit={handleSend} className="space-y-2">
                 <div className="relative flex items-center">
                   <input
@@ -497,7 +497,7 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     placeholder="Type dispatch instructions (Max 300 chars)..."
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 py-3 pl-4 pr-12 text-xs font-semibold text-slate-800 placeholder-slate-400 outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 py-3 pl-4 pr-12 text-xs font-semibold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none transition-all focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20"
                   />
                   <button
                     type="submit"
@@ -511,8 +511,8 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
 
                 {/* Character Counter & Warnings */}
                 <div className="flex items-center justify-between px-1 text-[11px]">
-                  <span className="text-slate-400 font-medium">
-                    Press <kbd className="px-1 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px] text-slate-600 font-sans">Enter</kbd> to send
+                  <span className="text-slate-400 dark:text-slate-500 font-medium">
+                    Press <kbd className="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-[10px] text-slate-600 dark:text-slate-300 font-sans">Enter</kbd> to send
                   </span>
                   
                   <div className="flex items-center gap-1 font-bold">
