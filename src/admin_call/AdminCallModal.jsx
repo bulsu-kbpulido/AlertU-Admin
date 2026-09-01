@@ -461,7 +461,7 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
         className={
           isMinimized
             ? "fixed z-50 touch-none select-none"
-            : "fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/70 backdrop-blur-sm text-slate-800 font-sans antialiased overflow-y-auto"
+            : "fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/70 backdrop-blur-sm text-slate-800 dark:text-slate-200 font-sans antialiased overflow-y-auto"
         }
         style={
           isMinimized
@@ -477,7 +477,7 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={isDragging ? { duration: 0 } : { duration: 0.2 }}
-          className={`relative bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 ${
+          className={`relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-700 ${
             isMinimized 
               ? 'w-[340px] border-2 border-slate-300 shadow-xl' 
               : 'w-full max-w-5xl max-h-[92vh]'
@@ -487,23 +487,23 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
           {isMinimized ? (
             <div
               onMouseDown={handleMouseDown}
-              className="px-3 py-2 bg-slate-100 hover:bg-slate-200/80 border-b border-slate-200 flex items-center justify-between cursor-grab active:cursor-grabbing transition-colors"
+              className="px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between cursor-grab active:cursor-grabbing transition-colors"
             >
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 truncate">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 truncate">
                 <GripHorizontal className="w-4 h-4 text-slate-400 shrink-0" />
                 <span className="truncate">{citizenInfo.citizenName || targetRoom}</span>
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
                 {callConnected && (
-                  <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-white text-[11px] font-mono font-bold text-slate-700 border border-slate-200">
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-white dark:bg-slate-900 text-[11px] font-mono font-bold text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
                     <Clock className="w-3 h-3 text-slate-400" />
                     <span>{formatTime(timeLeft)}</span>
                   </div>
                 )}
                 <button
                   onClick={() => setIsMinimized(false)}
-                  className="p-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 transition active:scale-95"
+                  className="p-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition active:scale-95"
                   title="Expand View"
                 >
                   <Maximize2 className="w-3.5 h-3.5" />
@@ -512,9 +512,9 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
             </div>
           ) : (
             /* Standard Full Modal Header */
-            <header className="px-5 py-3.5 border-b border-slate-200 bg-slate-50/90 flex items-center justify-between gap-3 shrink-0">
+            <header className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-800/80 flex items-center justify-between gap-3 shrink-0">
               <div className="flex items-center gap-3 truncate">
-                <div className="p-2 rounded-xl bg-red-50 border border-red-200 text-red-600 shrink-0">
+                <div className="p-2 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 shrink-0">
                   <ShieldAlert className="w-5 h-5" />
                 </div>
                 <div className="truncate">
@@ -523,16 +523,16 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
                       Emergency Call (360p)
                     </span>
                     {callConnected ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                         Live Connected
                       </span>
                     ) : (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 animate-pulse">
                         Connecting...
                       </span>
                     )}
                   </div>
-                  <h3 className="text-sm font-bold text-slate-900 tracking-tight mt-0.5 truncate">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 tracking-tight mt-0.5 truncate">
                     {citizenInfo.citizenName || targetRoom}
                   </h3>
                 </div>
@@ -555,7 +555,7 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
 
                 <button
                   onClick={() => setIsMinimized(true)}
-                  className="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 transition-all shadow-sm active:scale-95"
+                  className="w-8 h-8 flex items-center justify-center rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-all shadow-sm active:scale-95"
                   title="Minimize View"
                 >
                   <Minimize2 className="w-4 h-4" />
@@ -633,15 +633,15 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
 
           {/* Action Control Bar (Footer) */}
           <footer
-            className={`bg-slate-50 border-t border-slate-200 flex items-center justify-center ${
+            className={`bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700 flex items-center justify-center ${
               isMinimized ? 'p-2.5' : 'px-6 py-4 sm:justify-between'
             }`}
           >
             {/* Desktop Status Label (Full View) */}
             {!isMinimized && (
-              <div className="hidden sm:flex items-center gap-2 text-xs text-slate-600 font-medium">
+              <div className="hidden sm:flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 font-medium">
                 <User className="text-blue-600 w-4 h-4" />
-                <span>Admin: <strong className="text-slate-800">{adminName || 'System Admin'}</strong></span>
+                <span>Admin: <strong className="text-slate-800 dark:text-slate-200">{adminName || 'System Admin'}</strong></span>
               </div>
             )}
 
@@ -657,7 +657,7 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
                 } ${
                   isVideoEnabled
                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                    : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
                 title={isVideoEnabled ? 'Turn camera off' : 'Enable camera'}
               >
@@ -674,8 +674,8 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
                   isMinimized ? 'w-10 h-10 p-0' : 'px-4 py-2.5 text-xs'
                 } ${
                   isMuted
-                    ? 'bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100'
-                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                    ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800 hover:bg-rose-100 dark:hover:bg-rose-900/50'
+                    : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
                 title={isMuted ? "Unmute Mic" : "Mute Mic"}
               >
@@ -699,7 +699,7 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
 
             {/* Desktop Security Label (Full View) */}
             {!isMinimized && (
-              <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+              <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
                 <Radio className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
                 <span>Encrypted RTC Channel</span>
               </div>
