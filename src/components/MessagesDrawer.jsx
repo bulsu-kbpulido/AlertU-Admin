@@ -206,7 +206,23 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
     return name.includes(term) || cid.includes(term) || chatId.includes(term) || msg.includes(term);
   });
 
-  const groupedMessages = groupMessagesByDate(messages);
+  // Normalize timestamps so Firestore Timestamp values and ISO strings sort together.
+  const getMessageTime = (message) => {
+    const timestamp = message?.timestamp;
+    if (timestamp?.toDate) return timestamp.toDate().getTime();
+    if (typeof timestamp?.seconds === 'number') {
+      return timestamp.seconds * 1000 + Math.floor((timestamp.nanoseconds || 0) / 1000000);
+    }
+    const parsed = dayjs(timestamp).valueOf();
+    return Number.isFinite(parsed) ? parsed : Number.MAX_SAFE_INTEGER;
+  };
+
+  // Always render one shared conversation timeline, sorted by message timestamp.
+  const chronologicalMessages = [...messages].sort(
+    (a, b) => getMessageTime(a) - getMessageTime(b)
+  );
+
+  const groupedMessages = groupMessagesByDate(chronologicalMessages);
 
   return (
     <div
@@ -388,12 +404,7 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
                       </div>
 
                       {/* Messages within Date Group */}
-                                            {msgGroup.map((msg, index) => {
-                        const chronologicalIndex = messages.findIndex(
-                          (candidate) => candidate.id === msg.id
-                        );
-                        const alignRight = (chronologicalIndex >= 0 ? chronologicalIndex : index) % 2 === 1;
-
+                      {msgGroup.map((msg, index) => {
                         const isAdmin =
 
                           msg.senderRole === 'admin' ||
@@ -412,8 +423,8 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.15 }}
-                                                        className={`flex items-end gap-2.5 ${
-                              alignRight ? 'flex-row-reverse' : 'flex-row'
+                                                        className={`flex w-full items-end gap-2.5 ${
+                              isAdmin ? 'flex-row-reverse justify-start' : 'flex-row justify-start'
                             }`}
 
                           >
@@ -434,9 +445,9 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
 
                             {/* Chat Bubble Container */}
                             <div
-                                                            className={`group relative max-w-[80%] space-y-1.5 ${
-                                alignRight ? 'items-end' : 'items-start'
-                              }`}
+                                className={`group flex max-w-[80%] flex-col space-y-1.5 ${
+                                  isAdmin ? 'items-end' : 'items-start'
+                                }`}
 
                             >
                               <div
@@ -453,8 +464,8 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
 
                               {/* Message Metadata Tag */}
                               <div
-                                                                className={`flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 px-1 ${
-                                  alignRight ? 'justify-end' : 'justify-start'
+                                className={`flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 px-1 ${
+                                  isAdmin ? 'justify-end' : 'justify-start'
                                 }`}
 
                               >
