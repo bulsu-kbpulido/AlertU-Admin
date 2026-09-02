@@ -40,6 +40,13 @@ import ArchivedCitizensTable from '@/citizen_utilities/ArchivedCitizensTable';
 // --- Helper Functions ---
 const getCitizenId = (c) => c?.citizenID || c?.cid || c?.id;
 
+// Compare the numeric portion of IDs such as CID00000002 and CID00000001.
+const getCitizenIdNumber = (citizen) => {
+  const value = getCitizenId(citizen);
+  const match = String(value ?? '').match(/(\d+)$/);
+  return match ? Number(match[1]) : Number.NEGATIVE_INFINITY;
+};
+
 const checkIsAccountEnabled = (citizen, storeOverride) => {
   if (!citizen) return false;
   if (typeof storeOverride === 'boolean') {
@@ -473,7 +480,7 @@ const CitizenManagement = () => {
         citizen.zone?.toLowerCase().includes(term) ||
         citizen.phoneNumber?.toLowerCase().includes(term)
       );
-    });
+    }).sort((a, b) => getCitizenIdNumber(b) - getCitizenIdNumber(a));
   }, [citizens, activeTab, statusFilter, searchTerm, disabledCitizens]);
 
   // Reset page when search, tab, or filter updates
