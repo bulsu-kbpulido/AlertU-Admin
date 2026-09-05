@@ -39,11 +39,11 @@ import { BorderBeam } from "@/components/ui/border-beam";
 
 // Reference Dictionary for Dynamic Agency Profiles matching your backend array structure
 const AGENCIES = [
-  { id: "RHU", name: "Rural Health Unit", icon: "🏥", color: "border-emerald-500 bg-emerald-50 text-emerald-700" },
-  { id: "BFP", name: "Bureau of Fire Protection", icon: "🚒", color: "border-red-500 bg-red-50 text-red-700" },
-  { id: "PNP", name: "Philippine National Police", icon: "👮", color: "border-blue-500 bg-blue-50 text-blue-700" },
-  { id: "MDRRMO", name: "Municipal Disaster Risk Reduction and Management Office", icon: "🚑", color: "border-orange-500 bg-orange-50 text-orange-700" },
-  { id: "Barangay", name: "Barangay Officials", icon: "🏘️", color: "border-yellow-500 bg-yellow-50 text-yellow-700" }
+  { id: "RHU", name: "Rural Health Unit", icon: "🏥", color: "border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-200" },
+  { id: "BFP", name: "Bureau of Fire Protection", icon: "🚒", color: "border-red-500 dark:border-red-400 bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-200" },
+  { id: "PNP", name: "Philippine National Police", icon: "👮", color: "border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-200" },
+  { id: "MDRRMO", name: "Municipal Disaster Risk Reduction and Management Office", icon: "🚑", color: "border-orange-500 dark:border-orange-400 bg-orange-50 dark:bg-orange-950/50 text-orange-700 dark:text-orange-200" },
+  { id: "Barangay", name: "Barangay Officials", icon: "🏘️", color: "border-yellow-500 dark:border-yellow-400 bg-yellow-50 dark:bg-yellow-950/50 text-yellow-700 dark:text-yellow-200" }
 ];
 
 const ICON_COLOR_MAP = {
@@ -301,7 +301,7 @@ export default function LinkPreview({ isOpen, onClose, report }) {
       id: searchId.substring(0, 8),
       name: searchId,
       icon: "🏢",
-      color: "border-slate-300 bg-slate-50 text-slate-700"
+      color: "border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200"
     };
   });
 
@@ -591,7 +591,7 @@ export default function LinkPreview({ isOpen, onClose, report }) {
                         <span className="text-lg bg-white/70 dark:bg-slate-900/70 px-1.5 py-0.5 rounded border border-black/5 dark:border-slate-700">{agency.icon}</span>
                         <div className="min-w-0">
                           <p className="truncate text-slate-900 dark:text-white font-extrabold leading-tight">{agency.id}</p>
-                          <p className="text-[9px] opacity-75 truncate font-normal mt-0.5">{agency.name}</p>
+                          <p className="text-[9px] opacity-75 dark:opacity-90 truncate font-normal mt-0.5">{agency.name}</p>
                         </div>
                       </div>
                     ))}
