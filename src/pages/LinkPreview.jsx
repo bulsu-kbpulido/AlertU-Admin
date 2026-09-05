@@ -82,7 +82,41 @@ const formatTimestamp = (timestamp) => {
   } catch (err) {
     console.warn('Error formatting timestamp:', err);
   }
-  return 'Date and time unavailable';
+    return 'Date and time unavailable';
+};
+
+// Resolve media from all report shapes used by the backend. Signed stream URLs
+// often have no file extension, so MIME type must be checked before the URL.
+const resolveMediaAsset = (report) => {
+  const candidate =
+    report?.mediaUrl ||
+    report?.imageUrl ||
+    (Array.isArray(report?.media) ? report.media[0] : report?.media) ||
+    (Array.isArray(report?.attachments) ? report.attachments[0] : report?.attachments) ||
+    null;
+
+  const url = typeof candidate === 'string'
+    ? candidate
+    : candidate?.url || candidate?.downloadURL || candidate?.src || null;
+
+  const type = String(
+    (typeof candidate === 'object' && candidate
+      ? candidate.type || candidate.mimeType || candidate.contentType
+      : null) ||
+    report?.mediaType ||
+    report?.mimeType ||
+    report?.contentType ||
+    ''
+  ).toLowerCase();
+
+  const cleanUrl = String(url || '').split('?')[0].split('#')[0];
+  const isVideo = type.startsWith('video/') ||
+    /\.(mp4|webm|ogg|mov|m4v|avi|mpeg|mpg)$/i.test(cleanUrl) ||
+    /[\\/]video[\\/](upload|raw)[\\/]/i.test(String(url || ''));
+  const isAudio = type.startsWith('audio/') ||
+    /\.(mp3|wav|ogg|m4a|aac|webm)$/i.test(cleanUrl);
+
+  return { url, type, isVideo, isAudio };
 };
 
 export default function LinkPreview({ isOpen, onClose, report }) {
@@ -243,10 +277,11 @@ export default function LinkPreview({ isOpen, onClose, report }) {
   });
 
   const reportDateFormatted = formatTimestamp(report.timestamp || report.createdAt);
-  const activeAudioUrl = report.mediaUrl && report.mediaType?.includes('audio') ? report.mediaUrl : null;
+  const { url: mediaUrl, type: mediaType, isVideo, isAudio } = resolveMediaAsset(report);
+  const activeAudioUrl = isAudio && !isVideo ? mediaUrl : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 xl:p-6 bg-slate-950/80 backdrop-blur-md text-slate-800 font-sans antialiased overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 xl:p-6 bg-slate-950/80 backdrop-blur-md text-slate-800 dark:text-slate-100 font-sans antialiased overflow-y-auto">
       
       <div className="hidden">
         <div ref={pulseOverlayRef} className="relative flex items-center justify-center pointer-events-none">
@@ -260,19 +295,19 @@ export default function LinkPreview({ isOpen, onClose, report }) {
       </div>
 
       {/* Expanded Modern Workspace - Desktop Optimized */}
-      <div className="relative w-full max-w-[95vw] xl:max-w-7xl max-h-[92vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200">
+      <div className="relative w-full max-w-[95vw] xl:max-w-7xl max-h-[92vh] bg-white dark:bg-slate-950 rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
         
         <BorderBeam size={350} duration={14} delay={9} colorFrom="#3b82f6" colorTo="#10b981" />
 
         {/* Header Layout */}
-        <header className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+        <header className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 shrink-0">
+            <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900 text-blue-600 dark:text-blue-400 shrink-0">
               <Shield className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
                   Verified Report Details
                 </span>
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border capitalize ${
@@ -284,21 +319,21 @@ export default function LinkPreview({ isOpen, onClose, report }) {
                   {rawStatus}
                 </span>
               </div>
-              <h3 className="text-base font-bold text-slate-900 tracking-tight mt-0.5">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight mt-0.5">
                 Case Preview Reference: #{reportIdentifier}
               </h3>
             </div>
           </div>
 
           <div className="flex items-center gap-3 justify-between sm:justify-end">
-            <div className="flex items-center gap-1.5 text-xs text-slate-600 font-medium bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+            <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300 font-medium bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
               <Clock className="text-slate-400 w-3.5 h-3.5" />
               <span>{reportDateFormatted}</span>
             </div>
             
             <button 
               onClick={onClose} 
-              className="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-all shadow-sm active:scale-95"
+              className="w-8 h-8 flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm active:scale-95"
             >
               <X className="w-4 h-4" />
             </button>
@@ -306,47 +341,56 @@ export default function LinkPreview({ isOpen, onClose, report }) {
         </header>
 
         {/* Main Content Area */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/40">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/40 dark:bg-slate-900/60">
           
           {/* Top Panel Map and Media Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
             {/* Left Media Column */}
             <div className="space-y-2 flex flex-col">
-              <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+              <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
                 <FileText className="text-blue-600 w-4 h-4" /> Photos & Multimedia Reports
               </h4>
 
-              <div className="flex-1 bg-white border border-slate-200 rounded-xl p-3 shadow-sm flex flex-col justify-between min-h-[280px]">
-                {report.mediaUrl && !activeAudioUrl ? (
+              <div className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-sm flex flex-col justify-between min-h-[280px]">
+                {mediaUrl && !activeAudioUrl ? (
                   <div className="relative rounded-lg overflow-hidden bg-slate-950 h-56 flex items-center justify-center">
                     <SensitiveMediaWrapper
-                      key={`${report.id}-${report.mediaUrl}`}
-                      mediaUrl={report.mediaUrl}
+                      key={`${report.id}-${mediaUrl}`}
+                      mediaUrl={mediaUrl}
                       isSensitive={report.isSensitive}
                       topic={report.incidentType || "Incident Scene"}
                     >
-                      {/\.(mp4|webm|ogg|mov)$/i.test(report.mediaUrl.split("?")[0]) ? (
-                        <video src={report.mediaUrl} controls className="w-full h-full object-cover rounded-lg" />
+                      {isVideo ? (
+                        <video
+                          src={mediaUrl}
+                          controls
+                          playsInline
+                          preload="metadata"
+                          className="w-full h-full object-contain rounded-lg bg-black"
+                        >
+                          {mediaType && <source src={mediaUrl} type={mediaType} />}
+                          Your browser does not support this video format.
+                        </video>
                       ) : (
-                        <img src={report.mediaUrl} alt="Incident Evidence" className="w-full h-full object-cover rounded-lg" />
+                        <img src={mediaUrl} alt="Incident Evidence" className="w-full h-full object-contain rounded-lg bg-slate-100 dark:bg-slate-950" />
                       )}
                     </SensitiveMediaWrapper>
                   </div>
                 ) : (
-                  <div className="p-6 border border-dashed border-slate-200 rounded-lg flex flex-col items-center justify-center text-center text-xs text-slate-400 font-medium h-56 bg-slate-50">
+                  <div className="p-6 border border-dashed border-slate-200 dark:border-slate-700 rounded-lg flex flex-col items-center justify-center text-center text-xs text-slate-400 font-medium h-56 bg-slate-50 dark:bg-slate-800/60">
                     <FileText className="w-8 h-8 text-slate-300 mb-2" />
                     <span>No display images attached to this record</span>
                   </div>
                 )}
 
                 {activeAudioUrl && (
-                  <div className="mt-3 pt-3 border-t border-slate-100 bg-slate-50 p-3 rounded-lg flex items-center gap-3">
-                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg shrink-0">
+                  <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 p-3 rounded-lg flex items-center gap-3">
+                    <div className="p-2 bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 rounded-lg shrink-0">
                       <Volume2 className="w-4 h-4" />
                     </div>
                     <div className="flex-1">
-                      <span className="text-[11px] font-bold text-slate-700 block mb-1">Emergency Dispatch Voice Note</span>
+                      <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 block mb-1">Emergency Dispatch Voice Note</span>
                       <audio src={activeAudioUrl} controls className="w-full h-8 accent-blue-600" />
                     </div>
                   </div>
@@ -356,23 +400,23 @@ export default function LinkPreview({ isOpen, onClose, report }) {
 
             {/* Right Map Column */}
             <div className="space-y-2 flex flex-col">
-              <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+              <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
                 <MapPin className="text-blue-600 w-4 h-4" /> Verified Geographic Location
               </h4>
 
-              <div className="flex-1 bg-white border border-slate-200 rounded-xl p-3 shadow-sm flex flex-col justify-between space-y-3 min-h-[280px]">
-                <div className="text-xs bg-slate-50 p-3 rounded-lg border border-slate-100 text-slate-700 flex items-start gap-2">
+              <div className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-sm flex flex-col justify-between space-y-3 min-h-[280px]">
+                <div className="text-xs bg-slate-50 dark:bg-slate-800 p-3 rounded-lg border border-slate-100 dark:border-slate-700 text-slate-700 dark:text-slate-200 flex items-start gap-2">
                   <MapPin className="w-4 h-4 text-rose-500 mt-0.5 shrink-0" />
-                  <span className="font-semibold text-slate-800 break-words">{currentAddress}</span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-100 break-words">{currentAddress}</span>
                 </div>
 
-                <div className="relative rounded-lg overflow-hidden border border-slate-200 h-56">
-                  <div ref={mapRef} className="w-full h-full bg-slate-100" />
+                <div className="relative rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 h-56">
+                  <div ref={mapRef} className="w-full h-full bg-slate-100 dark:bg-slate-800" />
                   <a 
                     href={googleMapsUrl} 
                     target="_blank" 
                     rel="noopener noreferrer" 
-                    className="absolute bottom-3 right-3 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-md backdrop-blur-md transition-all active:scale-95"
+                    className="absolute bottom-3 right-3 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-md backdrop-blur-md transition-all active:scale-95"
                   >
                     <FcGoogle className="text-base" /> <span>Open Google Maps</span>
                   </a>
@@ -385,10 +429,10 @@ export default function LinkPreview({ isOpen, onClose, report }) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
             
             {/* Column 1: Core Content Categorization & Submitter Profile */}
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-5">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between space-y-5">
               
               <div className="space-y-3">
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center gap-1.5">
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center gap-1.5">
                   <FolderHeart className="w-4 h-4 text-blue-600" />
                   <span>Categorization Specifications</span>
                 </h4>
@@ -396,7 +440,7 @@ export default function LinkPreview({ isOpen, onClose, report }) {
                 <div className="space-y-2.5">
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Report Title</span>
-                    <div className="text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg truncate flex items-center gap-2">
+                    <div className="text-xs font-bold text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2 rounded-lg truncate flex items-center gap-2">
                       <FileText className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                       <span className="truncate">{reportTitleText}</span>
                     </div>
@@ -404,7 +448,7 @@ export default function LinkPreview({ isOpen, onClose, report }) {
 
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Incident Type</span>
-                    <div className="text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg truncate flex items-center gap-2">
+                    <div className="text-xs font-bold text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2 rounded-lg truncate flex items-center gap-2">
                       <Tag className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                       <span className="truncate capitalize">{incidentCategory}</span>
                     </div>
@@ -412,7 +456,7 @@ export default function LinkPreview({ isOpen, onClose, report }) {
 
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Hazard Status</span>
-                    <div className="text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg truncate flex items-center gap-2">
+                    <div className="text-xs font-bold text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2 rounded-lg truncate flex items-center gap-2">
                       <AlertTriangle className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                       <span className="truncate capitalize">{hazardType}</span>
                     </div>
@@ -421,18 +465,18 @@ export default function LinkPreview({ isOpen, onClose, report }) {
               </div>
 
               {/* Submitter Info Placement Layout */}
-              <div className="space-y-3 pt-2 border-t border-slate-100">
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+              <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
                   <User className="w-4 h-4 text-slate-700" />
                   <span>Submitter Information</span>
                 </h4>
 
-                <div className="space-y-2 text-xs text-slate-700 bg-slate-50 border border-slate-100 p-3 rounded-xl">
+                <div className="space-y-2 text-xs text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-3 rounded-xl">
                   <div className="flex items-center gap-2.5">
                     <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     <div>
                       <span className="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">Reporter Name</span>
-                      <span className="font-bold text-slate-900 block">{reporterName}</span>
+                      <span className="font-bold text-slate-900 dark:text-white block">{reporterName}</span>
                     </div>
                   </div>
 
@@ -440,7 +484,7 @@ export default function LinkPreview({ isOpen, onClose, report }) {
                     <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     <div className="min-w-0">
                       <span className="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">Email Address</span>
-                      <span className="font-semibold text-slate-800 block truncate">{reporterEmail}</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-100 block truncate">{reporterEmail}</span>
                     </div>
                   </div>
 
@@ -448,7 +492,7 @@ export default function LinkPreview({ isOpen, onClose, report }) {
                     <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     <div>
                       <span className="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">Contact Phone</span>
-                      <span className="font-bold text-slate-900 block tracking-wide">{reporterPhone}</span>
+                      <span className="font-bold text-slate-900 dark:text-white block tracking-wide">{reporterPhone}</span>
                     </div>
                   </div>
                 </div>
