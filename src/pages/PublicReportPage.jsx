@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import 'ol/ol.css';
 import { Map, View } from 'ol';
 import TileLayer from 'ol/layer/Tile';
@@ -25,12 +25,7 @@ import {
   Shield,
   CornerDownRight,
   PhoneCall,
-  MessageSquare,
-  User,
-  Mail,
-  Phone,
-  Building2,
-  FileText
+  MessageSquare
 } from 'lucide-react';
 
 import { DashRing } from "@/components/dash-ring";
@@ -38,8 +33,8 @@ import { DashRing } from "@/components/dash-ring";
 const ICON_COLOR_MAP = {
   'fireicon.png': '#ef4444',
   'floodicon.png': '#3b82f6',
-  'accicon.png': '#a855f7',
-  'caricon.png': '#a855f7',
+  'accicon.png': '#eab308',
+  'caricon.png': '#eab308',
   'quakeicon.png': '#78350f',
   'warnicon.png': '#f97316'
 };
@@ -56,8 +51,40 @@ const getIncidentBadgeStyle = (incidentType) => {
   const normalized = (incidentType || '').trim().toLowerCase();
   if (normalized.includes('fire')) return 'bg-red-600 text-white border-red-700';
   if (normalized.includes('flood')) return 'bg-blue-600 text-white border-blue-700';
-  if (normalized.includes('accident')) return 'bg-purple-600 text-white border-purple-700';
+  if (normalized.includes('accident')) return 'bg-yellow-500 text-slate-900 border-yellow-600';
   return 'bg-orange-600 text-white border-orange-700';
+};
+
+const getVideoMimeType = (url, declaredType = '') => {
+  const type = String(declaredType || '').toLowerCase();
+  if (type.startsWith('video/')) return type;
+
+  let pathValue = String(url || '');
+  try {
+    const parsed = new URL(pathValue, window.location.origin);
+    const storagePath = parsed.searchParams.get('storagePath');
+    if (storagePath) pathValue += ` ${decodeURIComponent(storagePath)}`;
+  } catch (_) {
+    // Fall back to the raw URL for malformed or extensionless URLs.
+  }
+
+  const extension = pathValue.match(/\.(mp4|m4v|webm|ogg|mov|mpeg|mpg)(?:$|[?#\s])/i)?.[1]?.toLowerCase();
+  return {
+    mp4: 'video/mp4',
+    m4v: 'video/mp4',
+    webm: 'video/webm',
+    ogg: 'video/ogg',
+    mov: 'video/quicktime',
+    mpeg: 'video/mpeg',
+    mpg: 'video/mpeg'
+  }[extension] || '';
+};
+
+const isVideoMedia = (url, declaredType = '') => {
+  const value = String(url || '').toLowerCase();
+  return String(declaredType || '').toLowerCase().startsWith('video/') ||
+    Boolean(getVideoMimeType(url, declaredType)) ||
+    /[\\/]video[\\/](upload|raw)[\\/]/i.test(value);
 };
 
 export default function PublicReportPage() {
@@ -70,7 +97,17 @@ export default function PublicReportPage() {
   const mapRef = useRef(null);
   const pulseOverlayRef = useRef(null);
   const mapInstance = useRef(null);
+  const videoRef = useRef(null);
   const [mapPulseColor, setMapPulseColor] = useState('#3b82f6');
+  const [isSensitiveRevealed, setIsSensitiveRevealed] = useState(false);
+  const [videoHasEnded, setVideoHasEnded] = useState(false);
+  const [videoError, setVideoError] = useState(false);
+
+  useEffect(() => {
+    setIsSensitiveRevealed(!report?.isSensitive);
+    setVideoHasEnded(false);
+    setVideoError(false);
+  }, [report?.id, report?.mediaUrl, report?.isSensitive]);
 
   useEffect(() => {
     const fetchSharedTelemetry = async () => {
@@ -244,6 +281,8 @@ export default function PublicReportPage() {
   if (loading) {
     return (
       <div className="relative w-screen h-screen flex flex-col items-center justify-center bg-slate-950 text-slate-100 font-['Roboto',sans-serif] overflow-hidden select-none">
+        
+        {/* Soft Animated Background Glows */}
         <motion.div 
           animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.25, 0.15] }}
           transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
@@ -255,12 +294,14 @@ export default function PublicReportPage() {
           className="absolute -bottom-32 -right-32 w-96 h-96 bg-indigo-600 rounded-full blur-[128px] pointer-events-none"
         />
 
+        {/* Floating Card Container */}
         <motion.div 
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           className="relative z-10 flex flex-col items-center gap-6 p-8 sm:p-10 rounded-3xl bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 shadow-2xl shadow-blue-950/20 max-w-xs text-center"
         >
+          {/* DashRing Icon Container with Glow */}
           <div className="relative flex items-center justify-center">
             <div className="absolute inset-0 rounded-full bg-blue-500/20 blur-md animate-pulse" />
             <DashRing className="h-10 w-10 text-blue-400 relative z-10 shrink-0" />
@@ -298,30 +339,12 @@ export default function PublicReportPage() {
 
   const resolvedMediaUrl = report.mediaUrl || report.media?.url || null;
   const resolvedMediaType = report.mediaType || report.media?.type || '';
-  const resolvedAudioUrl = report.audioUrl || report.voicenoteUrl || report.voiceNoteUrl || report.audio?.url || null;
-  
+  const mediaIsVideo = isVideoMedia(resolvedMediaUrl, resolvedMediaType);
+  const videoMimeType = getVideoMimeType(resolvedMediaUrl, resolvedMediaType);
   const finalLat = Number(report.location?.latitude || report.latitude || 0);
   const finalLng = Number(report.location?.longitude || report.longitude || 0);
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${finalLat},${finalLng}`;
   const displayId = report.verifiedReportId || report.verifiedreportID || report.id || '';
-
-  // Submitter information resolution
-  const submitterName = report.submitterName || report.userName || report.reporterName || report.user?.name || null;
-  const submitterEmail = report.submitterEmail || report.userEmail || report.reporterEmail || report.user?.email || null;
-  const submitterPhone = report.submitterPhone || report.userPhone || report.phoneNumber || report.contactNumber || report.user?.phone || null;
-
-  // Agencies list resolution
-  const agenciesList = Array.isArray(report.selectedAgencies) 
-    ? report.selectedAgencies 
-    : Array.isArray(report.agencies) 
-    ? report.agencies 
-    : typeof report.agencies === 'string' 
-    ? [report.agencies] 
-    : [];
-
-  // Notes resolution (checks Firestore 'notes' field and fallback aliases)
-  const citizenNotesText = report.notes || report.citizenNotes || report.citizenComment || report.citizenRemarks || null;
-  const adminNotesText = report.adminNotes || report.officialAdvisory || report.remarks || null;
 
   return (
     <motion.div 
@@ -403,209 +426,209 @@ export default function PublicReportPage() {
           </div>
         </div>
 
-        {/* RESPONSIVE LAYOUT MATRIX: Column Left (Details) vs Column Right (Media & Map) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* ROW 1: MEDIA & OPENLAYERS MAP */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
           
-          {/* COLUMN LEFT (5 Cols on Desktop) - Detailed Text Metadata */}
-          <div className="col-span-1 lg:col-span-5 space-y-6 flex flex-col order-2 lg:order-1">
-            
-            {/* INCIDENT LOCATION CARD */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-4">
+          {/* EVIDENCE MEDIA */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-80 sm:h-[450px]">
+            <div className="relative w-full h-full bg-slate-950 flex items-center justify-center overflow-hidden">
+              {resolvedMediaUrl ? (
+                mediaIsVideo ? (
+                  <>
+                    {report.isSensitive && !isSensitiveRevealed ? (
+                      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-slate-950/95 p-6 text-center text-white">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500/15 text-red-300 ring-1 ring-red-400/30">
+                          <AlertTriangle className="h-7 w-7" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-bold tracking-wide">Graphic content warning</h3>
+                          <p className="mt-1 max-w-xs text-xs leading-relaxed text-slate-300">
+                            This video may contain disturbing or graphic content. Tap below to reveal and play it.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsSensitiveRevealed(true);
+                            setVideoHasEnded(false);
+                            setVideoError(false);
+                          }}
+                          className="rounded-lg bg-white px-4 py-2 text-xs font-bold text-slate-900 shadow-lg transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-white/70"
+                        >
+                          Click to reveal video
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <video
+                          key={`${resolvedMediaUrl}-${isSensitiveRevealed}`}
+                          ref={videoRef}
+                          autoPlay
+                          muted
+                          playsInline
+                          controls
+                          preload="metadata"
+                          crossOrigin="anonymous"
+                          onPlay={() => setVideoHasEnded(false)}
+                          onEnded={() => setVideoHasEnded(true)}
+                          onError={() => setVideoError(true)}
+                          onCanPlay={() => {
+                            videoRef.current?.play().catch(() => {
+                              // Native controls remain available if autoplay is blocked.
+                            });
+                          }}
+                          className="w-full h-full object-contain"
+                        >
+                          <source src={resolvedMediaUrl} type={videoMimeType || undefined} />
+                          Your browser does not support this video format.
+                        </video>
+
+                        {videoHasEnded && !videoError && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const video = videoRef.current;
+                              if (!video) return;
+                              setVideoHasEnded(false);
+                              video.currentTime = 0;
+                              video.play().catch(() => setVideoError(true));
+                            }}
+                            className="absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white/95 px-4 py-2 text-xs font-bold text-slate-900 shadow-xl transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-white/70"
+                          >
+                            Play again
+                          </button>
+                        )}
+
+                        {videoError && (
+                          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-slate-950/90 p-6 text-center text-white">
+                            <AlertTriangle className="h-7 w-7 text-amber-300" />
+                            <p className="text-xs text-slate-200">This video could not be played in this browser.</p>
+                            <a
+                              href={resolvedMediaUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="rounded-lg bg-white px-4 py-2 text-xs font-bold text-slate-900 hover:bg-slate-200"
+                            >
+                              Open video
+                            </a>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <img src={resolvedMediaUrl} alt="Primary Scene Evidence" className="w-full h-full object-contain" />
+                )
+              ) : (
+                <div className="flex flex-col items-center justify-center text-slate-500 space-y-2 text-center p-6">
+                  <AlertTriangle className="h-8 w-8 text-slate-600 stroke-1" />
+                  <p className="text-xs font-medium tracking-wide">No Primary Visual Media File Uploaded</p>
+                </div>
+              )}
+              
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950/95 via-slate-950/40 to-transparent p-5 pt-12 flex flex-col gap-0.5 z-10">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
+                  <Play className="h-3.5 w-3.5 fill-current text-blue-400" />
+                  <span>Primary Evidentiary Capture</span>
+                </h4>
+                <p className="text-[11px] text-slate-300">Logged via verified source channel</p>
+              </div>
+            </div>
+          </div>
+
+          {/* GEOSPATIAL MAP */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden h-80 sm:h-[450px] relative">
+            <div ref={mapRef} className="w-full h-full bg-slate-100 block" />
+          </div>
+
+        </div>
+
+        {/* ROW 2: DATA STRIPS & METRICS */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          
+          {/* GEOLOCATION METRICS CARD */}
+          <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-4 h-full flex flex-col justify-between">
+            <div className="space-y-4">
               <h3 className="text-xs font-bold tracking-wider text-blue-600 uppercase flex items-center gap-2">
                 <MapPin className="h-4 w-4 shrink-0" /> 
                 <span>Incident Location</span>
               </h3>
               
               <div className="space-y-3">
-                <p className="text-base font-semibold text-slate-900 leading-snug">
-                  {report.location?.address || report.address || 'Address information unverified'}
-                </p>
+                {(report.location?.address || report.address) && (
+                  <p className="text-base font-semibold text-slate-900 leading-snug">
+                    {report.location?.address || report.address}
+                  </p>
+                )}
 
                 <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
                   <code className="text-xs font-mono text-slate-600 block">
                     Coordinates: {finalLat.toFixed(6)}, {finalLng.toFixed(6)}
                   </code>
                 </div>
-
-                <a 
-                  href={googleMapsUrl} 
-                  target="_blank" 
-                  rel="noreferrer" 
-                  className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-sm font-semibold text-slate-700 shadow-xs transition-all cursor-pointer"
-                >
-                  <ExternalLink className="h-4 w-4 shrink-0 text-slate-400" />
-                  <span>Open Google Maps Navigation</span>
-                </a>
               </div>
             </div>
 
-            {/* HAZARD FACTOR */}
+            <div className="pt-4">
+              <a 
+                href={googleMapsUrl} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-sm font-semibold text-slate-700 shadow-xs transition-all cursor-pointer"
+              >
+                <ExternalLink className="h-4 w-4 shrink-0 text-slate-400" />
+                <span>Open Google Maps Navigation</span>
+              </a>
+            </div>
+          </div>
+
+          {/* HAZARDS & NOTES PIPELINE */}
+          <div className="space-y-6 h-full flex flex-col">
+            
+            {/* HAZARD SUMMARY */}
             {report.hazard && (
-              <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex items-center gap-3">
+              <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex items-center gap-3 shrink-0">
                 <div className="p-2 bg-amber-500/10 text-amber-500 rounded-lg shrink-0">
                   <AlertTriangle className="h-5 w-5" />
                 </div>
                 <div>
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Hazard Factor</span>
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Hazard</span>
                   <span className="text-sm font-bold text-slate-900">{report.hazard}</span>
                 </div>
               </div>
             )}
 
-            {/* SUBMITTER INFORMATION CARD */}
-            {(submitterName || submitterEmail || submitterPhone) && (
-              <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-3">
-                <h3 className="text-xs font-bold tracking-wider text-slate-400 uppercase flex items-center gap-2">
-                  <User className="h-4 w-4 text-slate-500" />
-                  <span>Reported By</span>
+            {/* REMARKS VIEWPORT */}
+            {(report.citizenNotes || report.citizenComment || report.citizenRemarks) && (
+              <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-2 flex-1">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-slate-500" />
+                  <span>Citizen Notes</span>
                 </h3>
-                <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 space-y-2.5">
-                  {submitterName && (
-                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                      <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                      <span>{submitterName}</span>
-                    </div>
-                  )}
-                  {submitterEmail && (
-                    <div className="flex items-center gap-2 text-xs font-medium text-slate-600">
-                      <Mail className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                      <span>{submitterEmail}</span>
-                    </div>
-                  )}
-                  {submitterPhone && (
-                    <div className="flex items-center gap-2 text-xs font-medium text-slate-600">
-                      <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                      <span>{submitterPhone}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* AGENCIES INVOLVED */}
-            {agenciesList.length > 0 && (
-              <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-3">
-                <h3 className="text-xs font-bold tracking-wider text-slate-400 uppercase flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-blue-500" />
-                  <span>Responding Agencies</span>
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {agenciesList.map((agency, index) => {
-                    const agencyName = typeof agency === 'object' && agency !== null
-                      ? (agency.name || agency.label || agency.title || agency.id || JSON.stringify(agency))
-                      : String(agency);
-
-                    const agencyKey = typeof agency === 'object' && agency !== null && agency.id 
-                      ? agency.id 
-                      : index;
-
-                    return (
-                      <span 
-                        key={agencyKey}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200"
-                      >
-                        <Building2 className="h-3 w-3 text-slate-400" />
-                        {agencyName}
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* OFFICIAL ADVISORY (ADMIN NOTES) */}
-            {adminNotesText && (
-              <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-3">
-                <h3 className="text-xs font-bold tracking-wider text-slate-400 uppercase flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-blue-500" />
-                  <span>Official Advisory</span>
-                </h3>
-                <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 h-[calc(100%-2rem)] overflow-y-auto">
                   <p className="text-sm text-slate-700 leading-relaxed font-medium whitespace-pre-line">
-                    {adminNotesText}
+                    {report.citizenNotes || report.citizenComment || report.citizenRemarks}
                   </p>
                 </div>
               </div>
             )}
 
-            {/* CITIZEN NOTES (ALWAYS VISIBLE) */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-3">
-              <h3 className="text-xs font-bold tracking-wider text-slate-400 uppercase flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-slate-500" />
-                <span>Citizen Notes</span>
-              </h3>
-              <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
-                {citizenNotesText ? (
-                  <p className="text-sm text-slate-700 leading-relaxed font-medium whitespace-pre-line">
-                    {citizenNotesText}
-                  </p>
-                ) : (
-                  <p className="text-xs font-medium text-slate-400 italic">
-                    No citizen notes provided for this report.
-                  </p>
-                )}
-              </div>
-            </div>
-
-          </div>
-
-          {/* COLUMN RIGHT (7 Cols on Desktop) - Map Canvas & Media Assets */}
-          <div className="col-span-1 lg:col-span-7 space-y-6 order-1 lg:order-2">
-            
-            {/* GEOSPATIAL MAP CANVAS */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden h-80 sm:h-[420px] relative">
-              <div ref={mapRef} className="w-full h-full bg-slate-100 block" />
-            </div>
-
-            {/* EVIDENCE MEDIA */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-              <div className="relative w-full h-72 sm:h-[380px] bg-slate-950 flex items-center justify-center overflow-hidden">
-                {resolvedMediaUrl ? (
-                  resolvedMediaType.toLowerCase().includes('video') || resolvedMediaUrl.toLowerCase().includes('.mp4') ? (
-                    <video src={resolvedMediaUrl} controls className="w-full h-full object-contain" />
-                  ) : (
-                    <img src={resolvedMediaUrl} alt="Primary Scene Evidence" className="w-full h-full object-contain" />
-                  )
-                ) : (
-                  <div className="flex flex-col items-center justify-center text-slate-500 space-y-2 text-center p-6">
-                    <AlertTriangle className="h-8 w-8 text-slate-600 stroke-1" />
-                    <p className="text-xs font-medium tracking-wide">No Primary Visual Media File Uploaded</p>
-                  </div>
-                )}
-                
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950/95 via-slate-950/40 to-transparent p-5 pt-12 flex flex-col gap-0.5 z-10">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
-                    <Play className="h-3.5 w-3.5 fill-current text-blue-400" />
-                    <span>Primary Evidentiary Capture</span>
-                  </h4>
-                  <p className="text-[11px] text-slate-300">Logged via verified source channel</p>
-                </div>
-              </div>
-            </div>
-
-            {/* AUDIO DISPATCH LOGS */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-3">
-              <h3 className="text-xs font-bold tracking-wider text-slate-400 uppercase flex items-center gap-2">
-                <Volume2 className="h-4 w-4 text-purple-500" /> 
-                <span>Incident Audio Dispatch Logs</span>
-              </h3>
-              
-              {resolvedAudioUrl ? (
+            {/* AUDIO DISPATCH PLUGINS */}
+            {(report.audioUrl || report.voicenoteUrl) && (
+              <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-3 shrink-0">
+                <h3 className="text-xs font-bold tracking-wider text-slate-400 uppercase flex items-center gap-2">
+                  <Volume2 className="h-4 w-4 text-purple-500" /> 
+                  <span>Incident Audio Dispatch Logs</span>
+                </h3>
                 <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 flex items-center justify-between gap-4">
                   <audio 
-                    src={resolvedAudioUrl} 
+                    src={report.audioUrl || report.voicenoteUrl} 
                     controls 
                     className="w-full h-8 accent-blue-600" 
                   />
                 </div>
-              ) : (
-                <div className="bg-slate-50 py-4 px-4 text-center rounded-lg border border-dashed border-slate-200">
-                  <p className="text-xs font-medium text-slate-400 italic">
-                    Audio recording track is not available for this incident log.
-                  </p>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
 
           </div>
         </div>
