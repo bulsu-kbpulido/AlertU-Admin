@@ -109,14 +109,41 @@ const resolveMediaAsset = (report) => {
     ''
   ).toLowerCase();
 
-  const cleanUrl = String(url || '').split('?')[0].split('#')[0];
-  const isVideo = type.startsWith('video/') ||
-    /\.(mp4|webm|ogg|mov|m4v|avi|mpeg|mpg)$/i.test(cleanUrl) ||
-    /[\\/]video[\\/](upload|raw)[\\/]/i.test(String(url || ''));
-  const isAudio = type.startsWith('audio/') ||
-    /\.(mp3|wav|ogg|m4a|aac|webm)$/i.test(cleanUrl);
+  const rawUrl = String(url || '');
+  const cleanUrl = rawUrl.split('?')[0].split('#')[0];
 
-  return { url, type, isVideo, isAudio };
+  // Railway/B2 stream URLs are often extensionless, for example:
+  // /api/media/stream?storagePath=incidents/123_clip.mp4
+  // Inspect storagePath as well as the visible URL and MIME type.
+  let storagePath = '';
+  try {
+    const parsedUrl = new URL(rawUrl, 'http://localhost');
+    storagePath = decodeURIComponent(parsedUrl.searchParams.get('storagePath') || '');
+  } catch (_) {
+    // Keep URL-based detection as a safe fallback for malformed URLs.
+  }
+
+  const mediaPath = `${cleanUrl} ${storagePath}`;
+  const extensionMatch = mediaPath.match(/\.(mp4|webm|ogg|mov|m4v|avi|mpeg|mpg)(?:$|[?#\s])/i);
+  const extensionMimeTypes = {
+    mp4: 'video/mp4',
+    webm: 'video/webm',
+    ogg: 'video/ogg',
+    mov: 'video/quicktime',
+    m4v: 'video/mp4',
+    avi: 'video/x-msvideo',
+    mpeg: 'video/mpeg',
+    mpg: 'video/mpeg'
+  };
+  const inferredVideoType = extensionMatch
+    ? extensionMimeTypes[extensionMatch[1].toLowerCase()]
+    : '';
+  const isVideo = type.startsWith('video/') || Boolean(inferredVideoType) ||
+    /[\\/]video[\\/](upload|raw)[\\/]/i.test(rawUrl);
+  const isAudio = type.startsWith('audio/') ||
+    /\.(mp3|wav|ogg|m4a|aac|webm)(?:$|[?#\s])/i.test(mediaPath);
+
+  return { url, type, inferredVideoType, isVideo, isAudio };
 };
 
 export default function LinkPreview({ isOpen, onClose, report }) {
@@ -279,12 +306,12 @@ export default function LinkPreview({ isOpen, onClose, report }) {
   });
 
   const reportDateFormatted = formatTimestamp(report.timestamp || report.createdAt);
-  const { url: mediaUrl, type: mediaType, isVideo, isAudio } = resolveMediaAsset(report);
+  const { url: mediaUrl, type: mediaType, inferredVideoType, isVideo, isAudio } = resolveMediaAsset(report);
   const rawAudio = report.voicenoteUrl || report.voiceNoteUrl || report.audioUrl || null;
   const activeAudioUrl = typeof rawAudio === 'string'
     ? rawAudio
     : rawAudio?.url || (isAudio && !isVideo ? mediaUrl : null);
-  const videoMimeType = mediaType.startsWith('video/') ? mediaType : undefined;
+  const videoMimeType = mediaType.startsWith('video/') ? mediaType : inferredVideoType || undefined;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 xl:p-6 bg-slate-950/80 backdrop-blur-md text-slate-800 dark:text-slate-100 font-sans antialiased overflow-y-auto">
