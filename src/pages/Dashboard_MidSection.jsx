@@ -135,25 +135,29 @@ export default function Dashboard_MidSection({
   }, [metrics, resolvedReports]);
 
   return (
-    <div className="flex flex-col gap-6 w-full">
+    <div className="flex flex-col gap-4 md:gap-5 lg:gap-6 w-full max-w-full min-w-0 box-border overflow-x-hidden">
       {/* 1. Charts Layout Container — Accepts state controls */}
-      <Charts_Wrapper 
-        reports={combinedMidSectionData} 
-        metrics={midSectionMetrics}
-        weeklyPickerType={weeklyPickerType}
-        setWeeklyPickerType={setWeeklyPickerType}
-        weeklyDateValue={weeklyDateValue}
-        setWeeklyDateValue={setWeeklyDateValue}
-      />
+      <div className="w-full min-w-0 flex-1">
+        <Charts_Wrapper 
+          reports={combinedMidSectionData} 
+          metrics={midSectionMetrics}
+          weeklyPickerType={weeklyPickerType}
+          setWeeklyPickerType={setWeeklyPickerType}
+          weeklyDateValue={weeklyDateValue}
+          setWeeklyDateValue={setWeeklyDateValue}
+        />
+      </div>
 
       {/* 2. Table Feed Layout Container — Receives date-filtered data */}
-      <Table_Wrapper 
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        metrics={midSectionMetrics}
-        filteredReports={weeklyDateFilteredReports} 
-        setSelectedReport={setSelectedReport}
-      />
+      <div className="w-full min-w-0 flex-1">
+        <Table_Wrapper 
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          metrics={midSectionMetrics}
+          filteredReports={weeklyDateFilteredReports} 
+          setSelectedReport={setSelectedReport}
+        />
+      </div>
     </div>
   );
 }
