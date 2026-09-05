@@ -590,26 +590,26 @@ export default function LinkPreview({ isOpen, onClose, report }) {
                       >
                         <span className="text-lg bg-white/70 dark:bg-slate-900/70 px-1.5 py-0.5 rounded border border-black/5 dark:border-slate-700">{agency.icon}</span>
                         <div className="min-w-0">
-                          <p className="truncate text-slate-900 font-extrabold leading-tight">{agency.id}</p>
+                          <p className="truncate text-slate-900 dark:text-white font-extrabold leading-tight">{agency.id}</p>
                           <p className="text-[9px] opacity-75 truncate font-normal mt-0.5">{agency.name}</p>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="p-4 text-center text-xs text-slate-400 font-medium bg-slate-50 border border-dashed border-slate-200 rounded-xl">
+                  <div className="p-4 text-center text-xs text-slate-400 dark:text-slate-500 font-medium bg-slate-50 dark:bg-slate-800 border border-dashed border-slate-200 dark:border-slate-700 rounded-xl">
                     No responder channels assigned yet
                   </div>
                 )}
               </div>
 
               {/* Exact output rendering for Citizen Notes */}
-              <div className="space-y-1.5 pt-2 border-t border-slate-100">
-                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                  <MessageSquare className="w-3.5 h-3.5 text-slate-600" />
+              <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider flex items-center gap-1.5">
+                  <MessageSquare className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" />
                   <span>Citizen Notes</span>
                 </span>
-                <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs font-medium text-slate-800 leading-relaxed shadow-inner min-h-[96px] max-h-[140px] overflow-y-auto whitespace-pre-line">
+                <div className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-xs font-medium text-slate-800 dark:text-slate-100 leading-relaxed shadow-inner min-h-[96px] max-h-[140px] overflow-y-auto whitespace-pre-line scrollbar-thin scrollbar-thumb-slate-400 dark:scrollbar-thumb-slate-600 scrollbar-track-slate-100 dark:scrollbar-track-slate-900">
                   {citizenNotesContent}
                 </div>
               </div>
