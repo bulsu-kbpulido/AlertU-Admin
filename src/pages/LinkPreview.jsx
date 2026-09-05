@@ -621,9 +621,9 @@ export default function LinkPreview({ isOpen, onClose, report }) {
         </div>
 
         {/* Action Panel Footer */}
-        <footer className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
-          <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500 font-semibold">
-            <Shield className="text-slate-400 w-4 h-4" />
+        <footer className="px-6 py-4 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+          <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-semibold">
+            <Shield className="text-slate-400 dark:text-slate-500 w-4 h-4" />
             <span>Read-Only Incident Record View</span>
           </div>
 
@@ -631,7 +631,7 @@ export default function LinkPreview({ isOpen, onClose, report }) {
 
             <button 
               onClick={onClose} 
-              className="px-5 py-2 text-xs font-bold uppercase tracking-wider bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md transition-all active:scale-95"
+              className="px-5 py-2 text-xs font-bold uppercase tracking-wider bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white dark:text-slate-950 rounded-xl shadow-md transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-950"
             >
               Close Preview
             </button>
