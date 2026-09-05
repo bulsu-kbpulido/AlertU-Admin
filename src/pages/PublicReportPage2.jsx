@@ -25,7 +25,9 @@ import {
   Shield,
   CornerDownRight,
   PhoneCall,
-  MessageSquare
+  MessageSquare,
+  Eye,
+  RotateCcw
 } from 'lucide-react';
 
 import { DashRing } from "@/components/dash-ring";
@@ -62,6 +64,11 @@ export default function PublicReportPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Video State & Sensitive Blur Handling
+  const [isRevealed, setIsRevealed] = useState(false);
+  const [isVideoEnded, setIsVideoEnded] = useState(false);
+  const videoRef = useRef(null);
+
   const mapRef = useRef(null);
   const pulseOverlayRef = useRef(null);
   const mapInstance = useRef(null);
@@ -76,8 +83,6 @@ export default function PublicReportPage() {
       }
 
       try {
-        // Use the same-origin API path. Vercel rewrites /api/* to Railway
-        // in production, and Vite proxies /api/* during development.
         const response = await fetch(
           `/api/links/verify/${encodeURIComponent(id)}`,
           {
@@ -235,12 +240,17 @@ export default function PublicReportPage() {
     return { date, time };
   }, [report]);
 
-  // Modern Glassmorphism & Smooth Transition Loading State
+  const handleReplayVideo = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play();
+      setIsVideoEnded(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="relative w-screen h-screen flex flex-col items-center justify-center bg-slate-950 text-slate-100 font-['Roboto',sans-serif] overflow-hidden select-none">
-        
-        {/* Soft Animated Background Glows */}
         <motion.div 
           animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.25, 0.15] }}
           transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
@@ -252,14 +262,12 @@ export default function PublicReportPage() {
           className="absolute -bottom-32 -right-32 w-96 h-96 bg-indigo-600 rounded-full blur-[128px] pointer-events-none"
         />
 
-        {/* Floating Card Container */}
         <motion.div 
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           className="relative z-10 flex flex-col items-center gap-6 p-8 sm:p-10 rounded-3xl bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 shadow-2xl shadow-blue-950/20 max-w-xs text-center"
         >
-          {/* DashRing Icon Container with Glow */}
           <div className="relative flex items-center justify-center">
             <div className="absolute inset-0 rounded-full bg-blue-500/20 blur-md animate-pulse" />
             <DashRing className="h-10 w-10 text-blue-400 relative z-10 shrink-0" />
@@ -297,6 +305,9 @@ export default function PublicReportPage() {
 
   const resolvedMediaUrl = report.mediaUrl || report.media?.url || null;
   const resolvedMediaType = report.mediaType || report.media?.type || '';
+  const isVideo = resolvedMediaType.toLowerCase().includes('video') || (resolvedMediaUrl && resolvedMediaUrl.toLowerCase().includes('.mp4'));
+  const isSensitive = Boolean(report.isSensitive);
+
   const finalLat = Number(report.location?.latitude || report.latitude || 0);
   const finalLng = Number(report.location?.longitude || report.longitude || 0);
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${finalLat},${finalLng}`;
@@ -387,13 +398,60 @@ export default function PublicReportPage() {
           
           {/* EVIDENCE MEDIA */}
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-80 sm:h-[450px]">
-            <div className="relative w-full h-full bg-slate-950 flex items-center justify-center overflow-hidden">
+            <div className="relative w-full h-full bg-slate-950 flex items-center justify-center overflow-hidden group">
+              
               {resolvedMediaUrl ? (
-                resolvedMediaType.toLowerCase().includes('video') || resolvedMediaUrl.toLowerCase().includes('.mp4') ? (
-                  <video src={resolvedMediaUrl} controls className="w-full h-full object-contain" />
-                ) : (
-                  <img src={resolvedMediaUrl} alt="Primary Scene Evidence" className="w-full h-full object-contain" />
-                )
+                <>
+                  <div className={`w-full h-full flex items-center justify-center transition-all duration-300 ${isSensitive && !isRevealed ? 'blur-2xl scale-105 select-none pointer-events-none' : 'blur-0'}`}>
+                    {isVideo ? (
+                      <video 
+                        ref={videoRef}
+                        src={resolvedMediaUrl} 
+                        autoPlay 
+                        muted 
+                        playsInline
+                        controls 
+                        onEnded={() => setIsVideoEnded(true)}
+                        className="w-full h-full object-contain" 
+                      />
+                    ) : (
+                      <img src={resolvedMediaUrl} alt="Primary Scene Evidence" className="w-full h-full object-contain" />
+                    )}
+                  </div>
+
+                  {/* Sensitive Content Overlay */}
+                  {isSensitive && !isRevealed && (
+                    <div className="absolute inset-0 z-20 bg-slate-950/70 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
+                      <div className="p-3 bg-red-500/10 text-red-500 rounded-full mb-3 border border-red-500/20">
+                        <AlertTriangle className="h-6 w-6" />
+                      </div>
+                      <h4 className="text-sm font-bold text-white mb-1">Sensitive Content Warning</h4>
+                      <p className="text-xs text-slate-300 max-w-xs mb-4 leading-relaxed">
+                        This media may contain graphic or disturbing material.
+                      </p>
+                      <button
+                        onClick={() => setIsRevealed(true)}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg transition-all cursor-pointer"
+                      >
+                        <Eye className="h-4 w-4" />
+                        <span>Click to Reveal</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Replay Button Overlay for Ended Video */}
+                  {isVideo && isVideoEnded && (!isSensitive || isRevealed) && (
+                    <div className="absolute inset-0 z-20 bg-slate-950/40 flex flex-col items-center justify-center">
+                      <button
+                        onClick={handleReplayVideo}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600/90 hover:bg-blue-600 text-white text-xs font-semibold shadow-lg backdrop-blur-xs transition-all cursor-pointer"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                        <span>Replay Video</span>
+                      </button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="flex flex-col items-center justify-center text-slate-500 space-y-2 text-center p-6">
                   <AlertTriangle className="h-8 w-8 text-slate-600 stroke-1" />
@@ -401,7 +459,7 @@ export default function PublicReportPage() {
                 </div>
               )}
               
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950/95 via-slate-950/40 to-transparent p-5 pt-12 flex flex-col gap-0.5 z-10">
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950/95 via-slate-950/40 to-transparent p-5 pt-12 flex flex-col gap-0.5 z-10 pointer-events-none">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
                   <Play className="h-3.5 w-3.5 fill-current text-blue-400" />
                   <span>Primary Evidentiary Capture</span>
