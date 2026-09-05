@@ -133,34 +133,34 @@ export default function GeneratedLink({
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm font-sans text-slate-800 antialiased transition-opacity duration-300"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm font-sans text-slate-800 dark:text-slate-100 antialiased transition-opacity duration-300"
       onClick={onClose}
     >
       {/* Modal Container */}
       <div 
-        className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden transform transition-all duration-300 scale-100 animate-in zoom-in-95"
+        className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden transform transition-all duration-300 scale-100 animate-in zoom-in-95"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Decorative Top Color Bar */}
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-500" />
 
         {/* Header Section */}
-        <header className="px-6 py-5 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+        <header className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/70 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`p-2 rounded-lg border ${
               target === 'citizen' 
-                ? 'bg-blue-50 border-blue-100 text-blue-600' 
-                : 'bg-emerald-50 border-emerald-100 text-emerald-600'
+                ? 'bg-blue-50 dark:bg-blue-950/50 border-blue-100 dark:border-blue-800 text-blue-600 dark:text-blue-400' 
+                : 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-100 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400'
             }`}>
               {target === 'citizen' ? <Globe className="w-5 h-5" /> : <ShieldCheck className="w-5 h-5" />}
             </div>
             <div>
               <span className={`block text-[11px] font-bold uppercase tracking-wider ${
-                target === 'citizen' ? 'text-blue-600' : 'text-emerald-600'
+                target === 'citizen'                 ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400'
               }`}>
                 {target === 'citizen' ? 'Public View Link' : 'Internal Team Link'}
               </span>
-              <h3 className="text-base font-bold text-slate-900 tracking-tight mt-0.5">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight mt-0.5">
                 Link is Ready
               </h3>
             </div>
@@ -168,7 +168,7 @@ export default function GeneratedLink({
 
           <button 
             onClick={onClose} 
-            className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all shadow-sm active:scale-95"
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-300 hover:text-slate-600 dark:hover:text-white transition-all shadow-sm active:scale-95"
             aria-label="Close"
           >
             <X className="w-4 h-4" />
@@ -176,8 +176,8 @@ export default function GeneratedLink({
         </header>
 
         {/* Main Body Content */}
-        <div className="p-6 space-y-5 bg-white">
-          <p className="text-xs text-slate-500 font-medium leading-relaxed">
+        <div className="p-6 space-y-5 bg-white dark:bg-slate-900">
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
             {target === 'citizen' 
               ? 'This link is safe for the public. All private team notes, secret locations, and personal staff details have been hidden.' 
               : 'This link is for internal team members only. It includes full map coordinates, private logs, and agency files.'}
@@ -185,19 +185,19 @@ export default function GeneratedLink({
 
           {/* Link Input and Buttons */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wide block">
+            <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide block">
               Shareable Web Link
             </label>
             <div className="flex items-center gap-2">
               <div className="relative flex-1 flex items-center">
-                <div className="absolute left-3.5 text-slate-400 pointer-events-none">
+                  <div className="absolute left-3.5 text-slate-400 dark:text-slate-500 pointer-events-none">
                   <Link2 className="w-4 h-4" />
                 </div>
                 <input
                   type="text"
                   readOnly
                   value={isLoading ? 'Creating your link now...' : shortLink}
-                  className="w-full bg-slate-50 border border-slate-200 text-xs font-mono text-slate-600 pl-10 pr-4 py-2.5 rounded-lg select-all focus:outline-none focus:border-slate-300"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono text-slate-600 dark:text-slate-200 pl-10 pr-4 py-2.5 rounded-lg select-all focus:outline-none focus:border-slate-300 dark:focus:border-slate-500"
                 />
               </div>
 
@@ -207,7 +207,7 @@ export default function GeneratedLink({
                   onClick={handleCopy}
                   disabled={isLoading || !shortLink}
                   title="Copy link"
-                  className="h-9 px-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-slate-900 rounded-lg transition-all shadow-sm active:scale-95 disabled:opacity-40 flex items-center justify-center"
+                  className="h-9 px-3 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-lg transition-all shadow-sm active:scale-95 disabled:opacity-40 flex items-center justify-center"
                 >
                   {isCopied ? (
                     <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
@@ -222,7 +222,7 @@ export default function GeneratedLink({
                     target="_blank"
                     rel="noreferrer"
                     title="Open link preview"
-                    className="h-9 px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-900 rounded-lg transition-all shadow-sm active:scale-95 flex items-center justify-center"
+                    className="h-9 px-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-lg transition-all shadow-sm active:scale-95 flex items-center justify-center"
                   >
                     <ExternalLink className="w-4 h-4" />
                   </a>
@@ -234,15 +234,15 @@ export default function GeneratedLink({
           {/* Status Box */}
           <div className={`p-3.5 rounded-xl border flex items-center gap-3 transition-colors duration-300 ${
             isLoading 
-              ? 'bg-amber-50/60 border-amber-100 text-amber-800' 
-              : 'bg-emerald-50/50 border-emerald-100 text-emerald-800'
+              ? 'bg-amber-50/60 dark:bg-amber-950/40 border-amber-100 dark:border-amber-800 text-amber-800 dark:text-amber-200' 
+              : 'bg-emerald-50/50 dark:bg-emerald-950/40 border-emerald-100 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200'
           }`}>
             <div className="relative flex items-center justify-center">
               {isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
+                <Loader2 className="w-4 h-4 animate-spin text-amber-600 dark:text-amber-400" />
               ) : (
                 <>
-                  <Radio className="w-4 h-4 text-emerald-600 animate-pulse relative z-10" />
+                  <Radio className="w-4 h-4 text-emerald-600 dark:text-emerald-400 animate-pulse relative z-10" />
                   <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-30 animate-ping" />
                 </>
               )}
@@ -256,10 +256,10 @@ export default function GeneratedLink({
         </div>
 
         {/* Footer Actions */}
-        <footer className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+        <footer className="px-6 py-4 bg-slate-50 dark:bg-slate-950/70 border-t border-slate-100 dark:border-slate-800 flex justify-end">
           <button 
             onClick={onClose}
-            className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg shadow-md hover:shadow-lg transition-all active:scale-95"
+            className="px-5 py-2 bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 text-xs font-bold rounded-lg shadow-md hover:shadow-lg transition-all active:scale-95"
           >
             Done
           </button>
