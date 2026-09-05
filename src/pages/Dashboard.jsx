@@ -247,7 +247,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="w-full h-[calc(100dvh-6.75rem)] relative overflow-hidden box-border p-0 m-0">
+    <div className="w-full min-h-[calc(100vh-6.75rem)] lg:h-[calc(100dvh-6.75rem)] relative overflow-hidden box-border p-0 m-0">
       <Dashboard_Wrapper ref={wrapperRef}>
         
         {/* OVERVIEW PANEL (0) */}
@@ -265,8 +265,8 @@ export default function Dashboard() {
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5 items-stretch min-h-0">
-            <div className="lg:col-span-7 xl:col-span-8 w-full h-[520px] sm:h-[560px] lg:h-[580px] 2xl:h-[620px] flex flex-col">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5 items-stretch flex-1 min-h-[500px]">
+            <div className="lg:col-span-7 xl:col-span-8 w-full h-[450px] sm:h-[500px] md:h-[520px] lg:h-full flex flex-col min-h-[400px]">
               <DashboardMap 
                 liveReports={processedReports} 
                 selectedReport={selectedReport}
@@ -275,7 +275,7 @@ export default function Dashboard() {
               />
             </div>
 
-            <div className="lg:col-span-5 xl:col-span-4 w-full h-[520px] sm:h-[560px] lg:h-[580px] 2xl:h-[620px] flex flex-col gap-3 min-h-0">
+            <div className="lg:col-span-5 xl:col-span-4 w-full h-[500px] sm:h-[520px] lg:h-full flex flex-col gap-3 min-h-[400px]">
               <div className="shrink-0">
                 <Dashboard_Searchbar
                   searchTerminalQuery={searchTerminalQuery}
@@ -293,13 +293,15 @@ export default function Dashboard() {
                 />
               </div>
               
-              <ReportDetailsPanel 
-                reportsList={processedReports} 
-                selectedReport={selectedReport} 
-                setSelectedReport={setSelectedReport} 
-                loading={loading}
-                onViewClick={openDossierModal} 
-              />
+              <div className="flex-1 min-h-0">
+                <ReportDetailsPanel 
+                  reportsList={processedReports} 
+                  selectedReport={selectedReport} 
+                  setSelectedReport={setSelectedReport} 
+                  loading={loading}
+                  onViewClick={openDossierModal} 
+                />
+              </div>
             </div>
           </div>
         </div>
