@@ -126,10 +126,12 @@ export default function LinkPreview({ isOpen, onClose, report }) {
 
   const [isRevealed, setIsRevealed] = useState(false);
   const [mapPulseColor, setMapPulseColor] = useState('#3b82f6');
+  const [mediaError, setMediaError] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setIsRevealed(false);
+      setMediaError(false);
     }
   }, [isOpen, report?.id]);
 
@@ -278,7 +280,11 @@ export default function LinkPreview({ isOpen, onClose, report }) {
 
   const reportDateFormatted = formatTimestamp(report.timestamp || report.createdAt);
   const { url: mediaUrl, type: mediaType, isVideo, isAudio } = resolveMediaAsset(report);
-  const activeAudioUrl = isAudio && !isVideo ? mediaUrl : null;
+  const rawAudio = report.voicenoteUrl || report.voiceNoteUrl || report.audioUrl || null;
+  const activeAudioUrl = typeof rawAudio === 'string'
+    ? rawAudio
+    : rawAudio?.url || (isAudio && !isVideo ? mediaUrl : null);
+  const videoMimeType = mediaType.startsWith('video/') ? mediaType : undefined;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 xl:p-6 bg-slate-950/80 backdrop-blur-md text-slate-800 dark:text-slate-100 font-sans antialiased overflow-y-auto">
@@ -361,17 +367,32 @@ export default function LinkPreview({ isOpen, onClose, report }) {
                       isSensitive={report.isSensitive}
                       topic={report.incidentType || "Incident Scene"}
                     >
-                      {isVideo ? (
+                      {isVideo && !mediaError ? (
                         <video
-                          src={mediaUrl}
+                          key={`${mediaUrl}-${mediaType}`}
                           controls
                           playsInline
                           preload="metadata"
+                          crossOrigin="anonymous"
                           className="w-full h-full object-contain rounded-lg bg-black"
+                          onError={() => setMediaError(true)}
                         >
-                          {mediaType && <source src={mediaUrl} type={mediaType} />}
+                          <source src={mediaUrl} type={videoMimeType} />
                           Your browser does not support this video format.
                         </video>
+                      ) : isVideo && mediaError ? (
+                        <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-slate-950 p-6 text-center text-white">
+                          <AlertTriangle className="h-8 w-8 text-amber-400" />
+                          <p className="text-sm font-semibold">This video cannot be decoded by the browser.</p>
+                          <a
+                            href={mediaUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-lg bg-white/10 px-3 py-2 text-xs font-semibold text-white hover:bg-white/20"
+                          >
+                            Open or download video
+                          </a>
+                        </div>
                       ) : (
                         <img src={mediaUrl} alt="Incident Evidence" className="w-full h-full object-contain rounded-lg bg-slate-100 dark:bg-slate-950" />
                       )}
@@ -500,16 +521,16 @@ export default function LinkPreview({ isOpen, onClose, report }) {
             </div>
 
             {/* Column 2: Incident Narrative Logs */}
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between space-y-4">
               <div className="flex-1 flex flex-col">
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center justify-between">
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center justify-between">
                   <span>Incident Details</span>
                   <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold border uppercase tracking-wider ${
                     rawSeverity === 'high' || rawSeverity === 'critical'
-                      ? 'bg-rose-50 border-rose-100 text-rose-700'
+                      ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-100 dark:border-rose-800 text-rose-700 dark:text-rose-300'
                       : rawSeverity === 'medium'
-                      ? 'bg-amber-50 border-amber-100 text-amber-700'
-                      : 'bg-blue-50 border-blue-100 text-blue-700'
+                      ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-100 dark:border-amber-800 text-amber-700 dark:text-amber-300'
+                      : 'bg-blue-50 dark:bg-blue-950/40 border-blue-100 dark:border-blue-800 text-blue-700 dark:text-blue-300'
                   }`}>
                     {rawSeverity} Severity
                   </span>
@@ -517,7 +538,7 @@ export default function LinkPreview({ isOpen, onClose, report }) {
 
                 <div className="mt-4 flex-1 flex flex-col">
                   <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider mb-1.5">Narrative Log</span>
-                  <div className="text-xs text-slate-700 bg-slate-50 border border-slate-200 p-4 rounded-xl leading-relaxed whitespace-pre-line flex-1 min-h-[220px]">
+                  <div className="text-xs text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-xl leading-relaxed whitespace-pre-line flex-1 min-h-[220px]">
                     {incidentNotes}
                   </div>
                 </div>
@@ -525,10 +546,10 @@ export default function LinkPreview({ isOpen, onClose, report }) {
             </div>
 
             {/* Column 3: Active Selected Dispatch Channels & Citizen Notes */}
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between space-y-4">
               
               <div className="space-y-3">
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center justify-between">
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center justify-between">
                   <span>Assigned Emergency Channels</span>
                   <Building className="text-blue-600 w-4 h-4" />
                 </h4>
@@ -540,7 +561,7 @@ export default function LinkPreview({ isOpen, onClose, report }) {
                         key={idx} 
                         className={`px-3 py-2 rounded-xl border flex items-center gap-3 transition-all text-xs font-bold shadow-sm ${agency.color}`}
                       >
-                        <span className="text-lg bg-white/70 px-1.5 py-0.5 rounded border border-black/5">{agency.icon}</span>
+                        <span className="text-lg bg-white/70 dark:bg-slate-900/70 px-1.5 py-0.5 rounded border border-black/5 dark:border-slate-700">{agency.icon}</span>
                         <div className="min-w-0">
                           <p className="truncate text-slate-900 font-extrabold leading-tight">{agency.id}</p>
                           <p className="text-[9px] opacity-75 truncate font-normal mt-0.5">{agency.name}</p>
