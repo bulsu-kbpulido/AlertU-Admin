@@ -30,7 +30,10 @@ import {
   Mail,
   Phone,
   Building2,
-  FileText
+  FileText,
+  RotateCcw,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 import { DashRing } from "@/components/dash-ring";
@@ -70,7 +73,11 @@ export default function PublicReportPage() {
   const mapRef = useRef(null);
   const pulseOverlayRef = useRef(null);
   const mapInstance = useRef(null);
+  const videoRef = useRef(null);
+
   const [mapPulseColor, setMapPulseColor] = useState('#3b82f6');
+  const [isVideoEnded, setIsVideoEnded] = useState(false);
+  const [isRevealed, setIsRevealed] = useState(false);
 
   useEffect(() => {
     const fetchSharedTelemetry = async () => {
@@ -81,8 +88,6 @@ export default function PublicReportPage() {
       }
 
       try {
-        // Use the same-origin API path. Vercel rewrites /api/* to Railway
-        // in production, and Vite proxies /api/* during development.
         const response = await fetch(
           `/api/links/verify/${encodeURIComponent(id)}`,
           {
@@ -240,7 +245,14 @@ export default function PublicReportPage() {
     return { date, time };
   }, [report]);
 
-  // Modern Glassmorphism & Smooth Transition Loading State
+  const handleReplayVideo = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play();
+      setIsVideoEnded(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="relative w-screen h-screen flex flex-col items-center justify-center bg-slate-950 text-slate-100 font-['Roboto',sans-serif] overflow-hidden select-none">
@@ -300,17 +312,18 @@ export default function PublicReportPage() {
   const resolvedMediaType = report.mediaType || report.media?.type || '';
   const resolvedAudioUrl = report.audioUrl || report.voicenoteUrl || report.voiceNoteUrl || report.audio?.url || null;
   
+  const isSensitiveContent = Boolean(report.isSensitive || report.sensitive);
+  const isVideoMedia = resolvedMediaType.toLowerCase().includes('video') || (resolvedMediaUrl && resolvedMediaUrl.toLowerCase().includes('.mp4'));
+
   const finalLat = Number(report.location?.latitude || report.latitude || 0);
   const finalLng = Number(report.location?.longitude || report.longitude || 0);
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${finalLat},${finalLng}`;
   const displayId = report.verifiedReportId || report.verifiedreportID || report.id || '';
 
-  // Submitter information resolution
   const submitterName = report.submitterName || report.userName || report.reporterName || report.user?.name || null;
   const submitterEmail = report.submitterEmail || report.userEmail || report.reporterEmail || report.user?.email || null;
   const submitterPhone = report.submitterPhone || report.userPhone || report.phoneNumber || report.contactNumber || report.user?.phone || null;
 
-  // Agencies list resolution
   const agenciesList = Array.isArray(report.selectedAgencies) 
     ? report.selectedAgencies 
     : Array.isArray(report.agencies) 
@@ -319,7 +332,6 @@ export default function PublicReportPage() {
     ? [report.agencies] 
     : [];
 
-  // Notes resolution (checks Firestore 'notes' field and fallback aliases)
   const citizenNotesText = report.notes || report.citizenNotes || report.citizenComment || report.citizenRemarks || null;
   const adminNotesText = report.adminNotes || report.officialAdvisory || report.remarks || null;
 
@@ -382,6 +394,11 @@ export default function PublicReportPage() {
                     {report.severity} Severity
                   </span>
                 )}
+                {isSensitiveContent && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-bold bg-red-100 text-red-700 border border-red-200 uppercase">
+                    Sensitive Content
+                  </span>
+                )}
               </div>
               
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900">
@@ -403,10 +420,10 @@ export default function PublicReportPage() {
           </div>
         </div>
 
-        {/* RESPONSIVE LAYOUT MATRIX: Column Left (Details) vs Column Right (Media & Map) */}
+        {/* RESPONSIVE LAYOUT MATRIX */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
-          {/* COLUMN LEFT (5 Cols on Desktop) - Detailed Text Metadata */}
+          {/* COLUMN LEFT */}
           <div className="col-span-1 lg:col-span-5 space-y-6 flex flex-col order-2 lg:order-1">
             
             {/* INCIDENT LOCATION CARD */}
@@ -528,7 +545,7 @@ export default function PublicReportPage() {
               </div>
             )}
 
-            {/* CITIZEN NOTES (ALWAYS VISIBLE) */}
+            {/* CITIZEN NOTES */}
             <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-3">
               <h3 className="text-xs font-bold tracking-wider text-slate-400 uppercase flex items-center gap-2">
                 <MessageSquare className="h-4 w-4 text-slate-500" />
@@ -549,7 +566,7 @@ export default function PublicReportPage() {
 
           </div>
 
-          {/* COLUMN RIGHT (7 Cols on Desktop) - Map Canvas & Media Assets */}
+          {/* COLUMN RIGHT */}
           <div className="col-span-1 lg:col-span-7 space-y-6 order-1 lg:order-2">
             
             {/* GEOSPATIAL MAP CANVAS */}
@@ -557,15 +574,67 @@ export default function PublicReportPage() {
               <div ref={mapRef} className="w-full h-full bg-slate-100 block" />
             </div>
 
-            {/* EVIDENCE MEDIA */}
+            {/* EVIDENCE MEDIA WITH AUTOPLAY & SENSITIVE BLUR */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
               <div className="relative w-full h-72 sm:h-[380px] bg-slate-950 flex items-center justify-center overflow-hidden">
                 {resolvedMediaUrl ? (
-                  resolvedMediaType.toLowerCase().includes('video') || resolvedMediaUrl.toLowerCase().includes('.mp4') ? (
-                    <video src={resolvedMediaUrl} controls className="w-full h-full object-contain" />
-                  ) : (
-                    <img src={resolvedMediaUrl} alt="Primary Scene Evidence" className="w-full h-full object-contain" />
-                  )
+                  <>
+                    <div className={`w-full h-full flex items-center justify-center transition-all duration-300 ${isSensitiveContent && !isRevealed ? 'blur-2xl scale-105 pointer-events-none' : ''}`}>
+                      {isVideoMedia ? (
+                        <video
+                          ref={videoRef}
+                          src={resolvedMediaUrl}
+                          autoPlay
+                          muted
+                          playsInline
+                          controls
+                          onEnded={() => setIsVideoEnded(true)}
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <img 
+                          src={resolvedMediaUrl} 
+                          alt="Primary Scene Evidence" 
+                          className="w-full h-full object-contain" 
+                        />
+                      )}
+                    </div>
+
+                    {/* SENSITIVE BLUR OVERLAY */}
+                    {isSensitiveContent && !isRevealed && (
+                      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-950/60 p-6 text-center backdrop-blur-md">
+                        <div className="p-3 bg-red-500/20 text-red-400 rounded-full mb-3 border border-red-500/30">
+                          <EyeOff className="h-6 w-6" />
+                        </div>
+                        <h5 className="text-sm font-bold text-white mb-1">Sensitive Content Warning</h5>
+                        <p className="text-xs text-slate-300 max-w-xs mb-4">
+                          This media may contain sensitive or graphic content related to the incident.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setIsRevealed(true)}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-white text-slate-900 rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer"
+                        >
+                          <Eye className="h-4 w-4" />
+                          <span>Click to Reveal Media</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* REPEAT BUTTON OVERLAY FOR VIDEO */}
+                    {isVideoMedia && isVideoEnded && (!isSensitiveContent || isRevealed) && (
+                      <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-950/40 backdrop-blur-xs">
+                        <button
+                          type="button"
+                          onClick={handleReplayVideo}
+                          className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg hover:scale-105 cursor-pointer"
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                          <span>Play Again</span>
+                        </button>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <div className="flex flex-col items-center justify-center text-slate-500 space-y-2 text-center p-6">
                     <AlertTriangle className="h-8 w-8 text-slate-600 stroke-1" />
@@ -573,7 +642,7 @@ export default function PublicReportPage() {
                   </div>
                 )}
                 
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950/95 via-slate-950/40 to-transparent p-5 pt-12 flex flex-col gap-0.5 z-10">
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950/95 via-slate-950/40 to-transparent p-5 pt-12 flex flex-col gap-0.5 z-10 pointer-events-none">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
                     <Play className="h-3.5 w-3.5 fill-current text-blue-400" />
                     <span>Primary Evidentiary Capture</span>
