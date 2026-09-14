@@ -4,15 +4,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { joinSocketRoom, leaveSocketRoom, emitCallEnded, getSocket } from '../socket';
 
 // Lucide React Icons
-import { 
-  Mic, 
-  MicOff, 
-  PhoneOff, 
-  Minimize2, 
-  Maximize2, 
-  Clock, 
-  ShieldAlert, 
-  User, 
+import {
+  Mic,
+  MicOff,
+  PhoneOff,
+  Minimize2,
+  Maximize2,
+  Clock,
+  ShieldAlert,
+  User,
   AlertCircle,
   Radio,
     GripHorizontal,
@@ -38,7 +38,7 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
     const localTracksRef = useRef({ micTrack: null, cameraTrack: null });
 
   const isInitializingRef = useRef(false);
-  
+
   // Dynamic citizen info state
   const [citizenInfo, setCitizenInfo] = useState({
     citizenId: initialCitizenId || '',
@@ -86,7 +86,7 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
   // 💾 RECORD CALL HISTORY TO FIRESTORE
   const saveCallHistory = useCallback(async (endedByReason = 'admin') => {
     const resolvedBackendUrl = backendUrl || import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
-    
+
     let durationSeconds = 0;
     if (callStartTimeRef.current) {
       durationSeconds = Math.floor((Date.now() - callStartTimeRef.current) / 1000);
@@ -158,11 +158,11 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
       emitCallEnded(targetRoom, targetRoom);
       leaveSocketRoom(targetRoom);
     }
-    
+
     // Save history to backend / Firestore endpoint
     await saveCallHistory(endedByReason);
     await leaveCallCleanup();
-    
+
     if (onCloseRef.current) onCloseRef.current();
   }, [targetRoom, leaveCallCleanup, saveCallHistory]);
 
@@ -252,7 +252,7 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
     const handleUserPublished = async (user, mediaType) => {
       try {
         await client.subscribe(user, mediaType);
-        
+
         if (mediaType === 'video' && isMounted) {
           // Force high-stream 360p remote stream decoding (Stream type 0 = High stream)
           try {
@@ -267,7 +267,17 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
         }
 
         if (mediaType === 'audio') {
-          user.audioTrack?.play();
+          if (user.audioTrack) {
+            try {
+              user.audioTrack.setVolume(100);
+              user.audioTrack.play();
+            } catch (audioErr) {
+              console.warn("⚠️ Remote audio playback error:", audioErr);
+            }
+          }
+          if (isMounted) {
+            setCallConnected(true);
+          }
         }
       } catch (subErr) {
         console.error("❌ Subscription error:", subErr);
@@ -478,8 +488,8 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={isDragging ? { duration: 0 } : { duration: 0.2 }}
           className={`relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-700 ${
-            isMinimized 
-              ? 'w-[340px] border-2 border-slate-300 shadow-xl' 
+            isMinimized
+              ? 'w-[340px] border-2 border-slate-300 shadow-xl'
               : 'w-full max-w-5xl max-h-[92vh]'
           }`}
         >

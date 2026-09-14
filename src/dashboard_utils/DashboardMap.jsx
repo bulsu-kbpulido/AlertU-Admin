@@ -18,9 +18,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { easeOut } from 'ol/easing';
 
 // Firebase & Socket Imports
-import { db } from '../firebase'; 
+import { db } from '../firebase';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { socket, joinSocketRoom, leaveSocketRoom } from '../socket';
+import { useActiveReportsStore } from '../useActiveReportsStore';
 
 const iconColorMap = {
   'fireicon.png': '#ef4444',
@@ -53,17 +54,17 @@ const MapPulse = ({ map, coordinate, color }) => {
 
   useEffect(() => {
     if (!map || !elRef.current || !coordinate) return;
-    
+
     const overlay = new Overlay({
       element: elRef.current,
       position: fromLonLat([Number(coordinate[0]), Number(coordinate[1])]),
-      positioning: 'center-center', 
-      stopEvent: false, 
-      insertFirst: true 
+      positioning: 'center-center',
+      stopEvent: false,
+      insertFirst: true
     });
-    
+
     map.addOverlay(overlay);
-    
+
     return () => {
       if (map && overlay) {
         map.removeOverlay(overlay);
@@ -72,10 +73,10 @@ const MapPulse = ({ map, coordinate, color }) => {
   }, [map, coordinate]);
 
   return (
-    <div 
-      ref={elRef} 
+    <div
+      ref={elRef}
       className="pointer-events-none absolute"
-      style={{ transform: 'translate(-50%, -50%)' }} 
+      style={{ transform: 'translate(-50%, -50%)' }}
     >
       <motion.div
         initial={{ scale: 0, opacity: 0.85 }}
@@ -93,14 +94,15 @@ const MapPulse = ({ map, coordinate, color }) => {
   );
 };
 
-export default function DashboardMap({ selectedReport, setSelectedReport, mapTargetCoords }) {
+export default function DashboardMap({ liveReports: liveReportsProp, selectedReport, setSelectedReport, mapTargetCoords }) {
   const mapRef = useRef(null);
   const popupRef = useRef(null);
-  
+
   const [mapInstance, setMapInstance] = useState(null);
+  const storeActiveReports = useActiveReportsStore((state) => state.activeReports);
   const [liveReports, setLiveReports] = useState([]);
   const [activeHoverData, setActiveHoverData] = useState(null);
-  
+
   const vectorSourceRef = useRef(null);
   const popupOverlayRef = useRef(null);
 
@@ -108,7 +110,7 @@ export default function DashboardMap({ selectedReport, setSelectedReport, mapTar
   const formatReportDateTime = (report) => {
     const raw = report?.timestamp || report?.createdAt || report?.created_at;
     if (!raw) return 'Unknown date and time';
-    
+
     try {
       let dateObj;
       if (typeof raw.toDate === 'function') dateObj = raw.toDate();
@@ -141,14 +143,14 @@ export default function DashboardMap({ selectedReport, setSelectedReport, mapTar
       element: popupRef.current,
       autoPan: false,
       positioning: 'bottom-center',
-      offset: [0, -60], 
+      offset: [0, -60],
       stopEvent: false
     });
     popupOverlayRef.current = popupOverlay;
 
     const map = new Map({
       target: mapRef.current,
-      controls: [], 
+      controls: [],
       layers: [
         new TileLayer({ source: new OSM({ crossOrigin: 'anonymous' }) }),
         new VectorLayer({ source: vectorSource })
@@ -156,7 +158,7 @@ export default function DashboardMap({ selectedReport, setSelectedReport, mapTar
       overlays: [popupOverlay],
       view: new View({
         center: fromLonLat([120.7842, 14.8236]), // Centered at Paombong, Bulacan
-        zoom: 14 
+        zoom: 14
       })
     });
 
@@ -169,7 +171,7 @@ export default function DashboardMap({ selectedReport, setSelectedReport, mapTar
         const report = feature.get('reportData');
         const geometry = feature.getGeometry();
         map.getTargetElement().style.cursor = 'pointer';
-        
+
         if (geometry && geometry.getType() === 'Point') {
           popupOverlay.setPosition(geometry.getCoordinates());
         } else {
@@ -222,7 +224,7 @@ export default function DashboardMap({ selectedReport, setSelectedReport, mapTar
 
     const handleSocketIncident = (newIncident) => {
       if (!newIncident) return;
-      
+
       const formattedIncident = {
         id: newIncident.id || `socket-${Date.now()}`,
         source: 'socket',
@@ -251,51 +253,23 @@ export default function DashboardMap({ selectedReport, setSelectedReport, mapTar
     };
   }, []);
 
-  // 3. Real-time Firebase Firestore Stream
+  // 3. Real-time Reports Synchronization (Shared Source of Truth with Notifications)
   useEffect(() => {
-    let approvedList = [];
-    let adminList = [];
-
-    const handleNewIncomingIncidents = (combinedList) => {
-      setLiveReports(combinedList);
-    };
-
-    const unsubApproved = onSnapshot(collection(db, 'approved_reports'), (snapshot) => {
-      approvedList = snapshot.docs.map(doc => {
-        const data = doc.data();
-        const type = data.incidentType || data.hazardType || data.hazard || data.type || 'general';
-        return {
-          id: doc.id,
-          source: 'approved',
-          incidentType: type,
-          selectedMarkerIcon: data.selectedMarkerIcon || resolveIconFromType(type),
-          ...data
-        };
-      });
-      handleNewIncomingIncidents([...approvedList, ...adminList]);
-    }, (err) => console.error("Firestore approved_reports stream error:", err));
-
-    const adminQuery = query(collection(db, 'ApprovedAdminReports'), where('isAuthenticated', '==', true));
-    const unsubAdmin = onSnapshot(adminQuery, (snapshot) => {
-      adminList = snapshot.docs.map(doc => {
-        const data = doc.data();
-        const type = data.incidentType || data.hazardType || data.hazard || data.type || 'general';
-        return {
-          id: doc.id,
-          source: 'admin',
-          incidentType: type,
-          selectedMarkerIcon: data.selectedMarkerIcon || resolveIconFromType(type),
-          ...data
-        };
-      });
-      handleNewIncomingIncidents([...approvedList, ...adminList]);
-    }, (err) => console.error("Firestore ApprovedAdminReports stream error:", err));
-
-    return () => {
-      unsubApproved();
-      unsubAdmin();
-    };
+    // Reference-counted subscription to unified store across active collections
+    const unsubscribeStore = useActiveReportsStore.getState().subscribe();
+    return () => unsubscribeStore();
   }, []);
+
+  useEffect(() => {
+    // Priority: liveReportsProp from parent (Dashboard.jsx) or unified storeActiveReports
+    const incoming = (liveReportsProp !== undefined && liveReportsProp !== null)
+      ? liveReportsProp
+      : storeActiveReports;
+
+    if (Array.isArray(incoming)) {
+      setLiveReports(incoming);
+    }
+  }, [liveReportsProp, storeActiveReports]);
 
   // 4. Render Vector Layer Features (Icons, Polylines, Radii)
   useEffect(() => {
@@ -304,7 +278,7 @@ export default function DashboardMap({ selectedReport, setSelectedReport, mapTar
 
     liveReports.forEach((rep) => {
       if (!rep) return;
-      
+
       const lat = Number(rep.radius?.centerLat ?? rep.location?.latitude ?? rep.coords?.[1] ?? 14.8236);
       const lng = Number(rep.radius?.centerLng ?? rep.location?.longitude ?? rep.coords?.[0] ?? 120.7842);
       let pinTarget = [lng, lat];
@@ -325,7 +299,7 @@ export default function DashboardMap({ selectedReport, setSelectedReport, mapTar
         const projectedLineCoords = polylinePoints.map(p => fromLonLat(p));
         const lineGeometry = new LineString(projectedLineCoords);
         const lineFeature = new Feature({ geometry: lineGeometry });
-        
+
         lineFeature.setStyle(new Style({
           stroke: new Stroke({ color: hexColor, width: 4.5, lineJoin: 'round', lineCap: 'round' })
         }));
@@ -334,7 +308,7 @@ export default function DashboardMap({ selectedReport, setSelectedReport, mapTar
         const radiusMeters = Number(rep.radius.radiusMeters) || 300;
         const circleGeom = circular(pinTarget, radiusMeters, 64).transform('EPSG:4326', 'EPSG:3857');
         const radiusFeature = new Feature({ geometry: circleGeom });
-        
+
         radiusFeature.setStyle(new Style({
           fill: new Fill({ color: `${hexColor}26` }),
           stroke: new Stroke({ color: hexColor, width: 2.5 })
@@ -344,13 +318,13 @@ export default function DashboardMap({ selectedReport, setSelectedReport, mapTar
 
       const markerFeature = new Feature({ geometry: new Point(fromLonLat(pinTarget)) });
       markerFeature.set('reportData', rep);
-      
+
       markerFeature.setStyle(new Style({
         image: new Icon({
-          src: `/${iconFile}`, 
-          width: 58,  
+          src: `/${iconFile}`,
+          width: 58,
           height: 58,
-          anchor: [0.5, 1.0], 
+          anchor: [0.5, 1.0],
           crossOrigin: 'anonymous'
         }),
         zIndex: 100
@@ -402,43 +376,43 @@ export default function DashboardMap({ selectedReport, setSelectedReport, mapTar
         const lat = rep.radius?.centerLat ?? rep.location?.latitude ?? rep.coords?.[1] ?? 14.8236;
         const lng = rep.radius?.centerLng ?? rep.location?.longitude ?? rep.coords?.[0] ?? 120.7842;
         let pinTarget = [Number(lng), Number(lat)];
-        
+
         let polylinePoints = [];
         if (rep.routeCoords && rep.routeCoords.length > 0) {
           polylinePoints = [...rep.routeCoords].sort((a, b) => (a.order || 0) - (b.order || 0)).map(pt => [Number(pt.lng || pt.longitude), Number(pt.lat || pt.latitude)]);
         } else if (rep.polyline && rep.polyline.length >= 2) {
           polylinePoints = rep.polyline.map(pt => [Number(pt.lng || pt.longitude), Number(pt.lat || pt.latitude)]);
         }
-        
+
         if (polylinePoints.length > 0) {
           pinTarget = polylinePoints[Math.floor(polylinePoints.length / 2)];
         }
-        
+
         const iconFile = rep.selectedMarkerIcon || resolveIconFromType(rep.incidentType);
         const color = iconColorMap[iconFile] || '#f97316';
 
         return (
-          <MapPulse 
-            key={`pulse-${rep.id || idx}`} 
-            map={mapInstance} 
-            coordinate={pinTarget} 
-            color={color} 
+          <MapPulse
+            key={`pulse-${rep.id || idx}`}
+            map={mapInstance}
+            coordinate={pinTarget}
+            color={color}
           />
         );
       })}
 
       {/* Zoom Control Buttons */}
       <div className="absolute top-4 left-4 z-40 flex flex-col gap-1.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-lg">
-        <button 
-          onClick={zoomIn} 
+        <button
+          onClick={zoomIn}
           className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg transition-colors"
           title="Zoom In"
         >
           <FiPlus className="text-lg" />
         </button>
         <div className="h-px bg-slate-200 dark:bg-slate-800 w-full" />
-        <button 
-          onClick={zoomOut} 
+        <button
+          onClick={zoomOut}
           className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg transition-colors"
           title="Zoom Out"
         >
@@ -459,7 +433,7 @@ export default function DashboardMap({ selectedReport, setSelectedReport, mapTar
             >
               {/* Header: Title and Severity Pill */}
               <div className="flex items-start justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-2.5">
-                <span 
+                <span
                   className="text-xs font-bold tracking-wide truncate max-w-[170px]"
                   style={{
                     color: iconColorMap[activeHoverData.selectedMarkerIcon || resolveIconFromType(activeHoverData.incidentType)] || '#f97316'
@@ -467,12 +441,12 @@ export default function DashboardMap({ selectedReport, setSelectedReport, mapTar
                 >
                   {activeHoverData.reportTitle || activeHoverData.hazard || activeHoverData.incidentType || 'Incident'}
                 </span>
-                
+
                 {(() => {
                   const rawSev = (activeHoverData.verifiedSeverity || activeHoverData.severity || 'medium').toLowerCase();
                   const sevColor = severityColorMap[rawSev] || '#eab308';
                   return (
-                    <span 
+                    <span
                       className="text-[10px] font-bold px-2.5 py-0.5 rounded-full border tracking-wide shrink-0 capitalize"
                       style={{
                         backgroundColor: `${sevColor}15`,
@@ -485,7 +459,7 @@ export default function DashboardMap({ selectedReport, setSelectedReport, mapTar
                   );
                 })()}
               </div>
-              
+
               {/* Incident Details Layout */}
               <div className="flex flex-col gap-2 text-xs">
                 {/* Location */}
@@ -494,8 +468,8 @@ export default function DashboardMap({ selectedReport, setSelectedReport, mapTar
                     Location
                   </span>
                   <p className="font-medium text-slate-700 dark:text-slate-200 line-clamp-2 leading-relaxed">
-                    {typeof activeHoverData.location === 'string' 
-                      ? activeHoverData.location 
+                    {typeof activeHoverData.location === 'string'
+                      ? activeHoverData.location
                       : activeHoverData.location?.address || 'Coordinates Pinpointed'}
                   </p>
                 </div>

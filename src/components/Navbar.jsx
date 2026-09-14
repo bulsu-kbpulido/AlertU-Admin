@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Bell, 
-  MessageSquare, 
-  Trash2, 
-  Flame, 
-  AlertTriangle, 
-  Droplets, 
-  Clock, 
-  MapPin, 
+import {
+  Bell,
+  MessageSquare,
+  Trash2,
+  Flame,
+  AlertTriangle,
+  Droplets,
+  Clock,
+  MapPin,
   ShieldAlert,
   X,
   Menu,
@@ -22,8 +22,19 @@ import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 
 import { db, auth } from '../firebase'; // Adjust to your firebase configuration path
-import { collection, query, orderBy, limit, onSnapshot, doc } from 'firebase/firestore';
+import {
+  collection,
+  query,
+  orderBy,
+  limit,
+  onSnapshot,
+  doc,
+  setDoc,
+  serverTimestamp,
+  arrayUnion
+} from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
+import { toast } from 'sonner';
 
 // Import the SOS History Modal Component
 import SOShistorymodal from '../sos_emergency/SOShistorymodal';
@@ -31,11 +42,46 @@ import SOShistorymodal from '../sos_emergency/SOShistorymodal';
 // MagicUI Components
 import { NumberTicker } from "@/components/ui/number-ticker";
 
+// Unified Active Reports Store (synchronizes Dashboard Live Map and Notifications)
+import { useActiveReportsStore } from '../useActiveReportsStore';
+
 // Extend dayjs with timezone plugins
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const PHILIPPINE_TIMEZONE = 'Asia/Manila';
+
+// Helper to reliably extract timestamp milliseconds across various Firestore timestamp representations
+const getEpochMillis = (raw) => {
+  if (!raw) return 0;
+  if (typeof raw.toMillis === 'function') return raw.toMillis();
+  if (typeof raw.toDate === 'function') return raw.toDate().getTime();
+  if (typeof raw === 'object' && raw.seconds) return raw.seconds * 1000;
+  const parsed = new Date(raw).getTime();
+  return isNaN(parsed) ? 0 : parsed;
+};
+
+// Local storage caching for zero-flicker immediate state rendering
+const LOCAL_PREFS_KEY = 'alertu_admin_view_preferences_v2';
+const loadCachedPreferences = () => {
+  try {
+    // Migration: cleanup legacy cache if present
+    if (localStorage.getItem('alertu_admin_view_preferences')) {
+      localStorage.removeItem('alertu_admin_view_preferences');
+    }
+    const raw = localStorage.getItem(LOCAL_PREFS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+};
+const saveCachedPreferences = (prefs) => {
+  try {
+    localStorage.setItem(LOCAL_PREFS_KEY, JSON.stringify(prefs));
+  } catch (err) {
+    console.warn('Failed to save view preferences to localStorage:', err);
+  }
+};
 
 // ==========================================
 // ANIMATED DIGIT COMPONENT FOR SMOOTH TICKING
@@ -96,8 +142,8 @@ const AvatarFallback = ({ children, className = '' }) => (
   </div>
 );
 
-export default function Navbar({ 
-  onOpenMessages, 
+export default function Navbar({
+  onOpenMessages,
   onSelectSos,
   isOpen: isMobileNavOpen = false,
   setIsOpen: setIsMobileNavOpen,
@@ -109,14 +155,39 @@ export default function Navbar({
 
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isSosOpen, setIsSosOpen] = useState(false);
-  
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
 
-  const [sosAlerts, setSosAlerts] = useState([]);
-  const [unreadSosCount, setUnreadSosCount] = useState(0);
+  // Authenticated Admin Reference
+  const [currentUser, setCurrentUser] = useState(auth.currentUser);
+
+  // Admin dismissal and read preferences (persisted to Firestore doc 'admins/${uid}')
+  const [adminPreferences, setAdminPreferences] = useState(() => {
+    const cached = loadCachedPreferences();
+    return {
+      clearedNotificationsAt: cached.clearedNotificationsAt || 0,
+      dismissedNotificationIds: Array.isArray(cached.dismissedNotificationIds) ? cached.dismissedNotificationIds : [],
+      readNotificationIds: Array.isArray(cached.readNotificationIds) ? cached.readNotificationIds : [],
+      clearedSosAt: cached.clearedSosAt || 0,
+      dismissedSosIds: Array.isArray(cached.dismissedSosIds) ? cached.dismissedSosIds : [],
+      readSosIds: Array.isArray(cached.readSosIds) ? cached.readSosIds : [],
+    };
+  });
+
+  // Raw real-time stream storage initialized from cache for instant zero-delay badge rendering on refresh
+  const [rawReports, setRawReports] = useState(() => {
+    const cached = loadCachedPreferences();
+    return Array.isArray(cached.cachedRawReports) ? cached.cachedRawReports : [];
+  });
+  const [rawSosAlerts, setRawSosAlerts] = useState(() => {
+    const cached = loadCachedPreferences();
+    return Array.isArray(cached.cachedRawSosAlerts) ? cached.cachedRawSosAlerts : [];
+  });
 
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+
+  // Guard states for deleting / clearing actions
+  const [isClearingSos, setIsClearingSos] = useState(false);
+  const [isClearingNotifications, setIsClearingNotifications] = useState(false);
+  const [isDeletingId, setIsDeletingId] = useState(null);
 
   // State to store live Admin profile details for the avatar
   const [adminProfile, setAdminProfile] = useState({
@@ -132,43 +203,82 @@ export default function Navbar({
   const [phTime, setPhTime] = useState(() => dayjs().tz(PHILIPPINE_TIMEZONE));
 
   // ==========================================
-  // REAL-TIME ADMIN PROFILE & AVATAR SYNC
+  // REAL-TIME ADMIN PROFILE & DISMISSAL PREFERENCES SYNC
   // ==========================================
   useEffect(() => {
     let unsubscribeFirestore = null;
 
-    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
       if (unsubscribeFirestore) {
         unsubscribeFirestore();
         unsubscribeFirestore = null;
       }
 
-      if (currentUser) {
-        const adminDocRef = doc(db, 'admins', currentUser.uid);
+      if (user) {
+        const adminDocRef = doc(db, 'admins', user.uid);
 
         unsubscribeFirestore = onSnapshot(adminDocRef, (docSnap) => {
+          // Ignore local pending-writes snapshot to prevent local optimistic state clobbering
+          if (docSnap.metadata?.hasPendingWrites) {
+            return;
+          }
+
           const data = docSnap.exists() ? docSnap.data() : {};
 
+          // 1. Sync live avatar and name
           const resolvedName =
-            data.name || data.displayName || currentUser.displayName || 'Administrator';
-          
+            data.name || data.displayName || user.displayName || 'Administrator';
+
           const resolvedDepartment =
             data.department || 'System Administrator';
 
           const resolvedAvatar =
-            data.avatar || data.photoURL || currentUser.photoURL || '';
+            data.avatar || data.photoURL || user.photoURL || '';
 
           setAdminProfile({
             name: resolvedName,
             department: resolvedDepartment,
             avatar: resolvedAvatar,
           });
+
+          // 2. Sync persistent dismissal and read state safely
+          setAdminPreferences((prev) => {
+            const newPrefs = {
+              clearedNotificationsAt: data.clearedNotificationsAt !== undefined
+                ? getEpochMillis(data.clearedNotificationsAt)
+                : prev.clearedNotificationsAt,
+              dismissedNotificationIds: Array.isArray(data.dismissedNotificationIds)
+                ? data.dismissedNotificationIds
+                : prev.dismissedNotificationIds,
+              readNotificationIds: Array.isArray(data.readNotificationIds)
+                ? data.readNotificationIds
+                : prev.readNotificationIds,
+              clearedSosAt: data.clearedSosAt !== undefined
+                ? getEpochMillis(data.clearedSosAt)
+                : prev.clearedSosAt,
+              dismissedSosIds: Array.isArray(data.dismissedSosIds)
+                ? data.dismissedSosIds
+                : prev.dismissedSosIds,
+              readSosIds: Array.isArray(data.readSosIds)
+                ? data.readSosIds
+                : prev.readSosIds,
+            };
+
+            const currentCached = loadCachedPreferences();
+            saveCachedPreferences({
+              ...currentCached,
+              ...newPrefs,
+            });
+
+            return newPrefs;
+          });
         }, (error) => {
-          console.error('Error fetching admin avatar profile:', error);
+          console.error('Error syncing admin profile and preferences:', error);
           setAdminProfile({
-            name: currentUser.displayName || 'Administrator',
+            name: user.displayName || 'Administrator',
             department: 'System Administrator',
-            avatar: currentUser.photoURL || '',
+            avatar: user.photoURL || '',
           });
         });
       }
@@ -227,69 +337,47 @@ export default function Navbar({
   }, []);
 
   // ==========================================
-  // REALTIME FIRESTORE NOTIFICATION LISTENER
+  // REALTIME ACTIVE REPORTS NOTIFICATION STREAM (SYNCHRONIZED WITH LIVE MAP)
   // ==========================================
+  const activeReports = useActiveReportsStore((state) => state.activeReports);
+
   useEffect(() => {
-    const reportsQuery = query(
-      collection(db, 'reports'),
-      orderBy('timestamp', 'desc'),
-      limit(15)
-    );
-
-    const unsubscribe = onSnapshot(reportsQuery, (snapshot) => {
-      const items = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        let formattedTime = 'Just now';
-
-        if (data.timestamp?.toDate) {
-          formattedTime = dayjs(data.timestamp.toDate()).tz(PHILIPPINE_TIMEZONE).format('hh:mm A');
-        }
-
-        return {
-          id: doc.id,
-          reportID: data.reportID || data.reportId || doc.id,
-          incidentType: data.incidentType || 'General Emergency',
-          severity: data.severity || 'Low',
-          address: data.address || data.location?.address || 'Location specified',
-          submitterName: data.submitterName || 'Citizen',
-          time: formattedTime,
-          isRead: false,
-        };
-      });
-
-      setNotifications(items);
-      setUnreadCount(items.length);
-    }, (error) => {
-      console.error('Error subscribing to realtime reports:', error);
-    });
-
+    // Subscribe to unified store across active collections (reports, approved_reports, ApprovedAdminReports)
+    const unsubscribe = useActiveReportsStore.getState().subscribe();
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (Array.isArray(activeReports) && activeReports.length > 0) {
+      setRawReports(activeReports);
+      const current = loadCachedPreferences();
+      saveCachedPreferences({ ...current, cachedRawReports: activeReports });
+    } else if (Array.isArray(activeReports) && activeReports.length === 0) {
+      setRawReports([]);
+      const current = loadCachedPreferences();
+      saveCachedPreferences({ ...current, cachedRawReports: [] });
+    }
+  }, [activeReports]);
+
   // ==========================================
-  // REALTIME FIRESTORE SOS ALERTS LISTENER
+  // REALTIME FIRESTORE SOS ALERTS LISTENER (READ ONLY)
   // ==========================================
   useEffect(() => {
     const sosQuery = query(
       collection(db, 'sos_alerts'),
       orderBy('updatedAt', 'desc'),
-      limit(20)
+      limit(25)
     );
 
     const unsubscribe = onSnapshot(sosQuery, (snapshot) => {
       const items = snapshot.docs.map((doc) => {
         const data = doc.data();
         let formattedTime = 'Just now';
-        
+
         const rawTime = data.updatedAt || data.triggeredAt;
-        if (rawTime) {
-          if (typeof rawTime.toDate === 'function') {
-            formattedTime = dayjs(rawTime.toDate()).tz(PHILIPPINE_TIMEZONE).format('MMM D, hh:mm A');
-          } else if (rawTime.seconds) {
-            formattedTime = dayjs(new Date(rawTime.seconds * 1000)).tz(PHILIPPINE_TIMEZONE).format('MMM D, hh:mm A');
-          } else {
-            formattedTime = dayjs(rawTime).tz(PHILIPPINE_TIMEZONE).format('MMM D, hh:mm A');
-          }
+        const rawTimeMillis = getEpochMillis(rawTime);
+        if (rawTimeMillis > 0) {
+          formattedTime = dayjs(rawTimeMillis).tz(PHILIPPINE_TIMEZONE).format('MMM D, hh:mm A');
         }
 
         return {
@@ -305,13 +393,14 @@ export default function Navbar({
           emergencyContacts: data.emergencyContacts || [],
           sosDetails: data.sosDetails || data.details || '',
           time: formattedTime,
-          isRead: false,
+          rawTimeMillis,
           rawData: data
         };
       });
 
-      setSosAlerts(items);
-      setUnreadSosCount(items.filter(i => i.status === 'ACTIVE').length || items.length);
+      setRawSosAlerts(items);
+      const current = loadCachedPreferences();
+      saveCachedPreferences({ ...current, cachedRawSosAlerts: items });
     }, (error) => {
       console.error('Error subscribing to realtime sos_alerts:', error);
     });
@@ -319,66 +408,259 @@ export default function Navbar({
     return () => unsubscribe();
   }, []);
 
+  // ==========================================
+  // DYNAMIC FILTERING & READ STATE RESOLUTION
+  // (Safe: relies on admin preferences without deleting underlying collections)
+  // ==========================================
+  const notifications = React.useMemo(() => {
+    const { clearedNotificationsAt, dismissedNotificationIds, readNotificationIds } = adminPreferences;
+    const readSet = new Set(readNotificationIds || []);
+    return rawReports
+      .filter((item) => {
+        if (dismissedNotificationIds && dismissedNotificationIds.includes(item.id)) return false;
+        if (clearedNotificationsAt > 0 && item.rawTimeMillis <= clearedNotificationsAt) return false;
+        return true;
+      })
+      .map((item) => ({
+        ...item,
+        isRead: readSet.has(item.id),
+      }));
+  }, [rawReports, adminPreferences]);
+
+  const unreadCount = React.useMemo(() => {
+    return notifications.filter((item) => !item.isRead).length;
+  }, [notifications]);
+
+  const sosAlerts = React.useMemo(() => {
+    const { clearedSosAt, dismissedSosIds, readSosIds } = adminPreferences;
+    const readSosSet = new Set(readSosIds || []);
+    return rawSosAlerts
+      .filter((item) => {
+        if (dismissedSosIds && dismissedSosIds.includes(item.id)) return false;
+        if (clearedSosAt > 0 && item.rawTimeMillis <= clearedSosAt) return false;
+        return true;
+      })
+      .map((item) => ({
+        ...item,
+        isRead: readSosSet.has(item.id),
+      }));
+  }, [rawSosAlerts, adminPreferences]);
+
+  const unreadSosCount = React.useMemo(() => {
+    return sosAlerts.filter((item) => !item.isRead && item.status === 'ACTIVE').length;
+  }, [sosAlerts]);
+
+  // Helper to obtain the active admin Firestore document reference
+  const getAdminDocRef = () => {
+    const user = auth.currentUser || currentUser;
+    if (!user) return null;
+    return doc(db, 'admins', user.uid);
+  };
+
   // Toggle handlers (ensures only one popover is active at a time)
   const togglePopover = () => {
     const nextState = !isNotificationOpen;
     setIsNotificationOpen(nextState);
-    if (nextState) setIsSosOpen(false);
-
     if (nextState) {
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-      setUnreadCount(0);
+      setIsSosOpen(false);
+      handleMarkAllRead();
     }
   };
 
   const toggleSosPopover = () => {
     const nextState = !isSosOpen;
     setIsSosOpen(nextState);
-    if (nextState) setIsNotificationOpen(false);
-
     if (nextState) {
-      setSosAlerts(prev => prev.map(s => ({ ...s, isRead: true })));
-      setUnreadSosCount(0);
+      setIsNotificationOpen(false);
+      handleMarkAllSosRead();
     }
   };
 
   // Notification Actions
-  const handleMarkAllRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-    setUnreadCount(0);
-  };
+  const handleMarkAllRead = async () => {
+    const unreadIds = notifications.filter((n) => !n.isRead).map((n) => n.id);
+    if (unreadIds.length === 0) return;
 
-  const handleClearAll = () => {
-    setNotifications([]);
-    setUnreadCount(0);
-  };
+    const prevRead = Array.isArray(adminPreferences.readNotificationIds)
+      ? adminPreferences.readNotificationIds
+      : [];
+    const nextRead = [...new Set([...prevRead, ...unreadIds])];
+    const nextPrefs = { ...adminPreferences, readNotificationIds: nextRead };
 
-  const handleRemoveSingle = (e, id) => {
-    e.stopPropagation();
-    setNotifications(prev => {
-      const target = prev.find(n => n.id === id);
-      if (target && !target.isRead) {
-        setUnreadCount(c => Math.max(0, c - 1));
+    setAdminPreferences(nextPrefs);
+    const cached = loadCachedPreferences();
+    saveCachedPreferences({ ...cached, ...nextPrefs });
+
+    const ref = getAdminDocRef();
+    if (ref) {
+      try {
+        await setDoc(ref, { readNotificationIds: arrayUnion(...unreadIds) }, { merge: true });
+      } catch (err) {
+        console.warn('Failed to persist readNotificationIds:', err.message);
       }
-      return prev.filter(n => n.id !== id);
-    });
+    }
+  };
+
+  const handleClearAll = async () => {
+    if (isClearingNotifications || notifications.length === 0) return;
+    setIsClearingNotifications(true);
+
+    const ref = getAdminDocRef();
+    const now = Date.now();
+    const prevPrefs = { ...adminPreferences };
+    const nextPrefs = {
+      ...adminPreferences,
+      clearedNotificationsAt: now,
+      dismissedNotificationIds: [],
+    };
+
+    try {
+      if (ref) {
+        // Persist permanently to Firestore Admin Document
+        await setDoc(ref, {
+          clearedNotificationsAt: serverTimestamp(),
+          dismissedNotificationIds: [],
+        }, { merge: true });
+      }
+
+      setAdminPreferences(nextPrefs);
+      const cached = loadCachedPreferences();
+      saveCachedPreferences({ ...cached, ...nextPrefs });
+      toast.success('All notifications cleared.');
+    } catch (err) {
+      console.error('Failed to clear notifications in database:', err);
+      toast.error('Failed to clear notifications. Database write failed.');
+      // Rollback to maintain accurate state with database
+      setAdminPreferences(prevPrefs);
+    } finally {
+      setIsClearingNotifications(false);
+    }
+  };
+
+  const handleRemoveSingle = async (e, id) => {
+    e.stopPropagation();
+    if (isDeletingId) return;
+    setIsDeletingId(id);
+
+    const ref = getAdminDocRef();
+    const prevPrefs = { ...adminPreferences };
+    const currentDismissed = Array.isArray(adminPreferences.dismissedNotificationIds)
+      ? adminPreferences.dismissedNotificationIds
+      : [];
+    const nextDismissed = [...new Set([...currentDismissed, id])];
+    const nextPrefs = { ...adminPreferences, dismissedNotificationIds: nextDismissed };
+
+    try {
+      if (ref) {
+        await setDoc(ref, {
+          dismissedNotificationIds: arrayUnion(id),
+        }, { merge: true });
+      }
+
+      setAdminPreferences(nextPrefs);
+      const cached = loadCachedPreferences();
+      saveCachedPreferences({ ...cached, ...nextPrefs });
+      toast.success('Notification dismissed.');
+    } catch (err) {
+      console.error('Failed to dismiss notification in database:', err);
+      toast.error('Failed to dismiss notification. Database write failed.');
+      // Rollback on error
+      setAdminPreferences(prevPrefs);
+    } finally {
+      setIsDeletingId(null);
+    }
   };
 
   // SOS History Actions
-  const handleClearAllSos = () => {
-    setSosAlerts([]);
-    setUnreadSosCount(0);
+  const handleMarkAllSosRead = async () => {
+    const unreadActiveIds = sosAlerts.filter((s) => !s.isRead && s.status === 'ACTIVE').map((s) => s.id);
+    if (unreadActiveIds.length === 0) return;
+
+    const prevRead = Array.isArray(adminPreferences.readSosIds)
+      ? adminPreferences.readSosIds
+      : [];
+    const nextRead = [...new Set([...prevRead, ...unreadActiveIds])];
+    const nextPrefs = { ...adminPreferences, readSosIds: nextRead };
+
+    setAdminPreferences(nextPrefs);
+    const cached = loadCachedPreferences();
+    saveCachedPreferences({ ...cached, ...nextPrefs });
+
+    const ref = getAdminDocRef();
+    if (ref) {
+      try {
+        await setDoc(ref, { readSosIds: arrayUnion(...unreadActiveIds) }, { merge: true });
+      } catch (err) {
+        console.warn('Failed to persist readSosIds:', err.message);
+      }
+    }
   };
 
-  const handleRemoveSingleSos = (e, id) => {
-    e.stopPropagation();
-    setSosAlerts(prev => {
-      const target = prev.find(s => s.id === id);
-      if (target && !target.isRead) {
-        setUnreadSosCount(c => Math.max(0, c - 1));
+  const handleClearAllSos = async () => {
+    if (isClearingSos || sosAlerts.length === 0) return;
+    setIsClearingSos(true);
+
+    const ref = getAdminDocRef();
+    const now = Date.now();
+    const prevPrefs = { ...adminPreferences };
+    const nextPrefs = {
+      ...adminPreferences,
+      clearedSosAt: now,
+      dismissedSosIds: [],
+    };
+
+    try {
+      if (ref) {
+        await setDoc(ref, {
+          clearedSosAt: serverTimestamp(),
+          dismissedSosIds: [],
+        }, { merge: true });
       }
-      return prev.filter(s => s.id !== id);
-    });
+
+      setAdminPreferences(nextPrefs);
+      const cached = loadCachedPreferences();
+      saveCachedPreferences({ ...cached, ...nextPrefs });
+      toast.success('SOS History cleared.');
+    } catch (err) {
+      console.error('Failed to clear SOS history in database:', err);
+      toast.error('Failed to clear SOS history. Database write failed.');
+      setAdminPreferences(prevPrefs);
+    } finally {
+      setIsClearingSos(false);
+    }
+  };
+
+  const handleRemoveSingleSos = async (e, id) => {
+    e.stopPropagation();
+    if (isDeletingId) return;
+    setIsDeletingId(id);
+
+    const ref = getAdminDocRef();
+    const prevPrefs = { ...adminPreferences };
+    const currentDismissed = Array.isArray(adminPreferences.dismissedSosIds)
+      ? adminPreferences.dismissedSosIds
+      : [];
+    const nextDismissed = [...new Set([...currentDismissed, id])];
+    const nextPrefs = { ...adminPreferences, dismissedSosIds: nextDismissed };
+
+    try {
+      if (ref) {
+        await setDoc(ref, {
+          dismissedSosIds: arrayUnion(id),
+        }, { merge: true });
+      }
+
+      setAdminPreferences(nextPrefs);
+      const cached = loadCachedPreferences();
+      saveCachedPreferences({ ...cached, ...nextPrefs });
+      toast.success('SOS alert dismissed.');
+    } catch (err) {
+      console.error('Failed to dismiss SOS alert in database:', err);
+      toast.error('Failed to dismiss SOS alert. Database write failed.');
+      setAdminPreferences(prevPrefs);
+    } finally {
+      setIsDeletingId(null);
+    }
   };
 
   // Handle clicking on an SOS history item
@@ -456,7 +738,7 @@ export default function Navbar({
   return (
     <header className="sticky top-0 z-30 w-full border-b border-slate-200/80 bg-white/90 px-4 sm:px-6 lg:px-8 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90 transition-colors duration-200 font-sans">
       <div className="flex h-16 sm:h-20 items-center justify-between gap-3 sm:gap-4 lg:gap-6 min-w-0">
-        
+
         {/* LEFT: REAL-TIME CONNECTED AVATAR, DATE & LIVE PHILIPPINE CLOCK */}
         <div className="flex items-center gap-3 sm:gap-4 min-w-0 shrink">
           {/* Mobile hamburger action */}
@@ -509,11 +791,11 @@ export default function Navbar({
 
         {/* RIGHT: SOS HISTORY, NOTIFICATIONS & MESSAGES */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          
+
           {/* 🚨 SOS HISTORY DROPDOWN */}
           <div className="relative shrink-0">
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={toggleSosPopover}
               className="group relative inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl bg-orange-600 hover:bg-orange-700 px-2.5 sm:px-3.5 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition-all active:scale-[0.98] cursor-pointer outline-none border border-orange-500/50 shrink-0"
               title="SOS Emergency Broadcast History"
@@ -531,12 +813,12 @@ export default function Navbar({
             <AnimatePresence>
               {isSosOpen && (
                 <>
-                  <div 
-                    className="fixed inset-0 z-40" 
-                    onClick={() => setIsSosOpen(false)} 
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsSosOpen(false)}
                   />
 
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, scale: 0.95, y: -8 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: -8 }}
@@ -554,11 +836,12 @@ export default function Navbar({
                       {sosAlerts.length > 0 && (
                         <button
                           onClick={handleClearAllSos}
+                          disabled={isClearingSos}
                           title="Clear all SOS history"
-                          className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/50 transition-colors"
+                          className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
-                          <span>Clear</span>
+                          <span>{isClearingSos ? 'Clearing...' : 'Clear'}</span>
                         </button>
                       )}
                     </div>
@@ -621,9 +904,10 @@ export default function Navbar({
 
                             <button
                               type="button"
+                              disabled={isDeletingId === item.id}
                               onClick={(e) => handleRemoveSingleSos(e, item.id)}
                               title="Dismiss alert"
-                              className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-md hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-all"
+                              className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-md hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-all disabled:opacity-50"
                             >
                               <X className="h-3.5 w-3.5" />
                             </button>
@@ -639,8 +923,8 @@ export default function Navbar({
 
           {/* 🔔 SHADCN POPOVER NOTIFICATIONS DROPDOWN */}
           <div className="relative shrink-0">
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={togglePopover}
               className="group relative inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl border border-slate-200 bg-white px-2.5 sm:px-3.5 py-2 text-xs sm:text-sm font-medium text-slate-800 shadow-xs transition-all hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 cursor-pointer outline-none shrink-0"
               title="Notifications"
@@ -658,12 +942,12 @@ export default function Navbar({
             <AnimatePresence>
               {isNotificationOpen && (
                 <>
-                  <div 
-                    className="fixed inset-0 z-40" 
-                    onClick={() => setIsNotificationOpen(false)} 
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsNotificationOpen(false)}
                   />
 
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, scale: 0.95, y: -8 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: -8 }}
@@ -678,11 +962,12 @@ export default function Navbar({
                       {notifications.length > 0 && (
                         <button
                           onClick={handleClearAll}
+                          disabled={isClearingNotifications}
                           title="Clear all notifications"
-                          className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/50 transition-colors"
+                          className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
-                          <span>Clear All</span>
+                          <span>{isClearingNotifications ? 'Clearing...' : 'Clear All'}</span>
                         </button>
                       )}
                     </div>
@@ -739,9 +1024,10 @@ export default function Navbar({
 
                             <button
                               type="button"
+                              disabled={isDeletingId === item.id}
                               onClick={(e) => handleRemoveSingle(e, item.id)}
                               title="Dismiss notification"
-                              className="absolute top-3.5 right-3.5 opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-md hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-all"
+                              className="absolute top-3.5 right-3.5 opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-md hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-all disabled:opacity-50"
                             >
                               <X className="h-3.5 w-3.5" />
                             </button>
@@ -767,8 +1053,8 @@ export default function Navbar({
           </div>
 
           {/* Messaging Button with MagicUI NumberTicker */}
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={onOpenMessages}
             className="group relative inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl bg-blue-600 px-2.5 sm:px-3.5 py-2 text-xs sm:text-sm font-medium text-white shadow-xs transition-all hover:bg-blue-700 active:scale-[0.98] dark:bg-blue-600 dark:hover:bg-blue-500 cursor-pointer outline-none shrink-0"
             title="Messages"

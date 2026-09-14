@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { IncidentProvider } from './pages/IncidentContext'; 
-import Login from './pages/Login'; 
-import Dashboard from './pages/Dashboard'; 
-import Create_Reports from './pages/Create_Reports'; 
+import { IncidentProvider } from './pages/IncidentContext';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Create_Reports from './pages/Create_Reports';
 import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
 import Send_Reports from './pages/Send_Reports';
@@ -11,16 +11,16 @@ import Report_Management from './pages/Report_Management';
 import Citizen_Management from './pages/Citizen_Management';
 import Settings from './pages/Settings';
 import PublicReportPage from './pages/PublicReportPage';
-import PublicReportPage2 from './pages/PublicReportPage2'; 
-import { auth, db } from './firebase'; 
-import { collectionGroup, query, onSnapshot } from 'firebase/firestore'; 
+import PublicReportPage2 from './pages/PublicReportPage2';
+import { auth, db } from './firebase';
+import { collection, collectionGroup, query, onSnapshot } from 'firebase/firestore';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import '@mantine/dates/styles.css';
 
 // 📡 SOCKET & CUSTOM SOS HOOK IMPORTS
 import socket, { joinSocketRoom, registerSocketUser } from './socket';
-import { useSOSHandler } from './useSOSHandler'; 
+import { useSOSHandler } from './useSOSHandler';
 
 // 📞 AGORA CALL & ANSWER/DECLINE MODAL IMPORTS
 import AdminCallModal from './admin_call/AdminCallModal';
@@ -34,27 +34,27 @@ import { Toaster, toast } from 'sonner';
 import MessagesDrawer from './components/MessagesDrawer';
 
 // 📦 MANTINE IMPORTS
-import '@mantine/core/styles.css'; 
+import '@mantine/core/styles.css';
 import { MantineProvider } from '@mantine/core';
 
 // 🎵 MESSAGETONE HOOK IMPORT
 import { useMessagetone } from './useMessagetone';
 
 // Backend API URL
-const BACKEND_URL = 
-  import.meta.env.VITE_SOCKET_URL || 
-  import.meta.env.VITE_BACKEND_URL || 
+const BACKEND_URL =
+  import.meta.env.VITE_SOCKET_URL ||
+  import.meta.env.VITE_BACKEND_URL ||
   'https://alertu-server-production.up.railway.app';
 
-function AdminDashboardShell({ 
-  currentPage, 
-  onNavigate, 
-  pageTitle, 
-  darkMode, 
-  setDarkMode, 
-  onLogout, 
-  onSelectSos, 
-  children 
+function AdminDashboardShell({
+  currentPage,
+  onNavigate,
+  pageTitle,
+  darkMode,
+  setDarkMode,
+  onLogout,
+  onSelectSos,
+  children
 }) {
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
   const [isSidebarCollapsed] = useState(false);
@@ -65,10 +65,10 @@ function AdminDashboardShell({
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-['Roboto',sans-serif] antialiased transition-colors duration-200">
-      <Sidebar 
-        currentPage={currentPage} 
-        setCurrentPage={onNavigate} 
-        onLogout={onLogout} 
+      <Sidebar
+        currentPage={currentPage}
+        setCurrentPage={onNavigate}
+        onLogout={onLogout}
         darkMode={darkMode}
         setDarkMode={setDarkMode}
         isCollapsed={isSidebarCollapsed}
@@ -76,14 +76,14 @@ function AdminDashboardShell({
         setIsOpen={setIsMobileSidebarOpen}
       />
 
-      <div 
+      <div
         className={`flex flex-col transition-[padding] duration-300 ease-[cubic-bezier(0.2,0,0,1)] will-change-[padding] ${
           isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'
         }`}
       >
-        <Navbar 
-          pageTitle={pageTitle} 
-          onOpenMessages={handleOpenMessages} 
+        <Navbar
+          pageTitle={pageTitle}
+          onOpenMessages={handleOpenMessages}
           onSelectSos={onSelectSos}
           isOpen={isMobileSidebarOpen}
           setIsOpen={setIsMobileSidebarOpen}
@@ -93,9 +93,9 @@ function AdminDashboardShell({
         </main>
       </div>
 
-      <MessagesDrawer 
-        isOpen={isMessagesOpen} 
-        onClose={handleCloseMessages} 
+      <MessagesDrawer
+        isOpen={isMessagesOpen}
+        onClose={handleCloseMessages}
       />
     </div>
   );
@@ -105,12 +105,12 @@ function AppRoutes() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('authToken'));
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem('theme') === 'dark' || 
+    return localStorage.getItem('theme') === 'dark' ||
       (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
   });
 
-  // 📞 GLOBAL CALL STATES
-  const [incomingCallSession, setIncomingCallSession] = useState(null);
+  // 📞 GLOBAL CALL STATES & QUEUE
+  const [incomingCallsQueue, setIncomingCallsQueue] = useState([]);
   const [activeCallSession, setActiveCallSession] = useState(null);
 
   // 🚨 CONSUME REAL-TIME SOS HOOK STATE (SINGLE SOURCE OF TRUTH)
@@ -165,7 +165,7 @@ function AppRoutes() {
             const data = change.doc.data();
             const senderRole = (data.senderRole || '').toLowerCase();
             const isCitizenMessage = senderRole === 'citizen' || senderRole === 'user' || (senderRole !== 'admin' && senderRole !== 'dispatcher');
-            
+
             // Check if message is already marked as read
             const isRead = data.isRead === true || data.read === true || data.isReadAdmin === true;
 
@@ -207,6 +207,39 @@ function AppRoutes() {
     return () => unsubscribeMessages();
   }, [isAuthenticated, playMessagetone]);
 
+  // 📞 REAL-TIME FIRESTORE ACTIVE CALLS LISTENER (SYNC ACROSS ALL ADMINS)
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const unsubscribeCalls = onSnapshot(
+      collection(db, 'active_calls'),
+      (snapshot) => {
+        const calls = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.status !== 'completed' && data.status !== 'ended') {
+            calls.push({
+              id: doc.id,
+              channelName: data.channelName || doc.id,
+              callerName: data.callerName || data.submitterName || data.citizenName || 'Emergency Citizen',
+              citizenId: data.citizenId || '',
+              status: data.status || 'ringing',
+              assignedAdminId: data.assignedAdminId || null,
+              assignedAdminName: data.assignedAdminName || null,
+              createdAt: data.createdAt,
+            });
+          }
+        });
+        setIncomingCallsQueue(calls);
+      },
+      (error) => {
+        console.error("❌ Error listening to active_calls collection:", error);
+      }
+    );
+
+    return () => unsubscribeCalls();
+  }, [isAuthenticated]);
+
   // 🟢 SOCKET EMERGENCY AGORA CALL LISTENERS
   useEffect(() => {
     if (isAuthenticated) {
@@ -224,33 +257,80 @@ function AppRoutes() {
 
       const handleIncomingCall = (data) => {
         const targetRoom = data.channelName || data.targetRoom || data.room;
-        const callerName = data.callerName || data.citizenName || "Emergency Citizen";
+        const callerName = data.callerName || data.submitterName || data.citizenName || "Emergency Citizen";
+        const citizenId = data.citizenId || '';
 
         toast.info("Incoming Emergency Call", {
           id: `call-toast-${targetRoom}`,
           description: `${callerName} is calling dispatch.`,
         });
 
-        setIncomingCallSession({
-          channelName: targetRoom,
-          callerName: callerName,
+        setIncomingCallsQueue((prev) => {
+          const exists = prev.some((c) => c.channelName === targetRoom);
+          if (exists) {
+            return prev.map((c) =>
+              c.channelName === targetRoom
+                ? { ...c, ...data, channelName: targetRoom, callerName, citizenId }
+                : c
+            );
+          }
+          return [
+            ...prev,
+            {
+              id: targetRoom,
+              channelName: targetRoom,
+              callerName,
+              citizenId,
+              status: data.status || 'ringing',
+              assignedAdminId: data.assignedAdminId || null,
+              assignedAdminName: data.assignedAdminName || null,
+            },
+          ];
         });
       };
 
-      const handleCallEnded = () => {
-        setIncomingCallSession(null);
-        setActiveCallSession(null);
+      const handleCallClaimed = (data) => {
+        const { channelName, assignedAdminId, assignedAdminName } = data || {};
+        if (channelName) {
+          setIncomingCallsQueue((prev) =>
+            prev.map((c) =>
+              c.channelName === channelName
+                ? {
+                    ...c,
+                    status: 'in_call',
+                    assignedAdminId,
+                    assignedAdminName,
+                  }
+                : c
+            )
+          );
+        }
+      };
+
+      const handleCallEnded = (data) => {
+        const channelName = typeof data === 'string' ? data : data?.channelName;
+        if (channelName) {
+          setIncomingCallsQueue((prev) => prev.filter((c) => c.channelName !== channelName));
+          setActiveCallSession((prev) => (prev && prev.targetRoom === channelName ? null : prev));
+        } else {
+          setIncomingCallsQueue([]);
+          setActiveCallSession(null);
+        }
       };
 
       socket.on('connect', handleConnect);
       socket.on('call_invite', handleIncomingCall);
       socket.on('incoming_call', handleIncomingCall);
+      socket.on('admin:incoming_call', handleIncomingCall);
+      socket.on('call_claimed', handleCallClaimed);
       socket.on('call_ended', handleCallEnded);
 
       return () => {
         socket.off('connect', handleConnect);
         socket.off('call_invite', handleIncomingCall);
         socket.off('incoming_call', handleIncomingCall);
+        socket.off('admin:incoming_call', handleIncomingCall);
+        socket.off('call_claimed', handleCallClaimed);
         socket.off('call_ended', handleCallEnded);
       };
     }
@@ -304,12 +384,12 @@ function AppRoutes() {
     if (adminData.token) {
       localStorage.setItem('authToken', adminData.token);
       setIsAuthenticated(true);
-      
+
       socket.connect();
       joinSocketRoom('admins');
       registerSocketUser({ role: 'admin', uid: adminData.uid || 'admin' });
 
-      navigate('/admin/dashboard'); 
+      navigate('/admin/dashboard');
     }
   };
 
@@ -317,7 +397,7 @@ function AppRoutes() {
     await auth.signOut();
     localStorage.removeItem('authToken');
     setIsAuthenticated(false);
-    
+
     if (socket.connected) {
       socket.disconnect();
     }
@@ -330,17 +410,77 @@ function AppRoutes() {
     navigate(`/admin/${page}`);
   };
 
-  // 📞 CALL HANDLERS
-  const handleAnswerCall = (callData) => {
-    setIncomingCallSession(null);
-    setActiveCallSession({
-      targetRoom: callData.channelName,
-      citizenName: callData.callerName,
-    });
+  // 📞 CALL HANDLERS (ATOMIC CLAIM TO PREVENT DUPLICATE ANSWERING)
+  const handleAnswerCall = async (callData) => {
+    const currentAdminId = auth.currentUser?.uid || 'admin';
+    const currentAdminName = auth.currentUser?.displayName || auth.currentUser?.email || 'Dispatcher';
+    const channelName = callData.channelName;
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/calls/claim`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          channelName,
+          adminId: currentAdminId,
+          adminName: currentAdminName,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.status === 409) {
+        const claimedBy = result.claimedBy || 'another dispatcher';
+        toast.error('Call Already Claimed', {
+          id: `claimed-${channelName}`,
+          description: `This call has already been answered by ${claimedBy}.`,
+        });
+
+        // Update local queue immediately
+        setIncomingCallsQueue((prev) =>
+          prev.map((c) =>
+            c.channelName === channelName
+              ? { ...c, status: 'in_call', assignedAdminName: claimedBy, assignedAdminId: result.assignedAdminId }
+              : c
+          )
+        );
+        return false;
+      }
+
+      if (!response.ok) {
+        toast.error('Unable to claim call', {
+          description: result.message || 'Call may have ended.',
+        });
+        return false;
+      }
+
+      // Successfully claimed! Open call modal for this admin
+      setActiveCallSession({
+        targetRoom: channelName,
+        citizenName: callData.callerName || callData.citizenName || 'Emergency Citizen',
+        citizenId: callData.citizenId || '',
+      });
+
+      return true;
+    } catch (err) {
+      console.error('❌ Error claiming call:', err);
+      // Fallback: If network error reaching backend, proceed with call session
+      setActiveCallSession({
+        targetRoom: channelName,
+        citizenName: callData.callerName || callData.citizenName || 'Emergency Citizen',
+        citizenId: callData.citizenId || '',
+      });
+      return true;
+    }
   };
 
-  const handleDeclineCall = () => {
-    setIncomingCallSession(null);
+  const handleDeclineCall = (callData) => {
+    const channelName = callData?.channelName;
+    if (channelName) {
+      setIncomingCallsQueue((prev) => prev.filter((c) => c.channelName !== channelName));
+    } else {
+      setIncomingCallsQueue([]);
+    }
   };
 
   const staticTitle = "Dashboard";
@@ -355,19 +495,19 @@ function AppRoutes() {
   return (
     <>
       <Routes>
-        <Route path="/report/:id" element={<PublicReportPage />} />          
-        <Route path="/report/public/:id" element={<PublicReportPage2 />} />   
+        <Route path="/report/:id" element={<PublicReportPage />} />
+        <Route path="/report/public/:id" element={<PublicReportPage2 />} />
 
         <Route path="/" element={isAuthenticated ? <Navigate to="/admin/dashboard" replace /> : <Login onLoginSuccess={handleLoginSuccess} />} />
 
         <Route path="/admin/dashboard" element={
           isAuthenticated ? (
-            <AdminDashboardShell 
-              currentPage="dashboard" 
-              onNavigate={handleNavigation} 
-              pageTitle={staticTitle} 
-              darkMode={darkMode} 
-              setDarkMode={setDarkMode} 
+            <AdminDashboardShell
+              currentPage="dashboard"
+              onNavigate={handleNavigation}
+              pageTitle={staticTitle}
+              darkMode={darkMode}
+              setDarkMode={setDarkMode}
               onLogout={handleLogout}
               onSelectSos={selectSosAlert}
             >
@@ -378,12 +518,12 @@ function AppRoutes() {
 
         <Route path="/admin/dashboard-mid" element={
           isAuthenticated ? (
-            <AdminDashboardShell 
-              currentPage="dashboard-mid" 
-              onNavigate={handleNavigation} 
-              pageTitle={staticTitle} 
-              darkMode={darkMode} 
-              setDarkMode={setDarkMode} 
+            <AdminDashboardShell
+              currentPage="dashboard-mid"
+              onNavigate={handleNavigation}
+              pageTitle={staticTitle}
+              darkMode={darkMode}
+              setDarkMode={setDarkMode}
               onLogout={handleLogout}
               onSelectSos={selectSosAlert}
             >
@@ -394,12 +534,12 @@ function AppRoutes() {
 
         <Route path="/admin/dashboard-bottom" element={
           isAuthenticated ? (
-            <AdminDashboardShell 
-              currentPage="dashboard-bottom" 
-              onNavigate={handleNavigation} 
-              pageTitle={staticTitle} 
-              darkMode={darkMode} 
-              setDarkMode={setDarkMode} 
+            <AdminDashboardShell
+              currentPage="dashboard-bottom"
+              onNavigate={handleNavigation}
+              pageTitle={staticTitle}
+              darkMode={darkMode}
+              setDarkMode={setDarkMode}
               onLogout={handleLogout}
               onSelectSos={selectSosAlert}
             >
@@ -410,12 +550,12 @@ function AppRoutes() {
 
         <Route path="/admin/dashboard-last" element={
           isAuthenticated ? (
-            <AdminDashboardShell 
-              currentPage="dashboard-last" 
-              onNavigate={handleNavigation} 
-              pageTitle={staticTitle} 
-              darkMode={darkMode} 
-              setDarkMode={setDarkMode} 
+            <AdminDashboardShell
+              currentPage="dashboard-last"
+              onNavigate={handleNavigation}
+              pageTitle={staticTitle}
+              darkMode={darkMode}
+              setDarkMode={setDarkMode}
               onLogout={handleLogout}
               onSelectSos={selectSosAlert}
             >
@@ -426,12 +566,12 @@ function AppRoutes() {
 
         <Route path="/admin/create-reports" element={
           isAuthenticated ? (
-            <AdminDashboardShell 
-              currentPage="create-reports" 
-              onNavigate={handleNavigation} 
-              pageTitle={staticTitle} 
-              darkMode={darkMode} 
-              setDarkMode={setDarkMode} 
+            <AdminDashboardShell
+              currentPage="create-reports"
+              onNavigate={handleNavigation}
+              pageTitle={staticTitle}
+              darkMode={darkMode}
+              setDarkMode={setDarkMode}
               onLogout={handleLogout}
               onSelectSos={selectSosAlert}
             >
@@ -442,12 +582,12 @@ function AppRoutes() {
 
         <Route path="/admin/send-reports" element={
           isAuthenticated ? (
-            <AdminDashboardShell 
-              currentPage="send-reports" 
-              onNavigate={handleNavigation} 
-              pageTitle={staticTitle} 
-              darkMode={darkMode} 
-              setDarkMode={setDarkMode} 
+            <AdminDashboardShell
+              currentPage="send-reports"
+              onNavigate={handleNavigation}
+              pageTitle={staticTitle}
+              darkMode={darkMode}
+              setDarkMode={setDarkMode}
               onLogout={handleLogout}
               onSelectSos={selectSosAlert}
             >
@@ -458,12 +598,12 @@ function AppRoutes() {
 
         <Route path="/admin/report-management" element={
           isAuthenticated ? (
-            <AdminDashboardShell 
-              currentPage="report-management" 
-              onNavigate={handleNavigation} 
-              pageTitle={staticTitle} 
-              darkMode={darkMode} 
-              setDarkMode={setDarkMode} 
+            <AdminDashboardShell
+              currentPage="report-management"
+              onNavigate={handleNavigation}
+              pageTitle={staticTitle}
+              darkMode={darkMode}
+              setDarkMode={setDarkMode}
               onLogout={handleLogout}
               onSelectSos={selectSosAlert}
             >
@@ -474,12 +614,12 @@ function AppRoutes() {
 
         <Route path="/admin/citizen-management" element={
           isAuthenticated ? (
-            <AdminDashboardShell 
-              currentPage="citizen-management" 
-              onNavigate={handleNavigation} 
-              pageTitle={staticTitle} 
-              darkMode={darkMode} 
-              setDarkMode={setDarkMode} 
+            <AdminDashboardShell
+              currentPage="citizen-management"
+              onNavigate={handleNavigation}
+              pageTitle={staticTitle}
+              darkMode={darkMode}
+              setDarkMode={setDarkMode}
               onLogout={handleLogout}
               onSelectSos={selectSosAlert}
             >
@@ -490,12 +630,12 @@ function AppRoutes() {
 
         <Route path="/admin/settings" element={
           isAuthenticated ? (
-            <AdminDashboardShell 
-              currentPage="settings" 
-              onNavigate={handleNavigation} 
-              pageTitle={staticTitle} 
-              darkMode={darkMode} 
-              setDarkMode={setDarkMode} 
+            <AdminDashboardShell
+              currentPage="settings"
+              onNavigate={handleNavigation}
+              pageTitle={staticTitle}
+              darkMode={darkMode}
+              setDarkMode={setDarkMode}
               onLogout={handleLogout}
               onSelectSos={selectSosAlert}
             >
@@ -507,18 +647,20 @@ function AppRoutes() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      {/* 🔔 1. INCOMING RINGING CALL PROMPT WITH RINGTONE */}
-      {incomingCallSession && (
-        <AnswerOrDeclineCall 
-          callData={incomingCallSession}
+      {/* 🔔 1. INCOMING RINGING CALL PROMPT WITH RINGTONE & CALL QUEUE */}
+      {incomingCallsQueue.length > 0 && (
+        <AnswerOrDeclineCall
+          callsQueue={incomingCallsQueue}
           onAnswer={handleAnswerCall}
           onDecline={handleDeclineCall}
+          currentAdminId={auth.currentUser?.uid}
+          isCallActive={Boolean(activeCallSession)}
         />
       )}
 
       {/* 📞 2. GLOBAL AGORA EMERGENCY VIDEO CALL OVERLAY */}
       {activeCallSession && (
-        <AdminCallModal 
+        <AdminCallModal
           targetRoom={activeCallSession.targetRoom}
           citizenName={activeCallSession.citizenName}
           backendUrl={BACKEND_URL}
@@ -615,8 +757,8 @@ function AppRoutes() {
         theme={darkMode ? "dark" : "light"}
       />
 
-      <Toaster 
-        position="top-right" 
+      <Toaster
+        position="top-right"
         duration={4000}
         visibleToasts={3}
       />

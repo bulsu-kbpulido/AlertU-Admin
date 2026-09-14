@@ -1,11 +1,11 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Bar } from 'react-chartjs-2';
 import 'chart.js/auto';
-import { 
-  parseISO, 
-  startOfWeek, 
-  endOfWeek, 
-  isWithinInterval, 
+import {
+  parseISO,
+  startOfWeek,
+  endOfWeek,
+  isWithinInterval,
   getDay,
   format,
   isSameDay,
@@ -23,13 +23,13 @@ import { collection, onSnapshot, query } from 'firebase/firestore';
 import { useAuditLog } from '../useAuditLog';
 
 // UI Icons & Components
-import { 
-  Calendar as CalendarIcon, 
-  ChevronDown, 
+import {
+  Calendar as CalendarIcon,
+  ChevronDown,
   RefreshCw,
-  Download, 
-  FileSpreadsheet, 
-  FileText, 
+  Download,
+  FileSpreadsheet,
+  FileText,
   Loader2,
   Wifi
 } from 'lucide-react';
@@ -47,7 +47,7 @@ import {
 
 // Calendar Picker Core Engine
 import { DatePicker } from '@mantine/dates';
-import '@mantine/dates/styles.css'; 
+import '@mantine/dates/styles.css';
 
 // Download Libraries
 import * as XLSX from 'xlsx-js-style';
@@ -58,16 +58,16 @@ import { toast } from 'sonner';
 // 🎯 Universal Timestamp Helper to catch all possible date fields across Active & Resolved collections
 const getReportDate = (report) => {
   if (!report) return null;
-  const rawTimestamp = 
-    report.resolvedAt || 
+  const rawTimestamp =
+    report.resolvedAt ||
     report.dateResolved ||
-    report.timestamp || 
-    report.verifiedAt || 
-    report.reportTimestamp || 
+    report.timestamp ||
+    report.verifiedAt ||
+    report.reportTimestamp ||
     report.createdAt ||
     report.updatedAt ||
     report.time;
-    
+
   if (!rawTimestamp) return null;
 
   try {
@@ -106,7 +106,7 @@ export const filterReportsByDate = (reports = [], dateValue, pickerType) => {
   const defaultStart = startOfDay(startOfWeek(now, { weekStartsOn: 0 }));
   const defaultEnd = endOfDay(endOfWeek(now, { weekStartsOn: 0 }));
 
-  const isCustomFilterActive = 
+  const isCustomFilterActive =
     (pickerType === 'single' && dateValue) ||
     (pickerType === 'range' && dateValue?.[0]) ||
     (pickerType === 'multiple' && Array.isArray(dateValue) && dateValue.length > 0);
@@ -141,11 +141,11 @@ export const filterReportsByDate = (reports = [], dateValue, pickerType) => {
 const parseAgencies = (report) => {
   if (!report) return 'None Assigned';
 
-  const rawAgencies = 
-    report.selectedAgencies || 
-    report.assignedAgencies || 
-    report.assignedAgency || 
-    report.agency || 
+  const rawAgencies =
+    report.selectedAgencies ||
+    report.assignedAgencies ||
+    report.assignedAgency ||
+    report.agency ||
     report.agencies;
 
   if (!rawAgencies) return 'None Assigned';
@@ -173,7 +173,7 @@ const parseAgencies = (report) => {
 // 🎯 Robust Date Formatter that checks all fields on the report
 const formatDate = (report) => {
   if (!report) return 'N/A';
-  
+
   const parsedDate = getReportDate(report);
   if (parsedDate) {
     return parsedDate.toLocaleString();
@@ -201,11 +201,11 @@ const isResolvedReport = (report) => {
   const statusStr = String(report.status || '').toLowerCase();
   const sourceStr = String(report.source || '').toLowerCase();
   return (
-    statusStr === 'resolved' || 
+    statusStr === 'resolved' ||
     sourceStr === 'resolved' ||
-    report.isResolved === true || 
+    report.isResolved === true ||
     Boolean(report._isResolvedFeedItem) ||
-    Boolean(report.resolvedAt) || 
+    Boolean(report.resolvedAt) ||
     Boolean(report.dateResolved) ||
     report.migrationSource === 'ResolvedReports'
   );
@@ -343,19 +343,19 @@ export default function Weekly_ReportCharts({
   // Generate chart data matrix grouping active and resolved items together
   const chartData = useMemo(() => {
     const categories = ['fire', 'flood', 'accident', 'others'];
-    
+
     let labels = [];
     let matrix = [];
 
     if (pickerType === 'single' && dateValue) {
       labels = [format(dateValue, 'MMM dd')];
       matrix = [Array(categories.length).fill(0)];
-    } 
+    }
     else if (pickerType === 'multiple' && Array.isArray(dateValue) && dateValue.length > 0) {
       const sortedDates = [...dateValue].filter(Boolean).sort((a, b) => a - b);
       labels = sortedDates.map(d => format(d, 'MMM dd'));
       matrix = Array(sortedDates.length).fill(0).map(() => Array(categories.length).fill(0));
-    } 
+    }
     else if (pickerType === 'range' && dateValue[0] && dateValue[1]) {
       const start = startOfDay(dateValue[0]);
       const end = endOfDay(dateValue[1]);
@@ -369,7 +369,7 @@ export default function Weekly_ReportCharts({
         labels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         matrix = Array(7).fill(0).map(() => Array(categories.length).fill(0));
       }
-    } 
+    }
     else {
       labels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
       matrix = Array(7).fill(0).map(() => Array(categories.length).fill(0));
@@ -380,14 +380,14 @@ export default function Weekly_ReportCharts({
       if (!reportDate) return;
 
       let type = (
-        report.incidentType || 
-        report.type || 
-        report.reportTitle || 
-        report.hazardType || 
-        report.hazard || 
+        report.incidentType ||
+        report.type ||
+        report.reportTitle ||
+        report.hazardType ||
+        report.hazard ||
         'others'
       ).toLowerCase();
-      
+
       let catIndex = 3;
       if (type.includes('fire')) catIndex = 0;
       else if (type.includes('flood')) catIndex = 1;
@@ -395,12 +395,12 @@ export default function Weekly_ReportCharts({
 
       if (pickerType === 'single') {
         matrix[0][catIndex] += 1;
-      } 
+      }
       else if (pickerType === 'multiple' && Array.isArray(dateValue)) {
         const sortedDates = [...dateValue].filter(Boolean).sort((a, b) => a - b);
         const matchIdx = sortedDates.findIndex(d => isSameDay(reportDate, d));
         if (matchIdx !== -1) matrix[matchIdx][catIndex] += 1;
-      } 
+      }
       else if (pickerType === 'range' && dateValue[0] && dateValue[1]) {
         const start = startOfDay(dateValue[0]);
         const end = endOfDay(dateValue[1]);
@@ -414,7 +414,7 @@ export default function Weekly_ReportCharts({
           const dayIndex = getDay(reportDate);
           matrix[dayIndex][catIndex] += 1;
         }
-      } 
+      }
       else {
         const dayIndex = getDay(reportDate);
         matrix[dayIndex][catIndex] += 1;
@@ -456,10 +456,14 @@ export default function Weekly_ReportCharts({
 
   // 📊 Excel Sheet Downloader
   const handleExportExcel = async () => {
+    if (isExporting) return;
     if (!filteredReports || filteredReports.length === 0) {
       toast.error("Export Failed", { description: "No data rows found matching current scope to download." });
       return;
     }
+
+    setIsExporting(true);
+    toast.info("Downloading started", { description: "Compiling spreadsheet cells layout..." });
 
     try {
       const formattedTimestamp = getExportTimestamp();
@@ -474,7 +478,7 @@ export default function Weekly_ReportCharts({
         const type = String(report.incidentType || report.type || 'N/A').toUpperCase();
         const severity = String(report.verifiedSeverity || report.severity || 'Medium').toUpperCase();
         const hazard = String(report.hazardType || report.hazard || 'None Specified');
-        
+
         let locationAddress = 'Coordinates Transmitted';
         if (typeof report.location === 'string') {
           locationAddress = report.location;
@@ -503,7 +507,7 @@ export default function Weekly_ReportCharts({
       excelRows.push(["", "", "", "", "", "", "", ""]);
 
       excelRows.push(["SECTION 1: ACTIVE & UNRESOLVED REPORTS", "", "", "", "", "", "", ""]);
-      activeHeaderRowIndex = excelRows.length; 
+      activeHeaderRowIndex = excelRows.length;
       excelRows.push(tableHeaders);
 
       if (activeReports.length > 0) {
@@ -514,9 +518,9 @@ export default function Weekly_ReportCharts({
 
       excelRows.push(["", "", "", "", "", "", "", ""]);
       excelRows.push(["", "", "", "", "", "", "", ""]);
-      
+
       excelRows.push(["SECTION 2: HISTORICAL RESOLVED REPORTS LOG", "", "", "", "", "", "", ""]);
-      resolvedHeaderRowIndex = excelRows.length; 
+      resolvedHeaderRowIndex = excelRows.length;
       excelRows.push(tableHeaders);
 
       if (resolvedReports.length > 0) {
@@ -527,14 +531,14 @@ export default function Weekly_ReportCharts({
 
       const workbook = XLSX.utils.book_new();
       const worksheet = XLSX.utils.aoa_to_sheet(excelRows);
-      const totalColumns = 8; 
+      const totalColumns = 8;
 
       if (activeHeaderRowIndex !== -1) {
         for (let col = 0; col < totalColumns; col++) {
           const cellAddress = XLSX.utils.encode_cell({ r: activeHeaderRowIndex, c: col });
           if (worksheet[cellAddress]) {
             worksheet[cellAddress].s = {
-              fill: { patternType: 'solid', fgColor: { rgb: "1D4ED8" } }, 
+              fill: { patternType: 'solid', fgColor: { rgb: "1D4ED8" } },
               font: { name: 'Arial', sz: 10, bold: true, color: { rgb: "FFFFFF" } }
             };
           }
@@ -546,7 +550,7 @@ export default function Weekly_ReportCharts({
           const cellAddress = XLSX.utils.encode_cell({ r: resolvedHeaderRowIndex, c: col });
           if (worksheet[cellAddress]) {
             worksheet[cellAddress].s = {
-              fill: { patternType: 'solid', fgColor: { rgb: "10B981" } }, 
+              fill: { patternType: 'solid', fgColor: { rgb: "10B981" } },
               font: { name: 'Arial', sz: 10, bold: true, color: { rgb: "FFFFFF" } }
             };
           }
@@ -554,7 +558,7 @@ export default function Weekly_ReportCharts({
       }
 
       worksheet['!cols'] = [
-        { wch: 18 }, { wch: 32 }, { wch: 18 }, { wch: 15 }, { wch: 22 }, { wch: 50 }, { wch: 32 }, { wch: 24 } 
+        { wch: 18 }, { wch: 32 }, { wch: 18 }, { wch: 15 }, { wch: 22 }, { wch: 50 }, { wch: 32 }, { wch: 24 }
       ];
 
       XLSX.utils.book_append_sheet(workbook, worksheet, "Combined Logs Registry");
@@ -574,17 +578,21 @@ export default function Weekly_ReportCharts({
     } catch (error) {
       console.error(error);
       toast.error("Export Error", { description: "Failed to compile spreadsheet format columns." });
+    } finally {
+      setIsExporting(false);
     }
   };
 
   // 📄 PDF Document Downloader
   const handleExportPDF = async () => {
+    if (isExporting) return;
     if (!filteredReports || filteredReports.length === 0) {
       toast.error("Export Failed", { description: "No data rows found matching current scope to download." });
       return;
     }
 
     setIsExporting(true);
+    toast.info("Downloading started", { description: "Compiling document layout lines..." });
 
     try {
       const doc = new jsPDF('l', 'mm', 'a4');
@@ -596,7 +604,7 @@ export default function Weekly_ReportCharts({
       doc.setFontSize(15);
       doc.setFont('helvetica', 'bold');
       doc.text("INCIDENT MANAGEMENT SYSTEM SUMMARY RECORDS LOGS", 14, 15);
-      
+
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(100);
@@ -621,14 +629,14 @@ export default function Weekly_ReportCharts({
 
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(29, 78, 216); 
+      doc.setTextColor(29, 78, 216);
       doc.text("Section 1: Active & Unresolved Reports", 14, 29);
 
       autoTable(doc, {
         startY: 32,
         head: tableHeaders,
-        body: activeReports.length > 0 
-          ? formatTableRows(activeReports) 
+        body: activeReports.length > 0
+          ? formatTableRows(activeReports)
           : [['-', 'No Active Reports Found in Selected Timeframe', '-', '-', '-', '-', '-', '-']],
         theme: 'striped',
         headStyles: { fillColor: [29, 78, 216], fontSize: 9, fontStyle: 'bold' },
@@ -640,14 +648,14 @@ export default function Weekly_ReportCharts({
 
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(16, 185, 129); 
+      doc.setTextColor(16, 185, 129);
       doc.text("Section 2: Historical Resolved Reports Log", 14, nextY);
 
       autoTable(doc, {
         startY: nextY + 3,
         head: tableHeaders,
-        body: resolvedReports.length > 0 
-          ? formatTableRows(resolvedReports) 
+        body: resolvedReports.length > 0
+          ? formatTableRows(resolvedReports)
           : [['-', 'No Resolved Logs Found in Selected Timeframe', '-', '-', '-', '-', '-', '-']],
         theme: 'striped',
         headStyles: { fillColor: [16, 185, 129], fontSize: 9, fontStyle: 'bold' },
@@ -680,7 +688,7 @@ export default function Weekly_ReportCharts({
     <div className="w-full bg-white rounded-xl border border-slate-200/80 p-4 sm:p-5 lg:p-6 shadow-sm dark:bg-slate-900 dark:border-slate-800 flex flex-col justify-between min-h-[480px] h-full">
       {/* Card Header: 2-Tier Stacked Layout for 100% Visibility with Zero Overlap */}
       <div className="flex flex-col gap-3 mb-4 z-20">
-        
+
         {/* Row 1: Title Block */}
         <div className="flex flex-col gap-0.5 w-full">
           <div className="flex items-center gap-2">
@@ -705,11 +713,11 @@ export default function Weekly_ReportCharts({
 
         {/* Row 2: Toolbar Controls - Full Dedicated Row, Never Overlapping Title */}
         <div className="flex flex-wrap items-center gap-2 w-full">
-          
+
           <Popover>
             <PopoverTrigger asChild>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 disabled={isExporting || filteredReports.length === 0 || loading}
                 className="h-8 gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm border-0 cursor-pointer rounded-lg px-2.5 sm:px-3"
               >
@@ -717,27 +725,23 @@ export default function Weekly_ReportCharts({
                 <span>Export</span>
               </Button>
             </PopoverTrigger>
-            
+
             <PopoverContent align="end" className="w-56 p-2 flex flex-col gap-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-md z-[9999]">
               <Button
-                onClick={() => {
-                  toast.info("Downloading started", { description: "Compiling spreadsheet cells layout..." });
-                  handleExportExcel();
-                }}
+                onClick={handleExportExcel}
+                disabled={isExporting}
                 variant="ghost"
-                className="w-full justify-start gap-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium text-xs h-9 cursor-pointer rounded-md"
+                className="w-full justify-start gap-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium text-xs h-9 cursor-pointer rounded-md disabled:opacity-50"
               >
                 <FileSpreadsheet className="h-4 w-4 text-emerald-600 dark:text-emerald-500" />
                 Export as Excel
               </Button>
 
               <Button
-                onClick={() => {
-                  toast.info("Downloading started", { description: "Compiling document layout lines..." });
-                  handleExportPDF();
-                }}
+                onClick={handleExportPDF}
+                disabled={isExporting}
                 variant="ghost"
-                className="w-full justify-start gap-2 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-600 dark:hover:text-rose-400 font-medium text-xs h-9 cursor-pointer rounded-md"
+                className="w-full justify-start gap-2 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-600 dark:hover:text-rose-400 font-medium text-xs h-9 cursor-pointer rounded-md disabled:opacity-50"
               >
                 <FileText className="h-4 w-4 text-rose-600 dark:text-rose-500" />
                 Export as PDF
@@ -745,7 +749,7 @@ export default function Weekly_ReportCharts({
             </PopoverContent>
           </Popover>
 
-          <select 
+          <select
             className="text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-200 font-medium h-8 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer"
             value={pickerType}
             onChange={(e) => {
@@ -767,34 +771,34 @@ export default function Weekly_ReportCharts({
                 <ChevronDown className="h-3.5 w-3.5 opacity-50 shrink-0" />
               </Button>
             </DropdownMenuTrigger>
-            
-            <DropdownMenuContent 
-              align="end" 
+
+            <DropdownMenuContent
+              align="end"
               sideOffset={5}
               className="p-3 bg-white dark:bg-slate-900 shadow-xl rounded-lg border border-slate-200 dark:border-slate-800 z-[9999] min-w-fit w-auto"
             >
-              <div className="p-1 
+              <div className="p-1
                 [&_[data-selected]]:!bg-blue-600 [&_[data-selected]]:!text-white
                 [&_[data-in-range]]:!bg-blue-50 dark:[&_[data-in-range]]:!bg-blue-950/40
                 [&_[data-in-range]]:!text-blue-600 dark:[&_[data-in-range]]:!text-blue-400"
               >
-                <DatePicker 
-                  type={pickerType} 
-                  value={dateValue} 
+                <DatePicker
+                  type={pickerType}
+                  value={dateValue}
                   onChange={(val) => {
                     if (pickerType === 'range') setDateValue(val || [null, null]);
                     else if (pickerType === 'multiple') setDateValue(val || []);
                     else setDateValue(val);
-                  }} 
+                  }}
                 />
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-center cursor-pointer shrink-0" 
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-center cursor-pointer shrink-0"
             onClick={handleReset}
             title="Refresh Data"
           >

@@ -15,9 +15,11 @@ import { Button } from "@/components/ui/button";
 // 🛡️ Import Audit Logging Hook
 import { useAuditLog } from '../useAuditLog'; // Adjust path if needed
 
+import { isNonActiveReport } from '../useActiveReportsStore';
+
 export default function DashAction_Buttons({ onRefresh, isLoading, reports = [] }) {
   const [isExporting, setIsExporting] = useState(false);
-  
+
   // 🛡️ Initialize Audit Logger
   const { logExportFilteredReports } = useAuditLog();
 
@@ -66,14 +68,27 @@ export default function DashAction_Buttons({ onRefresh, isLoading, reports = [] 
     }).replace(' at', '');
   };
 
+  // Helper to filter only currently active/ongoing reports
+  const getActiveReports = () => {
+    if (!Array.isArray(reports)) return [];
+    return reports.filter(r => !isNonActiveReport(r));
+  };
+
   // 📊 Excel Sheet Data Matrix Compiler
   const handleExportExcel = async () => {
-    if (!reports || reports.length === 0) {
-      toast.error("Export Failed", {
-        description: "No data found to save.",
-      });
+    if (isExporting) return;
+
+    const activeReports = getActiveReports();
+    if (activeReports.length === 0) {
+      toast.error("No active reports to export.");
       return;
     }
+
+    setIsExporting(true);
+    toast.info("Downloading started", {
+      description: "Creating Excel file...",
+      icon: <Loader2 className="h-4 w-4 animate-spin text-emerald-500" />,
+    });
 
     try {
       const formattedTimestamp = getExportTimestamp();
@@ -81,20 +96,20 @@ export default function DashAction_Buttons({ onRefresh, isLoading, reports = [] 
       const excelRows = [
         ["INCIDENT RISK MANAGEMENT REGISTRY LOGS", "", "", "", "", "", "", ""],
         ["Active Reports Feed | Compiled As of " + formattedTimestamp, "", "", "", "", "", "", ""],
-        ["", "", "", "", "", "", "", ""], 
+        ["", "", "", "", "", "", "", ""],
         [
-          'Report Title', 
+          'Report Title',
           'Verified ID',
-          'Incident Type', 
-          'Severity Level', 
-          'Hazard Type', 
-          'Location Address', 
-          'Agencies Involved', 
+          'Incident Type',
+          'Severity Level',
+          'Hazard Type',
+          'Location Address',
+          'Agencies Involved',
           'Timestamp'
         ]
       ];
 
-      reports.forEach((report) => {
+      activeReports.forEach((report) => {
         if (!report) return;
 
         const title = String(report.reportTitle || report.citizen || 'Untitled Alert');
@@ -102,7 +117,7 @@ export default function DashAction_Buttons({ onRefresh, isLoading, reports = [] 
         const type = String(report.incidentType || report.type || 'N/A').toUpperCase();
         const severity = String(report.verifiedSeverity || report.severity || 'Medium').toUpperCase();
         const hazard = String(report.hazardType || report.hazard || 'None Specified');
-        
+
         let locationAddress = 'Coordinates Transmitted';
         if (typeof report.location === 'string') {
           locationAddress = report.location;
@@ -123,12 +138,12 @@ export default function DashAction_Buttons({ onRefresh, isLoading, reports = [] 
       const worksheet = XLSX.utils.aoa_to_sheet(excelRows);
 
       // 🎨 Apply Style to the Header Row
-      const headerRowIndex = 3; 
+      const headerRowIndex = 3;
       const totalColumns = 8; // Columns A through H
 
       for (let col = 0; col < totalColumns; col++) {
         const cellAddress = XLSX.utils.encode_cell({ r: headerRowIndex, c: col });
-        
+
         if (worksheet[cellAddress]) {
           worksheet[cellAddress].s = {
             fill: {
@@ -165,7 +180,7 @@ export default function DashAction_Buttons({ onRefresh, isLoading, reports = [] 
       toast.success("Excel file saved successfully");
 
       // 🛡️ Dispatch Audit Log Action
-      await logExportFilteredReports('XLSX', reports.length, {
+      await logExportFilteredReports('XLSX', activeReports.length, {
         sourceComponent: 'DashAction_Buttons.jsx',
         section: 'Control Panel Overview'
       });
@@ -173,18 +188,25 @@ export default function DashAction_Buttons({ onRefresh, isLoading, reports = [] 
     } catch (error) {
       console.error("Excel Generation Error Exception Handle:", error);
       toast.error("Export Error", { description: "Could not create the Excel file." });
+    } finally {
+      setIsExporting(false);
     }
   };
 
   const handleExportPDF = async () => {
-    if (!reports || reports.length === 0) {
-      toast.error("Export Failed", {
-        description: "No data found to save.",
-      });
+    if (isExporting) return;
+
+    const activeReports = getActiveReports();
+    if (activeReports.length === 0) {
+      toast.error("No active reports to export.");
       return;
     }
 
     setIsExporting(true);
+    toast.info("Downloading started", {
+      description: "Creating PDF file...",
+      icon: <Loader2 className="h-4 w-4 animate-spin text-rose-500" />,
+    });
 
     try {
       const doc = new jsPDF('l', 'mm', 'a4');
@@ -193,7 +215,7 @@ export default function DashAction_Buttons({ onRefresh, isLoading, reports = [] 
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
       doc.text("INCIDENT RISK MANAGEMENT REGISTRY LOGS", 14, 15);
-      
+
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(100);
@@ -203,7 +225,7 @@ export default function DashAction_Buttons({ onRefresh, isLoading, reports = [] 
         ['Report Title', 'Verified ID', 'Incident Type', 'Severity', 'Hazard Type', 'Location Address', 'Agencies Involved', 'Timestamp']
       ];
 
-      const tableRows = reports.map(report => [
+      const tableRows = activeReports.map(report => [
         report.reportTitle || report.citizen || 'Untitled Alert',
         report.verifiedReportId || report.verifiedreportID || 'PENDING',
         (report.incidentType || 'N/A').toUpperCase(),
@@ -232,7 +254,7 @@ export default function DashAction_Buttons({ onRefresh, isLoading, reports = [] 
       toast.success("PDF file saved successfully");
 
       // 🛡️ Dispatch Audit Log Action
-      await logExportFilteredReports('PDF', reports.length, {
+      await logExportFilteredReports('PDF', activeReports.length, {
         sourceComponent: 'DashAction_Buttons.jsx',
         section: 'Control Panel Overview'
       });
@@ -267,38 +289,28 @@ export default function DashAction_Buttons({ onRefresh, isLoading, reports = [] 
         </Button>
 
         <Popover>
-          <PopoverTrigger 
+          <PopoverTrigger
             disabled={isLoading || isExporting}
             className="w-full font-semibold border border-slate-200 dark:border-slate-800 flex items-center justify-center gap-2 text-slate-700 dark:text-slate-300 h-9 sm:h-10 px-3 sm:px-4 text-xs sm:text-sm rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:pointer-events-none transition-colors truncate cursor-pointer"
           >
             <Download className="h-4 w-4 shrink-0" />
             <span className="truncate">{isExporting ? 'Saving...' : 'Export Logs'}</span>
           </PopoverTrigger>
-          
+
           <PopoverContent className="w-64 p-2 flex flex-col gap-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-md">
             <Button
-              onClick={() => {
-                toast.info("Downloading started", {
-                  description: "Creating Excel file...",
-                  icon: <Loader2 className="h-4 w-4 animate-spin text-emerald-500" />,
-                });
-                handleExportExcel();
-              }}
-              className="w-full justify-start gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs h-9 shadow-sm"
+              onClick={handleExportExcel}
+              disabled={isExporting}
+              className="w-full justify-start gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs h-9 shadow-sm disabled:opacity-50"
             >
               <FileSpreadsheet className="h-4 w-4" />
               Save as Excel
             </Button>
 
             <Button
-              onClick={() => {
-                toast.info("Downloading started", {
-                  description: "Creating PDF file...",
-                  icon: <Loader2 className="h-4 w-4 animate-spin text-rose-500" />,
-                });
-                handleExportPDF();
-              }}
-              className="w-full justify-start gap-2 bg-rose-600 hover:bg-rose-700 text-white font-medium text-xs h-9 shadow-sm"
+              onClick={handleExportPDF}
+              disabled={isExporting}
+              className="w-full justify-start gap-2 bg-rose-600 hover:bg-rose-700 text-white font-medium text-xs h-9 shadow-sm disabled:opacity-50"
             >
               <FileText className="h-4 w-4" />
               Save as PDF
