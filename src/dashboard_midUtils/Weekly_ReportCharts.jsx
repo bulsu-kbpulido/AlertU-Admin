@@ -74,8 +74,16 @@ const getReportDate = (report) => {
     let reportDate;
     if (typeof rawTimestamp.toDate === 'function') {
       reportDate = rawTimestamp.toDate();
-    } else if (typeof rawTimestamp === 'object' && 'seconds' in rawTimestamp) {
-      reportDate = new Date(rawTimestamp.seconds * 1000);
+    } else if (typeof rawTimestamp === 'object' && rawTimestamp !== null) {
+      if ('seconds' in rawTimestamp && typeof rawTimestamp.seconds === 'number') {
+        reportDate = new Date(rawTimestamp.seconds * 1000);
+      } else if ('_seconds' in rawTimestamp && typeof rawTimestamp._seconds === 'number') {
+        reportDate = new Date(rawTimestamp._seconds * 1000);
+      } else {
+        reportDate = new Date(rawTimestamp);
+      }
+    } else if (typeof rawTimestamp === 'number') {
+      reportDate = new Date(rawTimestamp > 1e11 ? rawTimestamp : rawTimestamp * 1000);
     } else if (typeof rawTimestamp === 'string') {
       reportDate = parseISO(rawTimestamp);
       if (isNaN(reportDate.getTime())) {
@@ -84,7 +92,7 @@ const getReportDate = (report) => {
     } else {
       reportDate = new Date(rawTimestamp);
     }
-    return isNaN(reportDate.getTime()) ? null : reportDate;
+    return isNaN(reportDate?.getTime()) ? null : reportDate;
   } catch {
     return null;
   }
@@ -191,7 +199,16 @@ const getExportTimestamp = () => {
 const isResolvedReport = (report) => {
   if (!report) return false;
   const statusStr = String(report.status || '').toLowerCase();
-  return statusStr === 'resolved' || report.isResolved === true || Boolean(report.resolvedAt) || report.migrationSource === 'ResolvedReports';
+  const sourceStr = String(report.source || '').toLowerCase();
+  return (
+    statusStr === 'resolved' || 
+    sourceStr === 'resolved' ||
+    report.isResolved === true || 
+    Boolean(report._isResolvedFeedItem) ||
+    Boolean(report.resolvedAt) || 
+    Boolean(report.dateResolved) ||
+    report.migrationSource === 'ResolvedReports'
+  );
 };
 
 export default function Weekly_ReportCharts({
@@ -242,7 +259,13 @@ export default function Weekly_ReportCharts({
       }
 
       [...activeData, ...adminData, ...resolvedData].forEach(doc => {
-        if (doc && doc.id) mergedMap.set(doc.id, doc);
+        if (doc && doc.id) {
+          const existing = mergedMap.get(doc.id);
+          if (existing && isResolvedReport(existing) && !isResolvedReport(doc)) {
+            return;
+          }
+          mergedMap.set(doc.id, doc);
+        }
       });
 
       setFirestoreReports(Array.from(mergedMap.values()));

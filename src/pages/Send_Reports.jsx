@@ -402,7 +402,13 @@ export default function Send_Report() {
     try {
       const json = await fetchFromBackend('/reports?view=approved');
       if (json.success) {
-        setReports(json.data || []);
+        const activeOnly = (json.data || []).filter(r => 
+          r.status !== 'resolved' && 
+          r.isResolved !== true && 
+          !r.resolvedAt && 
+          r.source !== 'resolved'
+        );
+        setReports(activeOnly);
       }
     } catch (err) {
       console.error("Fetch error:", err);
@@ -466,7 +472,7 @@ export default function Send_Report() {
     if (!reportToResolve) return;
     
     setIsResolving(true);
-    const actualCollection = reportToResolve.source === 'admin' ? 'AdminReports' : 'approved_reports';
+    const actualCollection = reportToResolve.source === 'admin' ? 'ApprovedAdminReports' : 'approved_reports';
     
     const displayId = getDisplayId(reportToResolve);
 
@@ -507,7 +513,7 @@ export default function Send_Report() {
     if (!reportToArchive) return;
     
     setIsArchiving(true);
-    const actualCollection = reportToArchive.source === 'admin' ? 'AdminReports' : 'approved_reports';
+    const actualCollection = reportToArchive.source === 'admin' ? 'ApprovedAdminReports' : 'approved_reports';
     
     const displayId = getDisplayId(reportToArchive);
   

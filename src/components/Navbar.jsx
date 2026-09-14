@@ -10,6 +10,7 @@ import {
   MapPin, 
   ShieldAlert,
   X,
+  Menu,
   Radio,
   Phone,
   User,
@@ -95,8 +96,18 @@ const AvatarFallback = ({ children, className = '' }) => (
   </div>
 );
 
-export default function Navbar({ onOpenMessages, onSelectSos }) {
-  const [isOpen, setIsOpen] = useState(false);
+export default function Navbar({ 
+  onOpenMessages, 
+  onSelectSos,
+  isOpen: isMobileNavOpen = false,
+  setIsOpen: setIsMobileNavOpen,
+  isMobileSidebarOpen,
+  setIsMobileSidebarOpen,
+}) {
+  const isNavOpen = isMobileSidebarOpen ?? isMobileNavOpen;
+  const setNavOpen = setIsMobileSidebarOpen ?? setIsMobileNavOpen;
+
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isSosOpen, setIsSosOpen] = useState(false);
   
   const [notifications, setNotifications] = useState([]);
@@ -310,8 +321,8 @@ export default function Navbar({ onOpenMessages, onSelectSos }) {
 
   // Toggle handlers (ensures only one popover is active at a time)
   const togglePopover = () => {
-    const nextState = !isOpen;
-    setIsOpen(nextState);
+    const nextState = !isNotificationOpen;
+    setIsNotificationOpen(nextState);
     if (nextState) setIsSosOpen(false);
 
     if (nextState) {
@@ -323,7 +334,7 @@ export default function Navbar({ onOpenMessages, onSelectSos }) {
   const toggleSosPopover = () => {
     const nextState = !isSosOpen;
     setIsSosOpen(nextState);
-    if (nextState) setIsOpen(false);
+    if (nextState) setIsNotificationOpen(false);
 
     if (nextState) {
       setSosAlerts(prev => prev.map(s => ({ ...s, isRead: true })));
@@ -448,6 +459,16 @@ export default function Navbar({ onOpenMessages, onSelectSos }) {
         
         {/* LEFT: REAL-TIME CONNECTED AVATAR, DATE & LIVE PHILIPPINE CLOCK */}
         <div className="flex items-center gap-3 sm:gap-4 min-w-0 shrink">
+          {/* Mobile hamburger action */}
+          <button
+            type="button"
+            onClick={() => setNavOpen && setNavOpen(!isNavOpen)}
+            className="lg:hidden p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+            aria-label="Toggle Navigation"
+          >
+            {isNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+
           <div className="flex items-center gap-3 cursor-pointer group shrink-0 min-w-0">
             <div className="relative shrink-0">
               <Avatar className="ring-2 ring-blue-500/20 transition-transform group-hover:scale-105">
@@ -635,11 +656,11 @@ export default function Navbar({ onOpenMessages, onSelectSos }) {
 
             {/* FRAMER MOTION POPOVER PANEL */}
             <AnimatePresence>
-              {isOpen && (
+              {isNotificationOpen && (
                 <>
                   <div 
                     className="fixed inset-0 z-40" 
-                    onClick={() => setIsOpen(false)} 
+                    onClick={() => setIsNotificationOpen(false)} 
                   />
 
                   <motion.div 

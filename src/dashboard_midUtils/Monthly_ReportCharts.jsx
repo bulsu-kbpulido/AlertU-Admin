@@ -68,8 +68,16 @@ const getReportDate = (report) => {
     let reportDate;
     if (typeof rawTimestamp.toDate === 'function') {
       reportDate = rawTimestamp.toDate();
-    } else if (typeof rawTimestamp === 'object' && 'seconds' in rawTimestamp) {
-      reportDate = new Date(rawTimestamp.seconds * 1000);
+    } else if (typeof rawTimestamp === 'object' && rawTimestamp !== null) {
+      if ('seconds' in rawTimestamp && typeof rawTimestamp.seconds === 'number') {
+        reportDate = new Date(rawTimestamp.seconds * 1000);
+      } else if ('_seconds' in rawTimestamp && typeof rawTimestamp._seconds === 'number') {
+        reportDate = new Date(rawTimestamp._seconds * 1000);
+      } else {
+        reportDate = new Date(rawTimestamp);
+      }
+    } else if (typeof rawTimestamp === 'number') {
+      reportDate = new Date(rawTimestamp > 1e11 ? rawTimestamp : rawTimestamp * 1000);
     } else if (typeof rawTimestamp === 'string') {
       reportDate = parseISO(rawTimestamp);
       if (isNaN(reportDate.getTime())) {
@@ -78,7 +86,7 @@ const getReportDate = (report) => {
     } else {
       reportDate = new Date(rawTimestamp);
     }
-    return isNaN(reportDate.getTime()) ? null : reportDate;
+    return isNaN(reportDate?.getTime()) ? null : reportDate;
   } catch {
     return null;
   }
@@ -147,9 +155,12 @@ const getExportTimestamp = () => {
 const isResolvedReport = (report) => {
   if (!report) return false;
   const statusStr = String(report.status || '').toLowerCase();
+  const sourceStr = String(report.source || '').toLowerCase();
   return (
     statusStr === 'resolved' || 
+    sourceStr === 'resolved' ||
     report.isResolved === true || 
+    Boolean(report._isResolvedFeedItem) ||
     Boolean(report.resolvedAt) || 
     Boolean(report.dateResolved) ||
     report.migrationSource === 'ResolvedReports'
@@ -188,9 +199,15 @@ export default function Monthly_ReportCharts({ reports: propReports = [] }) {
         });
       }
 
-      // Live streams merge
+      // Live streams merge: keep resolved state intact if already present
       [...activeData, ...adminData, ...resolvedData].forEach(doc => {
-        if (doc && doc.id) mergedMap.set(doc.id, doc);
+        if (doc && doc.id) {
+          const existing = mergedMap.get(doc.id);
+          if (existing && isResolvedReport(existing) && !isResolvedReport(doc)) {
+            return;
+          }
+          mergedMap.set(doc.id, doc);
+        }
       });
 
       setFirestoreReports(Array.from(mergedMap.values()));
@@ -199,17 +216,27 @@ export default function Monthly_ReportCharts({ reports: propReports = [] }) {
     };
 
     const unsubscribeActive = onSnapshot(activeQuery, snapshot => {
-      activeData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), migrationSource: 'approved_reports' }));
+      activeData = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data(), migrationSource: 'approved_reports' }))
+        .filter(r => !isResolvedReport(r));
       mergeAndSetReports();
     }, () => setIsLive(false));
 
     const unsubscribeAdmin = onSnapshot(adminQuery, snapshot => {
-      adminData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), migrationSource: 'ApprovedAdminReports' }));
+      adminData = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data(), migrationSource: 'ApprovedAdminReports' }))
+        .filter(r => !isResolvedReport(r));
       mergeAndSetReports();
     }, () => setIsLive(false));
 
     const unsubscribeResolved = onSnapshot(resolvedQuery, snapshot => {
-      resolvedData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), migrationSource: 'ResolvedReports', status: 'resolved' }));
+      resolvedData = snapshot.docs.map(doc => ({ 
+        id: doc.id, 
+        ...doc.data(), 
+        migrationSource: 'ResolvedReports', 
+        source: 'resolved',
+        status: 'resolved' 
+      }));
       mergeAndSetReports();
     }, () => setIsLive(false));
 
@@ -495,8 +522,8 @@ export default function Monthly_ReportCharts({ reports: propReports = [] }) {
       const formatTableRows = (list) => list.map(report => [
         report.reportTitle || report.citizen || 'Untitled Alert',
         (report.incidentType || 'N/A').toUpperCase(),
-        (report.severity || 'Medium').toUpperCase(),
-        report.hazard || 'None Specified',
+        (report.verifiedSeverity || report.severity || 'Medium').toUpperCase(),
+        report.hazardType || report.hazard || 'None Specified',
         typeof report.location === 'string' ? report.location : report.location?.address || 'Coordinates Transmitted',
         parseAgencies(report),
         formatDate(report)
@@ -520,6 +547,10 @@ export default function Monthly_ReportCharts({ reports: propReports = [] }) {
       });
 
       let nextY = (doc).lastAutoTable?.finalY ? (doc).lastAutoTable.finalY + 12 : 100;
+      if (nextY > 165) {
+        doc.addPage();
+        nextY = 20;
+      }
 
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
@@ -539,6 +570,10 @@ export default function Monthly_ReportCharts({ reports: propReports = [] }) {
       });
 
       nextY = (doc).lastAutoTable?.finalY ? (doc).lastAutoTable.finalY + 12 : 160;
+      if (nextY > 155) {
+        doc.addPage();
+        nextY = 20;
+      }
 
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');

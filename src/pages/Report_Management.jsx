@@ -207,7 +207,17 @@ export default function Report_Management() {
 
         // Client-side filtering ensures both boolean flags and status fields work cleanly
         if (activeTab === 'active') {
-          fetchedReports = fetchedReports.filter(r => !r.isDuplicate && r.status !== 'duplicate');
+          fetchedReports = fetchedReports.filter(r => 
+            !r.isDuplicate && 
+            r.status !== 'duplicate' && 
+            r.status !== 'resolved' && 
+            r.status !== 'verified' && 
+            r.status !== 'dispatched' && 
+            r.status !== 'rejected' && 
+            r.status !== 'archived' && 
+            !r.isResolved && 
+            !r.isArchived
+          );
         } else if (activeTab === 'duplicate') {
           fetchedReports = fetchedReports.filter(r => r.isDuplicate === true || r.status === 'duplicate');
         }

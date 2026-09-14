@@ -102,7 +102,7 @@ export default function View_Reports({
   // Sync sensitivity state if report changes
   useEffect(() => {
     if (report) {
-      setIsSensitive(Boolean(report.isSensitive));
+      setIsSensitive(Boolean(report?.isSensitive));
     }
   }, [report]);
 
@@ -173,9 +173,9 @@ export default function View_Reports({
     report?.createdAt || report?.timestamp || report?.submittedAt || report?.verifiedAt
   );
 
-  const displayTitle = report.reportTitle || report.verifiedIncidentType || report.incidentType || report.hazard || 'Emergency Incident';
-  const rawSeverity = (report.verifiedSeverity || report.severity || 'Medium').toLowerCase();
-  const rawStatus = (report.status || 'Pending').toLowerCase();
+  const displayTitle = report?.reportTitle || report?.verifiedIncidentType || report?.incidentType || report?.hazard || 'Emergency Incident';
+  const rawSeverity = (report?.verifiedSeverity || report?.severity || 'Medium').toLowerCase();
+  const rawStatus = (report?.status || 'Pending').toLowerCase();
 
   // Submitter Profile
   const reporterName = 
@@ -206,8 +206,8 @@ export default function View_Reports({
     report?.reporter?.phone ||
     'No phone number provided';
 
-  const description = report.description || report.incidentDetails || report.notes || 'No description provided by the reporter.';
-  const adminNotes = report.adminNotes || report.verificationRemarks || null;
+  const description = report?.description || report?.incidentDetails || report?.notes || 'No description provided by the reporter.';
+  const adminNotes = report?.rejectionReason || report?.rejectedReason || report?.adminNotes || report?.verificationRemarks || null;
 
   const currentReportLat = report?.location?.latitude ?? report?.latitude ?? report?.correctedLatitude ?? 0;
   const currentReportLng = report?.location?.longitude ?? report?.longitude ?? report?.correctedLongitude ?? 0;

@@ -127,7 +127,7 @@ export default function Resolved_Incidents({ onRestoreSuccess }) {
   }, []);
 
   useEffect(() => {
-    fetchResolvedReports();
+    fetchResolvedReports(true);
   }, [fetchResolvedReports]);
 
   // Filter resolved reports based on search term

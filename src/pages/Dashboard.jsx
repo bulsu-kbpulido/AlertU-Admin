@@ -247,7 +247,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="w-full min-h-[calc(100vh-6.75rem)] lg:h-[calc(100dvh-6.75rem)] relative overflow-hidden box-border p-0 m-0">
+    <div className="w-full h-[calc(100dvh-6.75rem)] min-h-[calc(100vh-6.75rem)] relative overflow-hidden box-border p-0 m-0">
       <Dashboard_Wrapper ref={wrapperRef}>
         
         {/* OVERVIEW PANEL (0) */}
@@ -322,7 +322,11 @@ export default function Dashboard() {
         </div>
 
         {/* BOTTOM BARANGAY PANEL (2) */}
-        <div className="w-full max-w-full h-full box-border overflow-y-auto py-2">
+        <div className="w-full max-w-full h-full box-border overflow-y-auto min-h-0 py-2 pr-1 pb-8
+          [&::-webkit-scrollbar]:w-[6px] 
+          [&::-webkit-scrollbar-track]:bg-transparent 
+          [&::-webkit-scrollbar-thumb]:bg-slate-200 dark:[&::-webkit-scrollbar-thumb]:bg-slate-800 [&::-webkit-scrollbar-thumb]:rounded-full"
+        >
           <Dashboard_BottomSection 
             reports={allReports} 
             resolvedReports={resolvedReports}
@@ -331,7 +335,11 @@ export default function Dashboard() {
         </div>
 
         {/* LAST CITIZEN & AGENCY PANEL (3) */}
-        <div className="w-full max-w-full h-full pb-12 box-border overflow-y-auto py-2">
+        <div className="w-full max-w-full h-full pb-12 box-border overflow-y-auto min-h-0 py-2 pr-1
+          [&::-webkit-scrollbar]:w-[6px] 
+          [&::-webkit-scrollbar-track]:bg-transparent 
+          [&::-webkit-scrollbar-thumb]:bg-slate-200 dark:[&::-webkit-scrollbar-thumb]:bg-slate-800 [&::-webkit-scrollbar-thumb]:rounded-full"
+        >
           <Dashboard_LastSection 
             reports={allReports}
             resolvedReports={resolvedReports}

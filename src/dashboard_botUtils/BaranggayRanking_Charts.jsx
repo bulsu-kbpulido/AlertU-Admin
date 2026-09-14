@@ -249,7 +249,7 @@ export default function BaranggayRanking_Charts({
           <div className="flex items-center gap-2">
             <div className="h-4 w-4 text-amber-500" />
             <h3 className="text-sm font-semibold tracking-wide text-slate-800 dark:text-slate-200 uppercase">
-              Most Affected Baranggays Based on Months
+              Most Affected Barangays Based on Months
             </h3>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -351,10 +351,7 @@ export default function BaranggayRanking_Charts({
       </div>
 
       {/* FOOTER */}
-      <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-        <span className="font-medium">
-          Live sync with approved_reports and ResolvedReports
-        </span>
+      <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end text-xs text-slate-500 dark:text-slate-400">
         <span className="font-medium">
           Barangay Statistics
         </span>

@@ -15,6 +15,7 @@ import {
   Activity,
   BarChart3,
   Building2,
+  X,
 } from 'lucide-react';
 import { auth } from '../firebase'; // Adjust path to your firebase config
 import useAuditLog from '../useAuditLog'; // Adjust path if needed
@@ -26,6 +27,8 @@ export default function Sidebar({
   darkMode,
   setDarkMode,
   isCollapsed = false,
+  isOpen = false,
+  setIsOpen,
 }) {
   const currentUser = auth.currentUser;
 
@@ -55,7 +58,7 @@ export default function Sidebar({
   const dashboardSubItems = [
     { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
     { id: 'dashboard-mid', label: 'Report Statistics', icon: Activity },
-    { id: 'dashboard-bottom', label: 'Baranggay', icon: BarChart3 },
+    { id: 'dashboard-bottom', label: 'Barangay', icon: BarChart3 },
     { id: 'dashboard-last', label: 'Agency Statistics', icon: Building2 },
   ];
 
@@ -127,54 +130,73 @@ export default function Sidebar({
       // Standard page shift
       setCurrentPage(targetId);
     }
+
+    if (setIsOpen) {
+      setIsOpen(false);
+    }
   };
 
   return (
-    <aside
-      className={`fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-slate-200/80 bg-white text-slate-600 transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 lg:flex ${
-        isCollapsed ? 'w-20' : 'w-64'
-      }`}
-    >
-      {/* BRAND HEADER */}
-      <div
-        className={`flex h-20 items-center border-b border-slate-100 dark:border-slate-800/80 transition-all duration-300 overflow-hidden ${
-          isCollapsed ? 'justify-center px-0' : 'justify-between px-4'
+    <>
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-200/80 bg-white text-slate-600 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 lg:z-30 lg:translate-x-0 ${
+          isCollapsed ? 'w-20' : 'w-64'
+        } ${
+          isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
         }`}
       >
-        {isCollapsed ? (
-          <img
-            src="/logo1.png"
-            alt="Logo Icon"
-            className="h-10 w-auto object-contain shrink-0 transition-all duration-300"
-          />
-        ) : (
-          <>
-            <div className="flex items-center gap-0 min-w-0 shrink-0">
-              <img
-                src="/logo1.png"
-                alt="Logo Icon"
-                className="h-13 w-auto object-contain shrink-0"
-              />
-              <img
-                src="/AlertU.png"
-                alt="AlertU"
-                className="h-20 w-auto object-contain shrink-0"
-              />
-            </div>
+        {/* BRAND HEADER */}
+        <div
+          className={`flex h-20 items-center border-b border-slate-100 dark:border-slate-800/80 transition-all duration-300 overflow-hidden ${
+            isCollapsed ? 'justify-center px-0' : 'justify-between px-4'
+          }`}
+        >
+          {isCollapsed ? (
+            <img
+              src="/logo1.png"
+              alt="Logo Icon"
+              className="h-10 w-auto object-contain shrink-0 transition-all duration-300"
+            />
+          ) : (
+            <>
+              <div className="flex items-center gap-0 min-w-0 shrink-0">
+                <img
+                  src="/logo1.png"
+                  alt="Logo Icon"
+                  className="h-13 w-auto object-contain shrink-0"
+                />
+                <img
+                  src="/AlertU.png"
+                  alt="AlertU"
+                  className="h-20 w-auto object-contain shrink-0"
+                />
+              </div>
 
-            <Badge
-              variant="light"
-              color="blue"
-              size="sm"
-              radius="md"
-              leftSection={<ShieldCheck className="h-3 w-3" />}
-              className="font-bold uppercase tracking-wider shrink-0"
-            >
-              Admin
-            </Badge>
-          </>
-        )}
-      </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Badge
+                  variant="light"
+                  color="blue"
+                  size="sm"
+                  radius="md"
+                  leftSection={<ShieldCheck className="h-3 w-3" />}
+                  className="font-bold uppercase tracking-wider shrink-0"
+                >
+                  Admin
+                </Badge>
+
+                {/* Mobile Close Button */}
+                <button
+                  type="button"
+                  onClick={() => setIsOpen && setIsOpen(false)}
+                  className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                  aria-label="Close Sidebar"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </>
+          )}
+        </div>
 
       {/* NAVIGATION AREA */}
       <nav className="flex-1 space-y-1.5 overflow-y-auto overflow-x-hidden px-3 py-5">
@@ -336,5 +358,14 @@ export default function Sidebar({
         </button>
       </div>
     </aside>
+
+    {/* MOBILE BACKDROP OVERLAY */}
+    {isOpen && (
+      <div
+        onClick={() => setIsOpen && setIsOpen(false)}
+        className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-xs transition-opacity"
+      />
+    )}
+  </>
   );
 }

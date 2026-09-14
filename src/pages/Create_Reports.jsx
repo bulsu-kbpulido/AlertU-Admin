@@ -443,7 +443,7 @@ export default function Create_Reports() {
             <div className="flex items-center gap-1.5">
               <MapPin className="h-3.5 w-3.5 text-rose-500" />
               <h2 className="text-[11px] font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
-                Interactive Spatial Map Picker
+                Map Picker
               </h2>
             </div>
             <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">

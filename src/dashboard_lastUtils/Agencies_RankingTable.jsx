@@ -15,7 +15,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-import { AlertCircle, Loader2, Calendar as CalendarIcon, ChevronDown, RefreshCw } from 'lucide-react';
+import { Loader2, Calendar as CalendarIcon, ChevronDown, RefreshCw } from 'lucide-react';
 import { db } from '@/firebase'; // Adjust path to match your project setup
 import { collection, onSnapshot } from 'firebase/firestore';
 import { 
@@ -293,11 +293,7 @@ export default function Agencies_RankingTable() {
       </div>
 
       {/* FOOTER METRICS */}
-      <div className="pt-1.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-        <span className="font-medium flex items-center gap-1.5 truncate">
-          <AlertCircle className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-          <span className="truncate">Aggregated from Firestore Feed</span>
-        </span>
+      <div className="pt-1.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end text-xs text-slate-500 dark:text-slate-400">
         <span className="font-semibold shrink-0 ml-2 text-slate-600 dark:text-slate-300">
           Agencies
         </span>

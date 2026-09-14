@@ -58,6 +58,7 @@ function AdminDashboardShell({
 }) {
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
   const [isSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const handleOpenMessages = () => setIsMessagesOpen((prev) => !prev);
   const handleCloseMessages = () => setIsMessagesOpen(false);
@@ -71,6 +72,8 @@ function AdminDashboardShell({
         darkMode={darkMode}
         setDarkMode={setDarkMode}
         isCollapsed={isSidebarCollapsed}
+        isOpen={isMobileSidebarOpen}
+        setIsOpen={setIsMobileSidebarOpen}
       />
 
       <div 
@@ -82,6 +85,8 @@ function AdminDashboardShell({
           pageTitle={pageTitle} 
           onOpenMessages={handleOpenMessages} 
           onSelectSos={onSelectSos}
+          isOpen={isMobileSidebarOpen}
+          setIsOpen={setIsMobileSidebarOpen}
         />
         <main className="flex-1 pt-2 sm:pt-3 lg:pt-3 px-4 sm:px-6 lg:px-6 pb-8 w-full text-left">
           {children}
