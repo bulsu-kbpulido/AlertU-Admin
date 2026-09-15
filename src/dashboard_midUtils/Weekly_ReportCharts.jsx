@@ -186,6 +186,18 @@ const formatDate = (report) => {
   return 'N/A';
 };
 
+// 🎯 Aftermath details helpers (only populated once a report has been resolved)
+const formatCasualties = (report) => {
+  if (report?.casualties === undefined || report?.casualties === null || report?.casualties === '') return 'N/A';
+  const num = Number(report.casualties);
+  return Number.isFinite(num) ? String(num) : 'N/A';
+};
+
+const formatAftermathDetails = (report) => {
+  const text = report?.aftermathDetails;
+  return text && String(text).trim() ? String(text).trim() : 'N/A';
+};
+
 const getExportTimestamp = () => {
   return new Date().toLocaleString('en-US', {
     month: 'long',
@@ -490,48 +502,50 @@ export default function Weekly_ReportCharts({
 
         const agencies = parseAgencies(report);
         const dateStr = formatDate(report);
+        const casualties = formatCasualties(report);
+        const aftermath = formatAftermathDetails(report);
 
-        return [vrid, title, type, severity, hazard, String(locationAddress), agencies, dateStr];
+        return [vrid, title, type, severity, hazard, String(locationAddress), agencies, dateStr, casualties, aftermath];
       };
 
       const tableHeaders = [
-        'Report ID', 'Report Title', 'Incident Type', 'Severity Level', 'Hazard Type', 'Location Address', 'Agencies Involved', 'Timestamp'
+        'Report ID', 'Report Title', 'Incident Type', 'Severity Level', 'Hazard Type', 'Location Address', 'Agencies Involved', 'Timestamp', 'Casualties', 'Aftermath Details'
       ];
 
       const excelRows = [];
       let activeHeaderRowIndex = -1;
       let resolvedHeaderRowIndex = -1;
 
-      excelRows.push(["INCIDENT MANAGEMENT SYSTEM SUMMARY RECORDS LOGS", "", "", "", "", "", "", ""]);
-      excelRows.push(["Combined Registry Sheet | Created On " + formattedTimestamp, "", "", "", "", "", "", ""]);
-      excelRows.push(["", "", "", "", "", "", "", ""]);
+      excelRows.push(["INCIDENT MANAGEMENT SYSTEM SUMMARY RECORDS LOGS", "", "", "", "", "", "", "", "", ""]);
+      excelRows.push(["Combined Registry Sheet | Created On " + formattedTimestamp, "", "", "", "", "", "", "", "", ""]);
+      excelRows.push(["", "", "", "", "", "", "", "", "", ""]);
 
-      excelRows.push(["SECTION 1: ACTIVE & UNRESOLVED REPORTS", "", "", "", "", "", "", ""]);
+      excelRows.push(["SECTION 1: ACTIVE & UNRESOLVED REPORTS", "", "", "", "", "", "", "", "", ""]);
       activeHeaderRowIndex = excelRows.length;
       excelRows.push(tableHeaders);
 
       if (activeReports.length > 0) {
         activeReports.forEach(report => excelRows.push(formatReportRow(report)));
       } else {
-        excelRows.push(["No Active Reports Found in Selected Timeframe", "", "", "", "", "", "", ""]);
+        excelRows.push(["No Active Reports Found in Selected Timeframe", "", "", "", "", "", "", "", "", ""]);
       }
 
-      excelRows.push(["", "", "", "", "", "", "", ""]);
-      excelRows.push(["", "", "", "", "", "", "", ""]);
+      excelRows.push(["", "", "", "", "", "", "", "", "", ""]);
+      excelRows.push(["", "", "", "", "", "", "", "", "", ""]);
 
-      excelRows.push(["SECTION 2: HISTORICAL RESOLVED REPORTS LOG", "", "", "", "", "", "", ""]);
+      excelRows.push(["SECTION 2: HISTORICAL RESOLVED REPORTS LOG", "", "", "", "", "", "", "", "", ""]);
       resolvedHeaderRowIndex = excelRows.length;
       excelRows.push(tableHeaders);
 
       if (resolvedReports.length > 0) {
         resolvedReports.forEach(report => excelRows.push(formatReportRow(report)));
       } else {
-        excelRows.push(["No Resolved Logs Found in Selected Timeframe", "", "", "", "", "", "", ""]);
+        excelRows.push(["No Resolved Logs Found in Selected Timeframe", "", "", "", "", "", "", "", "", ""]);
       }
 
       const workbook = XLSX.utils.book_new();
       const worksheet = XLSX.utils.aoa_to_sheet(excelRows);
-      const totalColumns = 8;
+      const totalColumns = 10;
 
       if (activeHeaderRowIndex !== -1) {
         for (let col = 0; col < totalColumns; col++) {
@@ -558,7 +572,7 @@ export default function Weekly_ReportCharts({
       }
 
       worksheet['!cols'] = [
-        { wch: 18 }, { wch: 32 }, { wch: 18 }, { wch: 15 }, { wch: 22 }, { wch: 50 }, { wch: 32 }, { wch: 24 }
+        { wch: 18 }, { wch: 32 }, { wch: 18 }, { wch: 15 }, { wch: 22 }, { wch: 50 }, { wch: 32 }, { wch: 24 }, { wch: 12 }, { wch: 45 }
       ];
 
       XLSX.utils.book_append_sheet(workbook, worksheet, "Combined Logs Registry");
@@ -611,7 +625,7 @@ export default function Weekly_ReportCharts({
       doc.text(`Combined Registry Sheet | Created On ${formattedTimestamp}`, 14, 21);
 
       const tableHeaders = [
-        ['Report ID', 'Report Title', 'Incident Type', 'Severity', 'Hazard Type', 'Location Address', 'Agencies Involved', 'Timestamp']
+        ['Report ID', 'Report Title', 'Incident Type', 'Severity', 'Hazard Type', 'Location Address', 'Agencies Involved', 'Timestamp', 'Casualties', 'Aftermath Details']
       ];
 
       let overallCounter = 1;
@@ -624,7 +638,9 @@ export default function Weekly_ReportCharts({
         report.hazardType || report.hazard || 'None Specified',
         typeof report.location === 'string' ? report.location : report.location?.address || 'Coordinates Transmitted',
         parseAgencies(report),
-        formatDate(report)
+        formatDate(report),
+        formatCasualties(report),
+        formatAftermathDetails(report)
       ]);
 
       doc.setFontSize(12);
@@ -637,11 +653,11 @@ export default function Weekly_ReportCharts({
         head: tableHeaders,
         body: activeReports.length > 0
           ? formatTableRows(activeReports)
-          : [['-', 'No Active Reports Found in Selected Timeframe', '-', '-', '-', '-', '-', '-']],
+          : [['-', 'No Active Reports Found in Selected Timeframe', '-', '-', '-', '-', '-', '-', '-', '-']],
         theme: 'striped',
         headStyles: { fillColor: [29, 78, 216], fontSize: 9, fontStyle: 'bold' },
         styles: { fontSize: 8, overflow: 'linebreak' },
-        columnStyles: { 0: { cellWidth: 22 }, 5: { cellWidth: 50 }, 6: { cellWidth: 35 } }
+        columnStyles: { 0: { cellWidth: 20 }, 5: { cellWidth: 38 }, 6: { cellWidth: 26 }, 8: { cellWidth: 16 }, 9: { cellWidth: 42 } }
       });
 
       const nextY = (doc).lastAutoTable?.finalY ? (doc).lastAutoTable.finalY + 12 : 100;
@@ -656,11 +672,11 @@ export default function Weekly_ReportCharts({
         head: tableHeaders,
         body: resolvedReports.length > 0
           ? formatTableRows(resolvedReports)
-          : [['-', 'No Resolved Logs Found in Selected Timeframe', '-', '-', '-', '-', '-', '-']],
+          : [['-', 'No Resolved Logs Found in Selected Timeframe', '-', '-', '-', '-', '-', '-', '-', '-']],
         theme: 'striped',
         headStyles: { fillColor: [16, 185, 129], fontSize: 9, fontStyle: 'bold' },
         styles: { fontSize: 8, overflow: 'linebreak' },
-        columnStyles: { 0: { cellWidth: 22 }, 5: { cellWidth: 50 }, 6: { cellWidth: 35 } }
+        columnStyles: { 0: { cellWidth: 20 }, 5: { cellWidth: 38 }, 6: { cellWidth: 26 }, 8: { cellWidth: 16 }, 9: { cellWidth: 42 } }
       });
 
       doc.save(`Incident_Summary_Snapshot_${Date.now()}.pdf`);
