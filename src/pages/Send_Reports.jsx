@@ -32,7 +32,8 @@ import {
   ChevronRight,
   Hash,
   Calendar,
-  Loader2
+  Loader2,
+  Users
 } from 'lucide-react';
 
 // Import Shadcn UI AlertDialog components
@@ -58,32 +59,7 @@ import Resolved_Incidents from '../reportsapproved_utils/Resolved_Incidents';
 import { useAuditLog } from '../useAuditLog'; // Adjust import path if needed
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
-const ITEMS_PER_PAGE = 8;
-
-const resolveMediaAsset = (report) => {
-  const candidate =
-    report?.mediaUrl ||
-    report?.imageUrl ||
-    (Array.isArray(report?.media) ? report.media[0] : report?.media) ||
-    (Array.isArray(report?.attachments) ? report.attachments[0] : report?.attachments) ||
-    null;
-
-  const url = typeof candidate === 'string'
-    ? candidate
-    : candidate?.url || candidate?.downloadURL || candidate?.src || null;
-
-  const type = typeof candidate === 'object'
-    ? (candidate?.type || candidate?.mimeType || candidate?.contentType || '')
-    : (report?.mediaType || report?.mimeType || report?.contentType || '');
-
-  const cleanUrl = String(url || '').split('?')[0].split('#')[0].toLowerCase();
-  const isVideo = String(type).toLowerCase().startsWith('video/') ||
-    /\.(mp4|webm|ogg|mov|m4v|avi|mpeg|mpg)$/i.test(cleanUrl) ||
-    /[\\/]video[\\/](upload|raw)[\\/]/i.test(String(url || ''));
-
-  return { url, type, isVideo };
-};
- 
+const ITEMS_PER_PAGE = 8; 
 
 // Helper to resolve the display ID (Prioritizes VRID over RID)
 const getDisplayId = (report) => {
@@ -383,6 +359,9 @@ export default function Send_Report() {
   const [isResolveDialogOpen, setIsResolveDialogOpen] = useState(false);
   const [reportToResolve, setReportToResolve] = useState(null);
   const [isResolving, setIsResolving] = useState(false);
+  // Aftermath details captured before a report can be resolved
+  const [resolutionNotes, setResolutionNotes] = useState('');
+  const [casualtiesCount, setCasualtiesCount] = useState('');
 
   // Initialize Audit Logging Hook
   const { logMovement } = useAuditLog();
@@ -402,13 +381,7 @@ export default function Send_Report() {
     try {
       const json = await fetchFromBackend('/reports?view=approved');
       if (json.success) {
-        const activeOnly = (json.data || []).filter(r => 
-          r.status !== 'resolved' && 
-          r.isResolved !== true && 
-          !r.resolvedAt && 
-          r.source !== 'resolved'
-        );
-        setReports(activeOnly);
+        setReports(json.data || []);
       }
     } catch (err) {
       console.error("Fetch error:", err);
@@ -439,12 +412,8 @@ export default function Send_Report() {
   }, [filteredReports, currentPage]);
 
   const handleOpenPreview = (report) => {
-    const media = resolveMediaAsset(report);
     const resolvedReport = {
       ...report,
-      mediaUrl: media.url || report.mediaUrl || null,
-      mediaType: media.type || report.mediaType || null,
-      isVideo: media.isVideo,
       selectedAgencies: report.selectedAgencies || report.assignedAgencies || []
     };
     setSelectedReport(resolvedReport);
@@ -465,21 +434,32 @@ export default function Send_Report() {
   // Open Resolve Alert Dialog
   const triggerResolveModal = (report) => {
     setReportToResolve(report);
+    setResolutionNotes('');
+    setCasualtiesCount('');
     setIsResolveDialogOpen(true);
   };
 
+  const isResolveFormValid = resolutionNotes.trim().length > 0;
+
   const handleConfirmResolve = async () => {
     if (!reportToResolve) return;
+    if (!isResolveFormValid) return;
     
     setIsResolving(true);
-    const actualCollection = reportToResolve.source === 'admin' ? 'ApprovedAdminReports' : 'approved_reports';
+    const actualCollection = reportToResolve.source === 'admin' ? 'AdminReports' : 'approved_reports';
     
     const displayId = getDisplayId(reportToResolve);
+    const trimmedNotes = resolutionNotes.trim();
+    const casualties = casualtiesCount ? Number(casualtiesCount) : 0;
 
     try {
       const json = await fetchFromBackend(`/resolve/${reportToResolve.id}`, {
         method: 'POST',
-        body: JSON.stringify({ sourceCollection: actualCollection }),
+        body: JSON.stringify({
+          sourceCollection: actualCollection,
+          aftermathDetails: trimmedNotes,
+          casualties,
+        }),
       });
       if (json.success) {
         await logMovement('REPORT_RESOLVED', displayId, {
@@ -487,6 +467,8 @@ export default function Send_Report() {
           reportTitle: reportToResolve.reportTitle || reportToResolve.title || 'N/A',
           incidentType: reportToResolve.incidentType || reportToResolve.type || 'N/A',
           sourceCollection: actualCollection,
+          aftermathDetails: trimmedNotes,
+          casualties,
           resolvedAt: new Date().toISOString()
         });
 
@@ -500,6 +482,8 @@ export default function Send_Report() {
       setIsResolving(false);
       setIsResolveDialogOpen(false);
       setReportToResolve(null);
+      setResolutionNotes('');
+      setCasualtiesCount('');
     }
   };
 
@@ -513,7 +497,7 @@ export default function Send_Report() {
     if (!reportToArchive) return;
     
     setIsArchiving(true);
-    const actualCollection = reportToArchive.source === 'admin' ? 'ApprovedAdminReports' : 'approved_reports';
+    const actualCollection = reportToArchive.source === 'admin' ? 'AdminReports' : 'approved_reports';
     
     const displayId = getDisplayId(reportToArchive);
   
@@ -950,15 +934,51 @@ export default function Send_Report() {
               <CheckCircle2 className="h-5 w-5 text-emerald-600" /> Mark Report as Resolved?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to resolve <strong>#{getDisplayId(reportToResolve)}</strong>? This report will be moved to the Resolved tab.
+              Before resolving <strong>#{getDisplayId(reportToResolve)}</strong>, add the aftermath details for this incident. This report will then be moved to the Resolved tab.
             </AlertDialogDescription>
           </AlertDialogHeader>
+
+          <div className="space-y-3.5 py-1">
+            <div>
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5" />
+                Casualties / Injuries
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={casualtiesCount}
+                onChange={(e) => setCasualtiesCount(e.target.value)}
+                placeholder="0"
+                className="w-full mt-1 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                Aftermath Details <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={resolutionNotes}
+                onChange={(e) => setResolutionNotes(e.target.value)}
+                placeholder="Describe what happened, response taken, and outcome..."
+                rows={4}
+                className={`w-full mt-1 px-3 py-2 text-sm rounded-lg border bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none ${
+                  !isResolveFormValid && resolutionNotes.length === 0 ? 'border-slate-200 dark:border-slate-700' : 'border-slate-200 dark:border-slate-700'
+                }`}
+              />
+              {!isResolveFormValid && (
+                <p className="text-[11px] text-red-500 mt-1">Aftermath details are required before this report can be resolved.</p>
+              )}
+            </div>
+          </div>
+
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isResolving}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmResolve}
-              disabled={isResolving}
-              className="bg-emerald-700 text-white hover:bg-emerald-800 dark:bg-emerald-700 dark:hover:bg-emerald-800"
+              disabled={isResolving || !isResolveFormValid}
+              className="bg-emerald-700 text-white hover:bg-emerald-800 dark:bg-emerald-700 dark:hover:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isResolving ? (
                 <>
