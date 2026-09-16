@@ -141,6 +141,11 @@ export default function AnswerOrDeclineCall({
     const callToAnswer = targetCall || activeCall;
     if (!callToAnswer) return;
 
+    // Stop the ringtone immediately on click — don't wait for the
+    // backend/socket round-trip to update queue status (hasRingingCall),
+    // which was causing the ringtone to keep playing briefly after answering.
+    stopRingtone();
+
     if (onAnswerRef.current) {
       await onAnswerRef.current({
         ...callToAnswer,

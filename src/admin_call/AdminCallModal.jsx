@@ -43,6 +43,15 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
   // so a stray/ghost participant leaving the channel doesn't end this call.
   const remoteUserUidRef = useRef(null);
 
+  // Incremented every time the main init effect (re)runs. Async work (like
+  // the fire-and-forget leaveCallCleanup() in the previous effect's cleanup,
+  // or in-flight Agora callbacks) captures the session id at the time it
+  // started; if that id no longer matches sessionIdRef.current by the time
+  // the async work resolves, a newer session has since taken over and the
+  // stale work must not touch shared refs/state (agoraClientRef,
+  // remoteUserUidRef, callConnected, etc.) belonging to the new session.
+  const sessionIdRef = useRef(0);
+
   // Dynamic citizen info state
   const [citizenInfo, setCitizenInfo] = useState({
     citizenId: initialCitizenId || '',
@@ -120,8 +129,15 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
     }
   }, [backendUrl, targetRoom, citizenInfo.citizenId, citizenInfo.citizenName, adminId, adminName]);
 
-  // Clean up media tracks and unmount RTC client cleanly
-  const leaveCallCleanup = useCallback(async () => {
+  // Clean up media tracks and unmount RTC client cleanly.
+  // `client` is the specific Agora client instance this call belongs to, and
+  // `sessionId` is the session that requested the cleanup. Both are passed in
+  // explicitly (instead of reading agoraClientRef.current at await-resolution
+  // time) so that if a newer session has since started before this cleanup's
+  // await finishes, we neither leave the NEW client nor null out the NEW
+  // session's refs/state — we only ever touch what belongs to our own client
+  // and session.
+  const leaveCallCleanup = useCallback(async (client, sessionId) => {
     try {
       const { micTrack, cameraTrack } = localTracksRef.current;
       if (micTrack) {
@@ -132,28 +148,39 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
         cameraTrack.stop();
         cameraTrack.close();
       }
-      localTracksRef.current = { micTrack: null, cameraTrack: null };
+      // Only clear the shared local tracks ref if a newer session hasn't
+      // already replaced it with its own tracks.
+      if (sessionIdRef.current === sessionId) {
+        localTracksRef.current = { micTrack: null, cameraTrack: null };
+      }
 
-      if (agoraClientRef.current) {
-        agoraClientRef.current.removeAllListeners();
+      if (client) {
+        client.removeAllListeners();
         if (
-          agoraClientRef.current.connectionState === 'CONNECTED' ||
-          agoraClientRef.current.connectionState === 'CONNECTING'
+          client.connectionState === 'CONNECTED' ||
+          client.connectionState === 'CONNECTING'
         ) {
-          await agoraClientRef.current.leave();
+          await client.leave();
         }
-        agoraClientRef.current = null;
+        // Only null out agoraClientRef if it still points at THIS client —
+        // a newer session may have already replaced it with its own client.
+        if (agoraClientRef.current === client) {
+          agoraClientRef.current = null;
+        }
       }
     } catch (err) {
       console.error("❌ Error during Agora call cleanup:", err);
     } finally {
-            setCallConnected(false);
-      setRemoteUser(null);
-      remoteUserUidRef.current = null;
-      setIsVideoEnabled(false);
-      setIsVideoBusy(false);
-      setIsRemoteVideoMuted(false);
-
+      // Only reset shared state/refs if no newer session has taken over in
+      // the meantime — otherwise we'd clobber the new session's live state.
+      if (sessionIdRef.current === sessionId) {
+        setCallConnected(false);
+        setRemoteUser(null);
+        remoteUserUidRef.current = null;
+        setIsVideoEnabled(false);
+        setIsVideoBusy(false);
+        setIsRemoteVideoMuted(false);
+      }
     }
   }, []);
 
@@ -166,7 +193,7 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
 
     // Save history to backend / Firestore endpoint
     await saveCallHistory(endedByReason);
-    await leaveCallCleanup();
+    await leaveCallCleanup(agoraClientRef.current, sessionIdRef.current);
 
     if (onCloseRef.current) onCloseRef.current();
   }, [targetRoom, leaveCallCleanup, saveCallHistory]);
@@ -248,6 +275,29 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
     if (!targetRoom || isInitializingRef.current) return;
     isInitializingRef.current = true;
 
+    // Claim a new session id for this effect run. Any async work below
+    // (subscription callbacks, the join/publish chain, the fire-and-forget
+    // cleanup of the PREVIOUS session) captures `mySessionId` and checks it
+    // against sessionIdRef.current before touching shared refs/state — so
+    // stale work from a superseded run can never clobber this run's client
+    // or state, even if it resolves late.
+    const mySessionId = ++sessionIdRef.current;
+    const isCurrentSession = () => sessionIdRef.current === mySessionId;
+
+    // Unconditionally reset the tracked-citizen uid (and related per-call
+    // state) the moment this new session claims ownership. remoteUserUidRef
+    // is a single ref shared across sessions — if the PREVIOUS session's
+    // async leaveCallCleanup hasn't resolved yet, it will correctly skip
+    // resetting this ref (since sessionIdRef no longer matches it), which
+    // otherwise leaves a stale uid from the old call in place. Without this
+    // reset, an early 'user-left' event in the new session (e.g. a
+    // short-lived StrictMode-remounted client leaving) could be mistaken
+    // for the old tracked citizen, since the ref wouldn't be null.
+    remoteUserUidRef.current = null;
+    setRemoteUser(null);
+    setCallConnected(false);
+    setIsRemoteVideoMuted(false);
+
     joinSocketRoom(targetRoom);
     const resolvedBackendUrl = backendUrl || import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
 
@@ -255,8 +305,10 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
     agoraClientRef.current = client;
 
     const handleUserPublished = async (user, mediaType) => {
+      if (!isCurrentSession()) return;
       try {
         await client.subscribe(user, mediaType);
+        if (!isCurrentSession()) return;
 
         if (mediaType === 'video' && isMounted) {
           // Force high-stream 360p remote stream decoding (Stream type 0 = High stream)
@@ -292,6 +344,7 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
     };
 
     const handleUserUnpublished = (user, mediaType) => {
+      if (!isCurrentSession()) return;
       if (mediaType === 'video' && isMounted && user.uid === remoteUserUidRef.current) {
         setIsRemoteVideoMuted(true);
       }
@@ -303,8 +356,11 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
     // (i.e. remoteUserUidRef.current has been set via handleUserPublished);
     // otherwise a stray/ghost connection leaving would be mistaken for the
     // tracked citizen since there'd be nothing yet to mismatch against.
+    // isCurrentSession() guards against this listener firing for a session
+    // that has since been superseded by a newer call (e.g. a late/leftover
+    // event from a previous session's teardown).
     const handleUserLeft = (user) => {
-      if (!isMounted) return;
+      if (!isMounted || !isCurrentSession()) return;
       if (!remoteUserUidRef.current || user?.uid !== remoteUserUidRef.current) {
         console.log(`👤 Participant (uid: ${user?.uid}) left, but this is not the tracked citizen — ignoring.`);
         return;
@@ -330,10 +386,21 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
         client.on('user-unpublished', handleUserUnpublished);
         client.on('user-left', handleUserLeft);
 
+        // Bail out BEFORE ever joining the channel if a newer session has
+        // already taken over while we were awaiting the token fetch. This
+        // prevents a superseded ("ghost") session from actually entering
+        // the Agora channel at all — previously it would join and then
+        // immediately leave, which could still emit user-published/
+        // user-left events into the channel that the real, current session
+        // might observe and misinterpret.
+        if (!isMounted || !isCurrentSession()) {
+          return;
+        }
+
         // 3. Join Channel
         await client.join(appId, targetRoom, token, null);
 
-        if (!isMounted) {
+        if (!isMounted || !isCurrentSession()) {
           await client.leave();
           return;
         }
@@ -346,6 +413,16 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
           micTrack = await AgoraRTC.createMicrophoneAudioTrack({ encoderConfig: "speech_low_quality" });
         } catch (audioErr) {
           throw new Error("Microphone access denied. Check device permissions.");
+        }
+
+        // A superseded session may have started tearing this client down
+        // while the mic track was being created — bail out instead of
+        // publishing into a client whose peer connection is already gone.
+        if (!isCurrentSession()) {
+          micTrack.stop();
+          micTrack.close();
+          await client.leave();
+          return;
         }
 
         localTracksRef.current = { micTrack, cameraTrack: null };
@@ -368,7 +445,10 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
     return () => {
       isMounted = false;
       isInitializingRef.current = false;
-      leaveCallCleanup();
+      // Pass this specific client + session id — leaveCallCleanup will only
+      // touch agoraClientRef/remoteUserUidRef/etc. if a newer session hasn't
+      // already taken over by the time this async cleanup actually runs.
+      leaveCallCleanup(client, mySessionId);
       if (targetRoom) leaveSocketRoom(targetRoom);
     };
   }, [targetRoom, backendUrl, citizenInfo.citizenId, citizenInfo.citizenName, leaveCallCleanup, handleEndCall]);
