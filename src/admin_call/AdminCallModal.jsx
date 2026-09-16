@@ -39,6 +39,10 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
 
   const isInitializingRef = useRef(false);
 
+  // Track the uid of the specific remote (citizen) user we're connected to,
+  // so a stray/ghost participant leaving the channel doesn't end this call.
+  const remoteUserUidRef = useRef(null);
+
   // Dynamic citizen info state
   const [citizenInfo, setCitizenInfo] = useState({
     citizenId: initialCitizenId || '',
@@ -114,7 +118,7 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
     } catch (err) {
       console.error('❌ Failed to save call history to backend:', err);
     }
-  }, [backendUrl, targetRoom, citizenInfo, adminId, adminName]);
+  }, [backendUrl, targetRoom, citizenInfo.citizenId, citizenInfo.citizenName, adminId, adminName]);
 
   // Clean up media tracks and unmount RTC client cleanly
   const leaveCallCleanup = useCallback(async () => {
@@ -145,6 +149,7 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
     } finally {
             setCallConnected(false);
       setRemoteUser(null);
+      remoteUserUidRef.current = null;
       setIsVideoEnabled(false);
       setIsVideoBusy(false);
       setIsRemoteVideoMuted(false);
@@ -174,7 +179,7 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
     // Listen for citizen ending the call remotely via Socket.IO
     const handleCallEndedSignal = (data) => {
       const incomingChannel = typeof data === 'string' ? data : data?.channelName || data?.targetRoom;
-      if (!incomingChannel || incomingChannel === targetRoom) {
+      if (incomingChannel && incomingChannel === targetRoom) {
         console.log('⏹️ Remote end call signal received via socket. Closing modal...');
         handleEndCall('citizen');
       }
@@ -261,12 +266,14 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
             console.warn("Could not set explicit remote video stream type:", e);
           }
 
+          remoteUserUidRef.current = user.uid;
           setRemoteUser(user);
           setIsRemoteVideoMuted(false);
           setCallConnected(true);
         }
 
         if (mediaType === 'audio') {
+          remoteUserUidRef.current = user.uid;
           if (user.audioTrack) {
             try {
               user.audioTrack.setVolume(100);
@@ -285,16 +292,25 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
     };
 
     const handleUserUnpublished = (user, mediaType) => {
-      if (mediaType === 'video' && isMounted) {
+      if (mediaType === 'video' && isMounted && user.uid === remoteUserUidRef.current) {
         setIsRemoteVideoMuted(true);
       }
     };
 
-    const handleUserLeft = () => {
-      if (isMounted) {
-        console.log("👤 Citizen disconnected from RTC channel. Ending call...");
-        handleEndCall('citizen');
+    // Only end the call when the tracked remote (citizen) user leaves —
+    // ignore stray/ghost participants that may still be lingering in the channel.
+    // Also ignore leave events until we've confirmed a real citizen has joined
+    // (i.e. remoteUserUidRef.current has been set via handleUserPublished);
+    // otherwise a stray/ghost connection leaving would be mistaken for the
+    // tracked citizen since there'd be nothing yet to mismatch against.
+    const handleUserLeft = (user) => {
+      if (!isMounted) return;
+      if (!remoteUserUidRef.current || user?.uid !== remoteUserUidRef.current) {
+        console.log(`👤 Participant (uid: ${user?.uid}) left, but this is not the tracked citizen — ignoring.`);
+        return;
       }
+      console.log("👤 Citizen disconnected from RTC channel. Ending call...");
+      handleEndCall('citizen');
     };
 
     const initAgoraCall = async () => {
@@ -355,7 +371,7 @@ export default function AdminCallModal({ targetRoom, citizenName: initialCitizen
       leaveCallCleanup();
       if (targetRoom) leaveSocketRoom(targetRoom);
     };
-  }, [targetRoom, backendUrl, citizenInfo, leaveCallCleanup, handleEndCall]);
+  }, [targetRoom, backendUrl, citizenInfo.citizenId, citizenInfo.citizenName, leaveCallCleanup, handleEndCall]);
 
   // Attach Remote Citizen Video Stream when available
   useEffect(() => {
