@@ -13,7 +13,8 @@ import Settings from './pages/Settings';
 import PublicReportPage from './pages/PublicReportPage';
 import PublicReportPage2 from './pages/PublicReportPage2';
 import { auth, db } from './firebase';
-import { collection, collectionGroup, query, onSnapshot } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
+import { collection, collectionGroup, doc, query, onSnapshot } from 'firebase/firestore';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import '@mantine/dates/styles.css';
@@ -238,6 +239,57 @@ function AppRoutes() {
     );
 
     return () => unsubscribeCalls();
+  }, [isAuthenticated]);
+
+  // 🚫 REAL-TIME ACCOUNT STATUS LISTENER
+  // The Login screen (Login.jsx) only checks `archived`/`isDisabled` ONCE,
+  // at sign-in time. Without this, a Super Admin archiving or disabling an
+  // admin's account mid-session has no effect until that admin manually
+  // logs out and back in — they keep full access with their existing
+  // session. This listener watches the logged-in admin's own Firestore doc
+  // for the rest of the session and force-logs-them-out the moment either
+  // flag flips to true.
+  useEffect(() => {
+    if (!isAuthenticated) return undefined;
+
+    let unsubscribeDoc = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      if (unsubscribeDoc) {
+        unsubscribeDoc();
+        unsubscribeDoc = null;
+      }
+      if (!currentUser) return;
+
+      unsubscribeDoc = onSnapshot(
+        doc(db, 'admins', currentUser.uid),
+        (snap) => {
+          if (!snap.exists()) return;
+          const data = snap.data();
+          if (data.archived === true || data.isDisabled === true) {
+            toast.error('Your account has been archived/disabled by a Super Administrator.', {
+              id: 'account-revoked',
+            });
+            auth.signOut();
+            localStorage.removeItem('authToken');
+            setIsAuthenticated(false);
+            if (socket.connected) {
+              socket.disconnect();
+            }
+            navigate('/');
+          }
+        },
+        (error) => {
+          console.error('❌ Error listening to admin account status:', error);
+        }
+      );
+    });
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeDoc) unsubscribeDoc();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
   // 🟢 SOCKET EMERGENCY AGORA CALL LISTENERS

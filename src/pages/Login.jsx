@@ -59,6 +59,35 @@ export default function Login({ onLoginSuccess }) {
 
       if (adminDocSnap.exists()) {
         const adminData = adminDocSnap.data();
+
+        // Block login for accounts that have been archived or disabled by
+        // a Super Admin. Firebase Auth only verifies the password — it has
+        // no concept of "archived" — so this check must happen here, before
+        // we ever call onLoginSuccess, otherwise an archived admin can still
+        // authenticate successfully and use the dashboard.
+        if (adminData.archived === true || adminData.isDisabled === true) {
+          const errorMessage = 'This account has been archived/disabled. Please contact a Super Administrator if you believe this is a mistake.';
+          setError(errorMessage);
+
+          // Log Failed Login Audit Event (Archived/Disabled Account)
+          await logMovement({
+            action: 'LOGIN_FAILED',
+            target: user.uid,
+            actorId: adminData.adminId || user.uid,
+            adminName: adminData.name || adminData.fullName || user.email,
+            details: `Blocked login attempt for ${user.email}: account is archived/disabled.`,
+            metadata: {
+              email: user.email,
+              reason: adminData.archived === true ? 'ACCOUNT_ARCHIVED' : 'ACCOUNT_DISABLED',
+              attemptedAt: new Date().toISOString()
+            }
+          });
+
+          // Sign out immediately — don't leave a valid Firebase Auth session
+          // sitting around for an archived/disabled account.
+          await auth.signOut();
+          return;
+        }
         
         // Log Successful Login Audit Event
         await logMovement({
