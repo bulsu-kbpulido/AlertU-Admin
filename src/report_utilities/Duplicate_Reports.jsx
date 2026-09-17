@@ -114,7 +114,7 @@ const getAuthHeaders = async () => {
   };
 };
 
-export default function Duplicate_Reports() {
+export default function Duplicate_Reports({ onCountChange } = {}) {
   const [duplicateReports, setDuplicateReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -231,6 +231,11 @@ export default function Duplicate_Reports() {
       return title.includes(term) || address.includes(term) || id.includes(term);
     });
   }, [duplicateReports, searchTerm]);
+
+  // Keep the parent (tab badge) in sync with the real duplicate count
+  useEffect(() => {
+    onCountChange?.(duplicateReports.length);
+  }, [duplicateReports, onCountChange]);
 
   // Pagination Logic
   const totalPages = Math.ceil(filteredReports.length / itemsPerPage) || 1;

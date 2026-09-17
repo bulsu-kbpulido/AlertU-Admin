@@ -172,6 +172,7 @@ export default function Report_Management() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('active'); // 'active' | 'duplicate' | 'archived'
+  const [duplicateCount, setDuplicateCount] = useState(0);
 
   // Filtering & Pagination
   const [searchQuery, setSearchQuery] = useState('');
@@ -719,7 +720,7 @@ export default function Report_Management() {
             Duplicate Reports
             {activeTab === 'duplicate' && (
               <span className="ml-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 px-2 py-0.5 text-xs font-semibold">
-                {reports.length}
+                {duplicateCount}
               </span>
             )}
           </button>
@@ -786,7 +787,7 @@ export default function Report_Management() {
           {activeTab === 'archived' ? (
             <Archived_Routes key="archived-tab" cachedData={reportCacheRef.current.archived} onDataFetched={(data) => { reportCacheRef.current.archived = data; }} />
           ) : activeTab === 'duplicate' ? (
-            <DuplicateReports key="duplicate-tab" reports={reports} />
+            <DuplicateReports key="duplicate-tab" onCountChange={setDuplicateCount} />
           ) : loading || isRefreshing ? (
             <TableSkeletonLoader key="skeleton-loader" />
           ) : error ? (
