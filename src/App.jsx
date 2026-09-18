@@ -261,6 +261,14 @@ function AppRoutes() {
       }
       if (!currentUser) return;
 
+      // Register presence here (not just in the socket-connect effect) because
+      // right after a page refresh, isAuthenticated is already true from
+      // localStorage while Firebase Auth is still restoring the session —
+      // auth.currentUser can still be null at that moment. This callback's
+      // currentUser is guaranteed valid, so it's the reliable place to send
+      // the admin's real uid to the presence engine.
+      registerSocketUser({ role: 'admin', uid: currentUser.uid });
+
       unsubscribeDoc = onSnapshot(
         doc(db, 'admins', currentUser.uid),
         (snap) => {
@@ -299,12 +307,12 @@ function AppRoutes() {
         socket.connect();
       } else {
         joinSocketRoom('admins');
-        registerSocketUser({ role: 'admin', socketId: socket.id });
+        registerSocketUser({ role: 'admin', uid: auth.currentUser?.uid, socketId: socket.id });
       }
 
       const handleConnect = () => {
         joinSocketRoom('admins');
-        registerSocketUser({ role: 'admin', socketId: socket.id });
+        registerSocketUser({ role: 'admin', uid: auth.currentUser?.uid, socketId: socket.id });
       };
 
       const handleIncomingCall = (data) => {
@@ -439,7 +447,7 @@ function AppRoutes() {
 
       socket.connect();
       joinSocketRoom('admins');
-      registerSocketUser({ role: 'admin', uid: adminData.uid || 'admin' });
+      registerSocketUser({ role: 'admin', uid: adminData.uid || auth.currentUser?.uid });
 
       navigate('/admin/dashboard');
     }
