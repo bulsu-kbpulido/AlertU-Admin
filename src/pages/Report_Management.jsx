@@ -657,7 +657,6 @@ export default function Report_Management() {
 
   const severityFilterOptions = [
     { label: 'All', value: 'ALL' },
-    { label: 'Critical', value: 'CRITICAL' },
     { label: 'High', value: 'HIGH' },
     { label: 'Medium', value: 'MEDIUM' },
     { label: 'Low', value: 'LOW' },
