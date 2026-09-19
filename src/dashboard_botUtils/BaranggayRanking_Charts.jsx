@@ -214,7 +214,11 @@ export default function BaranggayRanking_Charts({
         const resolved = brgyMap[name].resolved;
         return { name, total, resolved };
       })
-      .sort((a, b) => b.total - a.total || b.resolved - a.resolved)
+      // Rank by the barangay's true total incident volume this month
+      // (approved + resolved combined) — a resolved report should still
+      // count toward "most affected", not disappear from the ranking
+      // just because it graduated out of the approved_reports collection.
+      .sort((a, b) => (b.total + b.resolved) - (a.total + a.resolved) || b.resolved - a.resolved)
       .map((item, index) => ({ rank: index + 1, ...item }))
       .slice(0, 4);
   }, [filteredApproved, filteredResolved]);
