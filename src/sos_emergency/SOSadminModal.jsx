@@ -518,7 +518,7 @@ export default function SOSadminModal({
         className={
           isMinimized
             ? 'fixed z-[9999] touch-none select-none'
-            : 'fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-slate-900/70 backdrop-blur-sm text-slate-800 font-sans antialiased overflow-y-auto'
+            : 'fixed inset-0 z-[9999] flex items-start sm:items-center justify-center p-4 sm:p-6 bg-slate-900/70 backdrop-blur-sm text-slate-800 font-sans antialiased overflow-y-auto'
         }
         style={
           isMinimized
@@ -636,11 +636,13 @@ export default function SOSadminModal({
           )}
 
           {/* Main Map & Info Body */}
-          <div className="flex-1 bg-slate-100 relative overflow-hidden flex flex-col lg:flex-row">
+          <div className={`flex-1 min-h-0 bg-slate-100 relative flex flex-col lg:flex-row ${
+            isMinimized ? 'overflow-hidden' : 'overflow-y-auto lg:overflow-hidden'
+          }`}>
             
             {/* Map Canvas Viewport */}
-            <div className={`relative flex-1 bg-slate-200 flex items-center justify-center overflow-hidden ${
-              isMinimized ? 'h-48' : 'min-h-[350px] lg:min-h-[460px]'
+            <div className={`relative bg-slate-200 flex items-center justify-center overflow-hidden shrink-0 lg:flex-1 ${
+              isMinimized ? 'h-48' : 'h-64 sm:h-80 lg:h-auto lg:min-h-[460px]'
             }`}>
               <div ref={mapElementRef} className="w-full h-full z-0" />
 
@@ -673,8 +675,8 @@ export default function SOSadminModal({
 
             {/* Sidebar Details Panel */}
             {!isMinimized && (
-              <div className="w-full lg:w-80 bg-white border-t lg:border-t-0 lg:border-l border-slate-200 p-5 flex flex-col justify-between shrink-0 space-y-4">
-                <div className="space-y-4 overflow-y-auto max-h-[500px] pr-1">
+              <div className="w-full lg:w-80 bg-white border-t lg:border-t-0 lg:border-l border-slate-200 p-5 flex flex-col justify-between shrink-0 space-y-4 lg:overflow-hidden">
+                <div className="space-y-4 lg:overflow-y-auto lg:max-h-[500px] pr-1">
                   
                   {/* Citizen Card */}
                   <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2.5">
@@ -749,7 +751,7 @@ export default function SOSadminModal({
                 </div>
 
                 {/* Footer Note */}
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-center gap-1.5 text-[11px] text-slate-500">
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-center gap-1.5 text-[11px] text-slate-500 shrink-0">
                   <Clock className="w-3.5 h-3.5 text-slate-400" />
                   <span>Last Ping: {currentLocation?.updatedAt || 'Live'}</span>
                 </div>
