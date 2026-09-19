@@ -473,8 +473,8 @@ export default function Create_Reports() {
             </div>
 
             {/* Map Search Bar Overlay */}
-            <div className="absolute top-2.5 left-2.5 right-2.5 z-20">
-              <div className="max-w-sm mx-auto bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-md border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+            <div className="absolute top-2.5 left-2.5 right-2.5 z-20 pointer-events-none">
+              <div className="max-w-sm mx-auto bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-md border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden pointer-events-auto">
                 <div className="flex items-center px-2.5 py-0.5">
                   <Search className="h-3.5 w-3.5 text-slate-400 shrink-0 ml-0.5" />
                   <input
