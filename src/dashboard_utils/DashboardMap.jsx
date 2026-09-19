@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import 'ol/ol.css';
 import Map from 'ol/Map';
 import View from 'ol/View';
@@ -49,14 +50,35 @@ const severityColorMap = {
 };
 
 // Radar Beacon Overlay
+//
+// FIX: OpenLayers Overlay physically MOVES the DOM element you give it into
+// its own internal overlay container in the real DOM. React has no idea this
+// happened — it still thinks the element lives at its original JSX position.
+// When `liveReports` changes (e.g. from search/filtering) and a MapPulse
+// unmounts, React tries to remove that element from the parent it originally
+// rendered it under — but OpenLayers already detached/moved it elsewhere, so
+// that parent/child relationship no longer exists, and `removeChild` throws
+// (uncaught DOM exception → React unmounts entirely → white screen).
+//
+// The fix: create a plain, detached DOM node ourselves (outside React's
+// render tree) and hand THAT to OpenLayers as the Overlay's element. We then
+// use a React Portal to render the pulse's visual content INTO that detached
+// node. React only ever manages the portal's children, never the container's
+// position in the real DOM — so OpenLayers is free to move the container
+// anywhere without conflicting with React's own bookkeeping.
 const MapPulse = ({ map, coordinate, color }) => {
-  const elRef = useRef(null);
+  const [container] = useState(() => {
+    const el = document.createElement('div');
+    el.className = 'pointer-events-none absolute';
+    el.style.transform = 'translate(-50%, -50%)';
+    return el;
+  });
 
   useEffect(() => {
-    if (!map || !elRef.current || !coordinate) return;
+    if (!map || !container || !coordinate) return;
 
     const overlay = new Overlay({
-      element: elRef.current,
+      element: container,
       position: fromLonLat([Number(coordinate[0]), Number(coordinate[1])]),
       positioning: 'center-center',
       stopEvent: false,
@@ -70,27 +92,22 @@ const MapPulse = ({ map, coordinate, color }) => {
         map.removeOverlay(overlay);
       }
     };
-  }, [map, coordinate]);
+  }, [map, coordinate, container]);
 
-  return (
-    <div
-      ref={elRef}
-      className="pointer-events-none absolute"
-      style={{ transform: 'translate(-50%, -50%)' }}
-    >
-      <motion.div
-        initial={{ scale: 0, opacity: 0.85 }}
-        animate={{ scale: 4.5, opacity: 0 }}
-        transition={{ duration: 2.2, repeat: Infinity, ease: 'easeOut' }}
-        style={{
-          width: '24px',
-          height: '24px',
-          backgroundColor: color,
-          borderRadius: '50%',
-          boxShadow: `0 0 16px ${color}`
-        }}
-      />
-    </div>
+  return createPortal(
+    <motion.div
+      initial={{ scale: 0, opacity: 0.85 }}
+      animate={{ scale: 4.5, opacity: 0 }}
+      transition={{ duration: 2.2, repeat: Infinity, ease: 'easeOut' }}
+      style={{
+        width: '24px',
+        height: '24px',
+        backgroundColor: color,
+        borderRadius: '50%',
+        boxShadow: `0 0 16px ${color}`
+      }}
+    />,
+    container
   );
 };
 
