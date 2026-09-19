@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../firebase';
-import { doc, onSnapshot, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { toast } from 'sonner';
 import socket, { joinSosRoom, leaveSosRoom, onSosLocationUpdated, onSosStatusUpdated } from '../socket';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSOSRingtone } from '../useSOSRingtone'; // Ensure correct relative path
@@ -34,7 +35,8 @@ import {
   Clock, 
   Radio, 
   GripHorizontal,
-  AlertTriangle
+  AlertTriangle,
+  CheckCircle2
 } from 'lucide-react';
 
 /**
@@ -203,7 +205,7 @@ export default function SOSadminModal({
 
   // Initial State
   const [currentLocation, setCurrentLocation] = useState(() => extractCoordinates(locationData));
-  const [trackingActive, setTrackingActive] = useState(true);
+  const [trackingActive, setTrackingActive] = useState(null); // null = status not yet confirmed
 
   // Helper to calculate safe bottom-right docked position on viewport
   const getSafeInitialPosition = useCallback(() => {
@@ -247,12 +249,14 @@ export default function SOSadminModal({
   const mapInstanceRef = useRef(null);
   const markerSourceRef = useRef(null);
 
-  // Start SOS alert audio playback automatically when active
+  // Start SOS alert audio playback only once confirmed active; stop it otherwise
   useEffect(() => {
     if (trackingActive) {
       startRingtone();
+    } else {
+      stopRingtone();
     }
-  }, [trackingActive, startRingtone]);
+  }, [trackingActive, startRingtone, stopRingtone]);
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -397,6 +401,8 @@ export default function SOSadminModal({
 
           if (data.status === 'RESOLVED' || data.status === 'CANCELLED' || data.status === 'CLOSED') {
             setTrackingActive(false);
+          } else {
+            setTrackingActive(true);
           }
 
           setIsDataLoaded(true);
@@ -461,6 +467,31 @@ export default function SOSadminModal({
     stopRingtone();
     if (isDataLoaded && onCloseRef.current) {
       onCloseRef.current();
+    }
+  };
+
+  // HANDLER TO MARK THIS SOS AS RESOLVED IN FIRESTORE
+  const [isResolving, setIsResolving] = useState(false);
+
+  const handleResolve = async () => {
+    if (!activeSosId || isResolving) return;
+    setIsResolving(true);
+    try {
+      const docRef = doc(db, 'sos_alerts', activeSosId);
+      await updateDoc(docRef, {
+        status: 'RESOLVED',
+        isActive: false,
+        resolvedAt: serverTimestamp(),
+        resolvedBy: adminId || adminName || null,
+      });
+      stopRingtone();
+      setTrackingActive(false);
+      toast.success('SOS marked as resolved.');
+    } catch (err) {
+      console.error('❌ Failed to mark SOS as resolved:', err);
+      toast.error('Failed to mark SOS as resolved. Please try again.');
+    } finally {
+      setIsResolving(false);
     }
   };
 
@@ -603,6 +634,16 @@ export default function SOSadminModal({
 
               {/* Action Buttons */}
               <div className="flex items-center gap-2 shrink-0">
+                {trackingActive && (
+                  <button
+                    onClick={handleResolve}
+                    disabled={isResolving}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 disabled:cursor-not-allowed shadow-sm transition active:scale-95"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>{isResolving ? 'Resolving…' : 'Mark as Resolved'}</span>
+                  </button>
+                )}
                 {currentLocation?.lat && (
                   <button
                     onClick={handleOpenGoogleMaps}
