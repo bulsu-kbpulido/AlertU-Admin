@@ -17,6 +17,7 @@ import DuplicateReports from '@/report_utilities/Duplicate_Reports';
 
 // Shadcn UI Skeleton & Dialog Components
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -178,7 +179,7 @@ export default function Report_Management() {
   const [searchQuery, setSearchQuery] = useState('');
   const [severityFilter, setSeverityFilter] = useState('ALL');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
 
   // 🔥 FIRESTORE REAL-TIME LISTENER FOR ACTIVE & DUPLICATE TABS 🔥
   useEffect(() => {
@@ -663,7 +664,7 @@ export default function Report_Management() {
   ];
 
   return (
-    <div className="w-full p-6 font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200">
+    <div className="w-full font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200">
       
       {/* Header */}
       <header className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -853,13 +854,8 @@ export default function Report_Management() {
                               transition={{ duration: 0.2 }}
                               className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors"
                             >
-                              <td className="px-6 py-4">
-                                <span 
-                                  style={{ fontFamily: "'Roboto', sans-serif" }} 
-                                  className="inline-block rounded-md px-2.5 py-1 text-sm font-bold tracking-wide bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200/80 dark:border-slate-700/80"
-                                >
-                                  {report.reportID || report.id}
-                                </span>
+                              <td className="px-6 py-4 font-['Roboto',sans-serif] font-medium text-slate-700 dark:text-slate-300">
+                                {report.reportID || report.id}
                               </td>
 
                               <td className="px-6 py-4 font-medium capitalize text-slate-900 dark:text-slate-100">
@@ -878,11 +874,8 @@ export default function Report_Management() {
                                 </span>
                               </td>
 
-                              <td className="px-6 py-4">
-                                <span className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 truncate max-w-xs">
-                                  <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                                  <span className="truncate">{formattedLocation}</span>
-                                </span>
+                              <td className="px-6 py-4 text-slate-600 dark:text-slate-300 max-w-xs xl:max-w-md truncate">
+                                {formattedLocation}
                               </td>
 
                               <td className="px-6 py-4 text-xs font-medium text-slate-600 dark:text-slate-300">
@@ -897,26 +890,33 @@ export default function Report_Management() {
                               {/* Action Buttons */}
                               <td className="px-6 py-4 text-right">
                                 <div className="inline-flex items-center justify-end gap-2">
-                                  <button
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
                                     onClick={() => handleOpenViewModal(report)}
-                                    className="inline-flex items-center gap-1 rounded-md bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1.5 text-xs font-medium shadow-sm transition-colors"
+                                    className="text-xs font-medium inline-flex items-center gap-1"
                                   >
-                                    <Eye className="h-3.5 w-3.5" /> View
-                                  </button>
+                                    <Eye className="h-3 w-3" />
+                                    <span>View</span>
+                                  </Button>
 
-                                  <button
+                                  <Button
+                                    size="sm"
                                     onClick={() => openVerifyWorkflow(report)}
-                                    className="inline-flex items-center gap-1 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 text-xs font-medium shadow-sm transition-colors"
+                                    className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1 shadow-sm"
                                   >
-                                    <CheckCircle2 className="h-3.5 w-3.5" /> Verify
-                                  </button>
+                                    <CheckCircle2 className="h-3 w-3" />
+                                    <span>Verify</span>
+                                  </Button>
 
-                                  <button
+                                  <Button
+                                    size="sm"
                                     onClick={() => triggerReject(report.id)}
-                                    className="inline-flex items-center gap-1 rounded-md bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1.5 text-xs font-medium shadow-sm transition-colors"
+                                    className="bg-red-800 hover:bg-red-900 text-white text-xs font-medium inline-flex items-center gap-1 shadow-sm"
                                   >
-                                    <XCircle className="h-3.5 w-3.5" /> Reject
-                                  </button>
+                                    <XCircle className="h-3 w-3" />
+                                    <span>Reject</span>
+                                  </Button>
                                 </div>
                               </td>
                             </motion.tr>

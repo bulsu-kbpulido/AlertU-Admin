@@ -22,6 +22,7 @@ import {
 
 // Import View Modal Component
 import ViewDuplicate_Reports from './ViewDuplicate_Reports';
+import { Button } from "@/components/ui/button";
 
 // Import Shadcn UI AlertDialog components
 import {
@@ -120,7 +121,7 @@ export default function Duplicate_Reports({ onCountChange } = {}) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
 
   // Cache Ref to eliminate redundant network requests and handle cold starts
   const duplicateCacheRef = useRef(null);
@@ -636,10 +637,8 @@ export default function Duplicate_Reports({ onCountChange } = {}) {
                       </button>
                     </td>
 
-                    <td className="px-6 py-4">
-                      <span className="inline-block rounded-md bg-amber-50 dark:bg-amber-950/40 px-2.5 py-1 text-xs font-bold tracking-wide text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50">
-                        {report.reportID || report.reportId || report.id || 'N/A'}
-                      </span>
+                    <td className="px-6 py-4 font-['Roboto',sans-serif] font-medium text-slate-700 dark:text-slate-300">
+                      {report.reportID || report.reportId || report.id || 'N/A'}
                     </td>
 
                     <td className="px-6 py-4">
@@ -648,11 +647,8 @@ export default function Duplicate_Reports({ onCountChange } = {}) {
                       </div>
                     </td>
 
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 max-w-xs truncate">
-                        <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                        <span className="truncate">{formattedLocation}</span>
-                      </span>
+                    <td className="px-6 py-4 text-slate-600 dark:text-slate-300 max-w-xs xl:max-w-md truncate">
+                      {formattedLocation}
                     </td>
 
                     <td className="px-6 py-4 text-xs font-medium text-slate-600 dark:text-slate-300">
@@ -667,28 +663,35 @@ export default function Duplicate_Reports({ onCountChange } = {}) {
                     <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="inline-flex items-center justify-end gap-2">
                         {/* VIEW BUTTON */}
-                        <button
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => triggerView(report)}
-                          className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors"
+                          className="text-xs font-medium inline-flex items-center gap-1"
                         >
-                          <Eye className="h-3.5 w-3.5" /> View
-                        </button>
+                          <Eye className="h-3 w-3" />
+                          <span>View</span>
+                        </Button>
 
                         {/* RESTORE BUTTON */}
-                        <button
+                        <Button
+                          size="sm"
                           onClick={() => triggerRestore(reportId)}
-                          className="inline-flex items-center gap-1 rounded-md border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-400 dark:hover:bg-emerald-900/60 px-2.5 py-1.5 text-xs font-medium shadow-sm transition-colors"
+                          className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1 shadow-sm"
                         >
-                          <RotateCcw className="h-3.5 w-3.5" /> Restore
-                        </button>
+                          <RotateCcw className="h-3 w-3" />
+                          <span>Restore</span>
+                        </Button>
 
                         {/* DELETE BUTTON */}
-                        <button
+                        <Button
+                          size="sm"
                           onClick={() => triggerDelete(reportId)}
-                          className="inline-flex items-center gap-1 rounded-md border border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-900/60 px-2.5 py-1.5 text-xs font-medium shadow-sm transition-colors"
+                          className="bg-red-800 hover:bg-red-900 text-white text-xs font-medium inline-flex items-center gap-1 shadow-sm"
                         >
-                          <Trash2 className="h-3.5 w-3.5" /> Delete
-                        </button>
+                          <Trash2 className="h-3 w-3" />
+                          <span>Delete</span>
+                        </Button>
                       </div>
                     </td>
                   </motion.tr>
