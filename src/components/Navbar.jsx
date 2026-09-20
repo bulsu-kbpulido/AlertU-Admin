@@ -780,7 +780,13 @@ export default function Navbar({
             <span className="truncate hidden 2xl:inline">{formattedDate}</span>
             <span className="hidden 2xl:inline text-slate-300 dark:text-slate-700">•</span>
             <div className="inline-flex items-center gap-1.5 text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-950/50 px-2.5 py-1 rounded-md border border-blue-200/60 dark:border-blue-900/40 shrink-0">
-              <Clock className="h-3.5 w-3.5 shrink-0 animate-pulse" />
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-emerald-600 dark:text-emerald-400 shrink-0">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                </span>
+                LIVE
+              </span>
               <SmoothClockDisplay timeString={formattedTimeString} />
               <span className="text-[10px] font-bold tracking-wider text-blue-500/80 dark:text-blue-400/80 uppercase ml-0.5">
                 PST
@@ -926,14 +932,14 @@ export default function Navbar({
             <button
               type="button"
               onClick={togglePopover}
-              className="group relative inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl border border-slate-200 bg-white px-2.5 sm:px-3.5 py-2 text-xs sm:text-sm font-medium text-slate-800 shadow-xs transition-all hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 cursor-pointer outline-none shrink-0"
+              className="group relative inline-flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600 text-white shadow-xs transition-all hover:bg-violet-700 active:scale-[0.98] dark:bg-violet-600 dark:hover:bg-violet-500 cursor-pointer outline-none shrink-0"
               title="Notifications"
+              aria-label="Notifications"
             >
-              <Bell className="h-4 w-4 text-slate-600 dark:text-slate-400 shrink-0 transition-transform group-hover:scale-105" />
-              <span className="hidden md:inline whitespace-nowrap">Notifications</span>
+              <Bell className="h-[18px] w-[18px] text-white shrink-0 transition-transform group-hover:scale-105" />
               {unreadCount > 0 && (
-                <span className="ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500/10 px-1.5 text-xs font-semibold text-rose-600 ring-1 ring-inset ring-rose-500/20 dark:bg-rose-500/20 dark:text-rose-300 shrink-0">
-                  {unreadCount}
+                <span className="absolute -top-1.5 -right-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[11px] font-semibold text-white ring-2 ring-white dark:ring-slate-900 shrink-0">
+                  {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
             </button>
@@ -1056,14 +1062,16 @@ export default function Navbar({
           <button
             type="button"
             onClick={onOpenMessages}
-            className="group relative inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl bg-blue-600 px-2.5 sm:px-3.5 py-2 text-xs sm:text-sm font-medium text-white shadow-xs transition-all hover:bg-blue-700 active:scale-[0.98] dark:bg-blue-600 dark:hover:bg-blue-500 cursor-pointer outline-none shrink-0"
+            className="group relative inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs transition-all hover:bg-blue-700 active:scale-[0.98] dark:bg-blue-600 dark:hover:bg-blue-500 cursor-pointer outline-none shrink-0"
             title="Messages"
+            aria-label="Messages"
           >
-            <MessageSquare className="h-4 w-4 shrink-0 transition-transform group-hover:scale-105" />
-            <span className="hidden md:inline whitespace-nowrap">Messages</span>
-            <span className="ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white/20 px-1.5 text-xs font-semibold text-white shrink-0">
-              <NumberTicker value={unreadMessageCount} className="text-white font-semibold" />
-            </span>
+            <MessageSquare className="h-[18px] w-[18px] shrink-0 transition-transform group-hover:scale-105" />
+            {unreadMessageCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[11px] font-semibold text-white ring-2 ring-white dark:ring-slate-900 shrink-0">
+                <NumberTicker value={unreadMessageCount} className="text-white font-semibold" />
+              </span>
+            )}
           </button>
 
         </div>

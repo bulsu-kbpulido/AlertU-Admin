@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, useSpring, useTransform } from 'framer-motion';
 import { io } from 'socket.io-client';
-import { Clock, Loader2, Wifi } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 // Live Railway backend base URL
 const SOCKET_SERVER_URL = 'https://alertu-server-production.up.railway.app';
@@ -34,7 +34,6 @@ const NumberTicker = ({ value = 0, className = '' }) => {
 export default function Pending_Reports() {
   const [pendingCount, setPendingCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [isLive, setIsLive] = useState(false);
 
   const fetchPendingCount = async () => {
     try {
@@ -60,17 +59,12 @@ export default function Pending_Reports() {
     const interval = setInterval(fetchPendingCount, 30000);
 
     // Socket.IO Realtime Listener Setup with Railway backend
+    // (No longer drives a per-card LIVE/SYNC badge — connection status is now
+    // shown once, in the Navbar, next to the clock — but the socket itself is
+    // still needed here to trigger instant refetches on report events.)
     const socket = io(SOCKET_SERVER_URL, {
       transports: ['websocket', 'polling'],
       reconnectionAttempts: 5,
-    });
-
-    socket.on('connect', () => {
-      setIsLive(true);
-    });
-
-    socket.on('disconnect', () => {
-      setIsLive(false);
     });
 
     // Real-time events listener
@@ -101,22 +95,9 @@ export default function Pending_Reports() {
         
         {/* Left Column: Label, Big Number, & Sub-label */}
         <div className="min-w-0 flex flex-col justify-center">
-          <div className="flex items-center gap-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-              Pending Reports
-            </p>
-            {/* Live Connection Badge */}
-            <span
-              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide border ${
-                isLive
-                  ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'
-              }`}
-            >
-              <Wifi className={`h-2.5 w-2.5 ${isLive ? 'animate-pulse text-amber-500' : 'text-slate-400'}`} />
-              {isLive ? 'LIVE' : 'SYNC'}
-            </span>
-          </div>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            Pending Reports
+          </p>
 
           <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight my-1.5 leading-none">
             {loading ? (
@@ -132,11 +113,6 @@ export default function Pending_Reports() {
           <p className="text-xs font-medium text-amber-600 dark:text-amber-400 truncate">
             Awaiting verification
           </p>
-        </div>
-
-        {/* Right Side Icon */}
-        <div className="p-2.5 bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 rounded-xl shrink-0 ml-4 border border-amber-100 dark:border-amber-900/40">
-          <Clock className="h-6 w-6" />
         </div>
 
       </CardContent>
