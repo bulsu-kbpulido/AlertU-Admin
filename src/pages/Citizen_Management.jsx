@@ -36,6 +36,8 @@ import View_Citizens from '@/citizen_utilities/View_Citizens';
 
 // Extension Component for Vault Table
 import ArchivedCitizensTable from '@/citizen_utilities/ArchivedCitizensTable';
+import { Button } from "@/components/ui/button";
+import { toast } from 'sonner';
 
 // --- Helper Functions ---
 const getCitizenId = (c) => c?.citizenID || c?.cid || c?.id;
@@ -224,7 +226,7 @@ const CitizenManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   // 🔹 Maximum Rows per Page
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
 
   const [toggleDialog, setToggleDialog] = useState({
     isOpen: false,
@@ -446,9 +448,15 @@ const CitizenManagement = () => {
       // ⚡ Audit Log Dispatch: Toggle Account Status
       await logToggleCitizenStatus(citizen, nextIsDisabled);
 
+      toast.success(
+        `${citizen.fullName || 'Citizen'} account ${nextStatus === 'Disabled' ? 'disabled' : 'enabled'} successfully.`,
+        { duration: 10000 }
+      );
+
       setToggleDialog({ isOpen: false, citizen: null });
     } catch (err) {
       console.error('Failed to update citizen status:', err);
+      toast.error('Failed to update account status. Please try again.', { duration: 10000 });
       setAccountDisabledState(citizenId, !nextIsDisabled);
       loadCitizens(false, true);
     } finally {
@@ -516,7 +524,7 @@ const CitizenManagement = () => {
   ];
 
   return (
-    <div className="w-full p-6 font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200">
+    <div className="w-full font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200">
       
       {/* Header */}
       <header className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -686,13 +694,8 @@ const CitizenManagement = () => {
 
                     return (
                       <tr key={citizenId || citizen.email} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
-                        <td className="px-6 py-4">
-                          <span 
-                            style={{ fontFamily: "'Roboto', sans-serif" }} 
-                            className="inline-block rounded-md bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-sm font-bold tracking-wide text-slate-800 dark:text-slate-100 border border-slate-200/80 dark:border-slate-700/80"
-                          >
-                            {citizenId || 'N/A'}
-                          </span>
+                        <td className="px-6 py-4 font-['Roboto',sans-serif] font-medium text-slate-700 dark:text-slate-300">
+                          {citizenId || 'N/A'}
                         </td>
 
                         <td className="px-6 py-4">
@@ -705,10 +708,8 @@ const CitizenManagement = () => {
                           <PresenceBadge isActive={isOnline} />
                         </td>
 
-                        <td className="px-6 py-4">
-                          <span className="inline-flex items-center rounded-md border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700">
-                            {citizen.zone || 'Unassigned'}
-                          </span>
+                        <td className="px-6 py-4 text-slate-600 dark:text-slate-300 max-w-xs xl:max-w-md truncate">
+                          {citizen.zone || 'Unassigned'}
                         </td>
 
                         <td className="px-6 py-4">
@@ -727,55 +728,66 @@ const CitizenManagement = () => {
 
                         <td className="px-6 py-4 text-right">
                           <div className="inline-flex items-center justify-end gap-2">
-                            <button
+                            <Button
+                              variant="outline"
+                              size="sm"
                               onClick={() => openModal('view', citizen)}
-                              className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-colors cursor-pointer"
+                              className="text-xs font-medium inline-flex items-center gap-1"
                             >
-                              <Eye className="h-3.5 w-3.5" /> View
-                            </button>
+                              <Eye className="h-3 w-3" />
+                              <span>View</span>
+                            </Button>
 
                             {/* Edit Button (Disabled if Online) */}
-                            <button
+                            <Button
+                              variant="outline"
+                              size="sm"
                               onClick={() => openModal('edit', citizen)}
                               disabled={isOnline}
                               title={isOnline ? 'Cannot edit citizen while online' : 'Edit citizen'}
-                              className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-slate-800 cursor-pointer"
+                              className="text-xs font-medium inline-flex items-center gap-1"
                             >
-                              <Edit3 className="h-3.5 w-3.5" /> Edit
-                            </button>
+                              <Edit3 className="h-3 w-3" />
+                              <span>Edit</span>
+                            </Button>
 
                             {/* Enable/Disable Toggle */}
-                            <button
+                            <Button
+                              size="sm"
                               onClick={() => triggerStatusConfirm(citizen)}
                               disabled={isActionBusy}
-                              className={`inline-flex items-center gap-1 w-[82px] justify-center rounded-md border px-2.5 py-1.5 text-xs font-medium shadow-sm transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
+                              className={`text-xs font-medium inline-flex items-center gap-1 w-[86px] justify-center text-white shadow-sm ${
                                 isAccountEnabled
-                                  ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-400 dark:hover:bg-amber-900/60'
-                                  : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-400 dark:hover:bg-emerald-900/60'
+                                  ? 'bg-amber-600 hover:bg-amber-700'
+                                  : 'bg-emerald-700 hover:bg-emerald-800'
                               }`}
                             >
                               {isActionBusy ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                <Loader2 className="h-3 w-3 animate-spin" />
                               ) : isAccountEnabled ? (
                                 <>
-                                  <UserX className="h-3.5 w-3.5" /> Disable
+                                  <UserX className="h-3 w-3" />
+                                  <span>Disable</span>
                                 </>
                               ) : (
                                 <>
-                                  <UserCheck className="h-3.5 w-3.5" /> Enable
+                                  <UserCheck className="h-3 w-3" />
+                                  <span>Enable</span>
                                 </>
                               )}
-                            </button>
+                            </Button>
 
                             {/* Archive Button (Disabled if Online) */}
-                            <button
+                            <Button
+                              size="sm"
                               onClick={() => openModal('archive', citizen)}
                               disabled={isOnline}
                               title={isOnline ? 'Cannot archive citizen while online' : 'Archive citizen'}
-                              className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-900/60 px-2.5 py-1.5 text-xs font-medium text-red-700 shadow-sm hover:bg-red-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-red-50 dark:disabled:hover:bg-red-950/40 cursor-pointer"
+                              className="bg-red-800 hover:bg-red-900 text-white text-xs font-medium inline-flex items-center gap-1 shadow-sm"
                             >
-                              <FolderArchive className="h-3.5 w-3.5" /> Archive
-                            </button>
+                              <FolderArchive className="h-3 w-3" />
+                              <span>Archive</span>
+                            </Button>
                           </div>
                         </td>
                       </tr>
@@ -853,6 +865,10 @@ const CitizenManagement = () => {
         onRefresh={(reason) => {
           if (selectedCitizen) {
             logArchiveCitizen(selectedCitizen, typeof reason === 'string' ? reason : 'Admin archived record');
+            toast.success(
+              `${selectedCitizen.fullName || 'Citizen'} archived successfully.`,
+              { duration: 10000 }
+            );
           }
           loadCitizens(true, true);
         }} 

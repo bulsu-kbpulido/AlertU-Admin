@@ -157,9 +157,12 @@ const Create_Citizen = ({ isOpen, onClose, onRefresh }) => {
   
   const isMatchValid = formData.confirmPassword.length > 0 && formData.password === formData.confirmPassword;
 
-  // Validate all emergency contacts
+  // Validate all emergency contacts (checks real phone format, not just length)
   const areContactsValid = emergencyContacts.every(
-    (c) => c.name.trim().length >= 2 && c.phone.trim().length >= 7
+    (c) =>
+      c.name.trim().length >= 2 &&
+      c.phone.trim().length >= 7 &&
+      validator.isMobilePhone(c.phone, 'any', { strictMode: false })
   );
 
   const isFormValid = 
@@ -210,7 +213,7 @@ const Create_Citizen = ({ isOpen, onClose, onRefresh }) => {
       if (!c.name.trim() || c.name.trim().length < 2) {
         return setError(`Emergency Contact #${i + 1} requires a valid name.`);
       }
-      if (!c.phone.trim() || c.phone.trim().length < 7) {
+      if (!c.phone.trim() || c.phone.trim().length < 7 || !validator.isMobilePhone(c.phone, 'any', { strictMode: false })) {
         return setError(`Emergency Contact #${i + 1} requires a valid phone number.`);
       }
     }
@@ -363,7 +366,6 @@ const Create_Citizen = ({ isOpen, onClose, onRefresh }) => {
                 {/* General Info */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-blue-600" />
                     <h4 className="text-[11px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">
                       Resident Details
                     </h4>
@@ -489,7 +491,6 @@ const Create_Citizen = ({ isOpen, onClose, onRefresh }) => {
                 {/* Account Security */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <Lock className="h-4 w-4 text-blue-600" />
                     <h4 className="text-[11px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">
                       Security & Passwords
                     </h4>
@@ -574,7 +575,6 @@ const Create_Citizen = ({ isOpen, onClose, onRefresh }) => {
                 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <ShieldAlert className="h-4 w-4 text-blue-600" />
                     <div>
                       <h4 className="text-[11px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">
                         Emergency Contacts ({emergencyContacts.length}/3)
@@ -584,24 +584,18 @@ const Create_Citizen = ({ isOpen, onClose, onRefresh }) => {
                       </p>
                     </div>
                   </div>
-
-                  {emergencyContacts.length < MAX_CONTACTS && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleAddContact}
-                      className="h-8 px-3 text-xs font-semibold border-blue-200 text-blue-600 hover:bg-blue-50 dark:border-blue-900 dark:hover:bg-blue-950/50 rounded-lg gap-1.5"
-                    >
-                      <Plus className="h-3.5 w-3.5" /> Add Contact
-                    </Button>
-                  )}
                 </div>
 
                 {/* 3-Column Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {emergencyContacts.map((contact, index) => {
-                    const isContactValid = contact.name.trim().length >= 2 && contact.phone.trim().length >= 7;
+                    const isContactPhoneValid =
+                      contact.phone.trim().length === 0 ||
+                      validator.isMobilePhone(contact.phone, 'any', { strictMode: false });
+                    const isContactValid =
+                      contact.name.trim().length >= 2 &&
+                      contact.phone.trim().length >= 7 &&
+                      isContactPhoneValid;
 
                     return (
                       <div 
@@ -661,7 +655,7 @@ const Create_Citizen = ({ isOpen, onClose, onRefresh }) => {
                               onChange={(val) => handleContactChange(index, 'phone', val || '')}
                               maxLength={MAX_PHONE_LENGTH}
                               placeholder="e.g. 912 345 6789"
-                              className="
+                              className={`
                                 w-full flex h-8 rounded-lg text-xs bg-white dark:bg-slate-900
                                 [&_*[data-slot=combobox-trigger]]:h-8 
                                 [&_*[data-slot=combobox-trigger]]:rounded-l-lg 
@@ -676,8 +670,14 @@ const Create_Citizen = ({ isOpen, onClose, onRefresh }) => {
                                 [&_input]:rounded-r-lg 
                                 [&_input]:border-slate-200 
                                 dark:[&_input]:border-slate-700
-                              "
+                                ${contact.phone && !isContactPhoneValid ? '[&_input]:border-red-500 [&_input]:focus-visible:ring-red-500' : ''}
+                              `}
                             />
+                            {contact.phone && !isContactPhoneValid && (
+                              <p className="text-[10px] text-red-500 font-medium">
+                                Please enter a valid phone number.
+                              </p>
+                            )}
                           </div>
 
                           {/* Relationship Selector */}
