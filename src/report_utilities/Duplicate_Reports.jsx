@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { getAuth } from 'firebase/auth';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import { 
   RotateCcw, 
-  Trash2, 
   ChevronLeft, 
   ChevronRight, 
   ShieldAlert, 
@@ -15,7 +15,8 @@ import {
   Search,
   MapPin,
   Clock,
-  Eye,
+  ExternalLink,
+  Calendar,
   X,
   RefreshCw
 } from 'lucide-react';
@@ -43,8 +44,26 @@ const API_BASE_URL = CLEAN_SERVER_URL.endsWith('/api')
   ? CLEAN_SERVER_URL
   : `${CLEAN_SERVER_URL}/api`;
 
+// How long the success/error pop-ups stay on screen (ms)
+const TOAST_DURATION = 10000;
+
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 2500;
+
+/**
+ * Incident type badge colors (same as the Send Reports tables)
+ */
+const getIncidentBadgeStyle = (incidentType) => {
+  const normalized = (incidentType || '').trim().toLowerCase();
+  if (normalized.includes('fire')) {
+    return 'bg-red-600 text-white border-red-700';
+  } else if (normalized.includes('flood')) {
+    return 'bg-blue-600 text-white border-blue-700';
+  } else if (normalized.includes('accident')) {
+    return 'bg-violet-600 text-white border-violet-700';
+  }
+  return 'bg-orange-600 text-white border-orange-700';
+};
 
 /**
  * Format street and barangay helper for duplicate addresses
@@ -132,9 +151,7 @@ export default function Duplicate_Reports({ onCountChange } = {}) {
   // Dialog state tracking
   const [selectedReportId, setSelectedReportId] = useState(null);
   const [isRestoreDialogOpen, setIsRestoreDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isBatchRestoreOpen, setIsBatchRestoreOpen] = useState(false);
-  const [isBatchDeleteOpen, setIsBatchDeleteOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // View Modal state tracking
@@ -298,11 +315,6 @@ export default function Duplicate_Reports({ onCountChange } = {}) {
     setIsRestoreDialogOpen(true);
   };
 
-  const triggerDelete = (reportId) => {
-    setSelectedReportId(reportId);
-    setIsDeleteDialogOpen(true);
-  };
-
   // Helper to remove records from local cache optimistic state
   const removeReportsFromStateAndCache = (idsToRemove) => {
     const removeSet = new Set(Array.isArray(idsToRemove) ? idsToRemove : [idsToRemove]);
@@ -319,6 +331,9 @@ export default function Duplicate_Reports({ onCountChange } = {}) {
   const handleRestore = async () => {
     if (!selectedReportId) return;
 
+    const target = duplicateReports.find((r) => (r.id || r.reportId || r.reportID) === selectedReportId);
+    const displayId = target?.reportID || target?.reportId || target?.id || selectedReportId;
+
     try {
       setIsSubmitting(true);
       const headers = await getAuthHeaders();
@@ -331,55 +346,34 @@ export default function Duplicate_Reports({ onCountChange } = {}) {
       const result = await response.json();
 
       if (response.status === 401) {
-        alert("Session expired or unauthorized. Please log in again.");
+        toast.error('Session expired', {
+          description: 'Please log in again to continue.',
+          duration: TOAST_DURATION,
+        });
         return;
       }
 
       if (response.ok && result.success) {
         removeReportsFromStateAndCache(selectedReportId);
+        toast.success('Report restored', {
+          description: `#${displayId} was removed from duplicates and moved back to Active Reports.`,
+          duration: TOAST_DURATION,
+        });
       } else {
-        alert(result.message || "Failed to restore duplicate report.");
+        toast.error('Unable to restore report', {
+          description: result.message || `#${displayId} could not be restored. Please try again.`,
+          duration: TOAST_DURATION,
+        });
       }
     } catch (err) {
       console.error("Restore error:", err);
-      alert("Failed to restore duplicate report. Please try again.");
+      toast.error('Unable to restore report', {
+        description: 'Something went wrong while restoring the report. Please try again.',
+        duration: TOAST_DURATION,
+      });
     } finally {
       setIsSubmitting(false);
       setIsRestoreDialogOpen(false);
-      setSelectedReportId(null);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!selectedReportId) return;
-
-    try {
-      setIsSubmitting(true);
-      const headers = await getAuthHeaders();
-
-      const response = await fetch(`${API_BASE_URL}/duplicate-reports/${selectedReportId}`, {
-        method: 'DELETE',
-        headers: headers
-      });
-      const result = await response.json();
-
-      if (response.status === 401) {
-        alert("Session expired or unauthorized. Please log in again.");
-        return;
-      }
-
-      if (response.ok && result.success) {
-        removeReportsFromStateAndCache(selectedReportId);
-      } else {
-        console.error("Failed to delete report:", result.message);
-        alert(result.message || "Failed to delete report.");
-      }
-    } catch (err) {
-      console.error("Delete error:", err);
-      alert("Failed to delete report. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-      setIsDeleteDialogOpen(false);
       setSelectedReportId(null);
     }
   };
@@ -404,50 +398,44 @@ export default function Duplicate_Reports({ onCountChange } = {}) {
       const hasUnauthorized = responses.some(res => res.status === 401);
 
       if (hasUnauthorized) {
-        alert("Session expired or unauthorized. Please log in again.");
+        toast.error('Session expired', {
+          description: 'Please log in again to continue.',
+          duration: TOAST_DURATION,
+        });
         return;
       }
 
-      removeReportsFromStateAndCache(idsArray);
+      const successfulIds = idsArray.filter((_, idx) => responses[idx]?.ok);
+
       setIsBatchRestoreOpen(false);
-      setSelectedIds(new Set());
+
+      if (successfulIds.length > 0) {
+        removeReportsFromStateAndCache(successfulIds);
+        setSelectedIds(new Set());
+      }
+
+      if (successfulIds.length === idsArray.length) {
+        toast.success(`${successfulIds.length} report${successfulIds.length > 1 ? 's' : ''} restored`, {
+          description: 'The selected reports were moved back to Active Reports.',
+          duration: TOAST_DURATION,
+        });
+      } else if (successfulIds.length > 0) {
+        toast.warning('Some reports could not be restored', {
+          description: `${successfulIds.length} of ${idsArray.length} selected reports were restored. Please try the rest again.`,
+          duration: TOAST_DURATION,
+        });
+      } else {
+        toast.error('Unable to restore reports', {
+          description: 'None of the selected reports could be restored. Please try again.',
+          duration: TOAST_DURATION,
+        });
+      }
     } catch (err) {
       console.error('Error restoring selected reports:', err);
-      alert('Failed to restore some selected records.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleConfirmBatchDelete = async () => {
-    if (selectedIds.size === 0) return;
-
-    try {
-      setIsSubmitting(true);
-      const headers = await getAuthHeaders();
-
-      const idsArray = Array.from(selectedIds);
-      const deletePromises = idsArray.map((id) =>
-        fetch(`${API_BASE_URL}/duplicate-reports/${id}`, { 
-          method: 'DELETE',
-          headers: headers
-        })
-      );
-
-      const responses = await Promise.all(deletePromises);
-      const hasUnauthorized = responses.some(res => res.status === 401);
-
-      if (hasUnauthorized) {
-        alert("Session expired or unauthorized. Please log in again.");
-        return;
-      }
-
-      removeReportsFromStateAndCache(idsArray);
-      setIsBatchDeleteOpen(false);
-      setSelectedIds(new Set());
-    } catch (err) {
-      console.error('Error deleting selected reports:', err);
-      alert('Failed to delete some selected records.');
+      toast.error('Unable to restore reports', {
+        description: 'Something went wrong while restoring the selected reports. Please try again.',
+        duration: TOAST_DURATION,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -545,7 +533,7 @@ export default function Duplicate_Reports({ onCountChange } = {}) {
             {areAllCurrentPageSelected ? 'Deselect All' : 'Select All'}
           </button>
 
-          {/* Animated Batch Restore & Purge Actions */}
+          {/* Animated Batch Restore Action */}
           <AnimatePresence>
             {selectedIds.size > 0 && (
               <motion.div
@@ -563,15 +551,6 @@ export default function Duplicate_Reports({ onCountChange } = {}) {
                   <RotateCcw className="h-3.5 w-3.5" />
                   Restore ({selectedIds.size})
                 </button>
-
-                <button
-                  type="button"
-                  onClick={() => setIsBatchDeleteOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-rose-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-rose-700 focus:outline-none transition-colors"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Purge ({selectedIds.size})
-                </button>
               </motion.div>
             )}
           </AnimatePresence>
@@ -580,17 +559,17 @@ export default function Duplicate_Reports({ onCountChange } = {}) {
 
       {/* Table Data */}
       <div className="w-full overflow-x-auto">
-        <table className="w-full text-left border-collapse text-sm">
+        <table className="w-full text-left border-collapse text-xs whitespace-nowrap lg:whitespace-normal">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-800/50 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              <th className="w-12 px-4 py-4 text-center">
+            <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider sticky top-0 z-10">
+              <th className="w-12 px-4 py-3.5 text-center">
                 <span className="sr-only">Select</span>
               </th>
-              <th className="px-6 py-4">Report ID</th>
-              <th className="px-6 py-4">Incident Type</th>
-              <th className="px-6 py-4">Flagged Location</th>
-              <th className="px-6 py-4">Flagged At</th>
-              <th className="px-6 py-4 text-right">Actions</th>
+              <th className="px-5 py-3.5 w-36">Report ID</th>
+              <th className="px-5 py-3.5 w-36">Type</th>
+              <th className="px-5 py-3.5 min-w-[220px]">Location</th>
+              <th className="px-5 py-3.5 w-36">Flagged At</th>
+              <th className="px-5 py-3.5 text-right min-w-[160px]">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -609,6 +588,7 @@ export default function Duplicate_Reports({ onCountChange } = {}) {
                 const formattedLocation = formatStreetAndBarangay(rawAddress);
                 const rawTimestamp = report.flaggedAt || report.createdAt || report.updatedAt || report.timestamp || report.date;
                 const { date, time } = formatDateTime(rawTimestamp);
+                const incidentType = report.incidentType || report.hazard || report.reportTitle || 'General';
 
                 return (
                   <motion.tr
@@ -618,7 +598,7 @@ export default function Duplicate_Reports({ onCountChange } = {}) {
                       backgroundColor: isSelected ? 'rgba(59, 130, 246, 0.08)' : 'rgba(0,0,0,0)',
                     }}
                     transition={{ duration: 0.2 }}
-                    className={`group cursor-pointer transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/50 ${
+                    className={`group cursor-pointer transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40 ${
                       isSelected ? 'border-l-4 border-l-blue-500' : ''
                     }`}
                   >
@@ -637,31 +617,35 @@ export default function Duplicate_Reports({ onCountChange } = {}) {
                       </button>
                     </td>
 
-                    <td className="px-6 py-4 font-['Roboto',sans-serif] font-medium text-slate-700 dark:text-slate-300">
+                    <td className="px-5 py-4 font-['Roboto',sans-serif] font-medium text-slate-700 dark:text-slate-300">
                       {report.reportID || report.reportId || report.id || 'N/A'}
                     </td>
 
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-slate-900 dark:text-slate-100 capitalize">
-                        {report.reportTitle || report.incidentType || report.hazard || 'Duplicate Incident'}
-                      </div>
+                    <td className="px-5 py-4">
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border shadow-xs transition-colors ${getIncidentBadgeStyle(incidentType)}`}>
+                        <span>{incidentType}</span>
+                      </span>
                     </td>
 
-                    <td className="px-6 py-4 text-slate-600 dark:text-slate-300 max-w-xs xl:max-w-md truncate">
+                    <td className="px-5 py-4 text-slate-600 dark:text-slate-300 max-w-xs xl:max-w-md truncate">
                       {formattedLocation}
                     </td>
 
-                    <td className="px-6 py-4 text-xs font-medium text-slate-600 dark:text-slate-300">
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-slate-900 dark:text-slate-100">{date}</span>
+                    <td className="px-5 py-4">
+                      <div className="flex flex-col text-[11px]">
+                        <span className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1">
+                          <Calendar className="h-3 w-3 text-blue-500 shrink-0" />
+                          {date}
+                        </span>
                         <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
-                          <Clock className="h-3 w-3 text-slate-400" /> {time}
+                          <Clock className="h-3 w-3 shrink-0" />
+                          {time}
                         </span>
                       </div>
                     </td>
 
-                    <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="inline-flex items-center justify-end gap-2">
+                    <td className="px-5 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="inline-flex items-center justify-end gap-2 flex-wrap xl:flex-nowrap">
                         {/* VIEW BUTTON */}
                         <Button
                           variant="outline"
@@ -669,7 +653,7 @@ export default function Duplicate_Reports({ onCountChange } = {}) {
                           onClick={() => triggerView(report)}
                           className="text-xs font-medium inline-flex items-center gap-1"
                         >
-                          <Eye className="h-3 w-3" />
+                          <ExternalLink className="h-3 w-3" />
                           <span>View</span>
                         </Button>
 
@@ -681,16 +665,6 @@ export default function Duplicate_Reports({ onCountChange } = {}) {
                         >
                           <RotateCcw className="h-3 w-3" />
                           <span>Restore</span>
-                        </Button>
-
-                        {/* DELETE BUTTON */}
-                        <Button
-                          size="sm"
-                          onClick={() => triggerDelete(reportId)}
-                          className="bg-red-800 hover:bg-red-900 text-white text-xs font-medium inline-flex items-center gap-1 shadow-sm"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                          <span>Delete</span>
                         </Button>
                       </div>
                     </td>
@@ -840,65 +814,6 @@ export default function Duplicate_Reports({ onCountChange } = {}) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* SINGLE PERMANENT DELETE ALERT DIALOG */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
-              <Trash2 className="h-5 w-5" /> Permanently Delete Duplicate Record?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              CRITICAL: This action <strong>cannot be undone</strong>. The duplicate incident record will be permanently purged from database archives.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isSubmitting}
-              className="bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-600 dark:hover:bg-rose-700"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Purging...
-                </>
-              ) : (
-                'Delete Permanently'
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* BATCH PERMANENT DELETE ALERT DIALOG */}
-      <AlertDialog open={isBatchDeleteOpen} onOpenChange={setIsBatchDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
-              <Trash2 className="h-5 w-5" /> Permanently Delete {selectedIds.size} Records
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              This action <strong>cannot be undone</strong>. You are about to permanently purge <strong>{selectedIds.size} selected reports</strong> from storage.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmBatchDelete}
-              disabled={isSubmitting}
-              className="bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-600 dark:hover:bg-rose-700"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Purging Selected...
-                </>
-              ) : (
-                `Purge Selected (${selectedIds.size})`
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

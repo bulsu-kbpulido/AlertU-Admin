@@ -13,12 +13,10 @@ import { Style, Stroke, Fill, Icon } from 'ol/style';
 // Modern Icons
 import { 
   FiRefreshCw, 
-  FiLock, 
   FiArrowLeft, 
   FiCheckCircle, 
   FiMapPin,
   FiX,
-  FiLayers,
   FiCompass,
   FiSliders,
   FiClock
@@ -84,6 +82,15 @@ const formatReportTimestamp = (timestamp) => {
     console.warn('Timestamp format warning:', err);
   }
   return 'Date unavailable';
+};
+
+// Incident type badge colors (same as the Send Reports tables)
+const getIncidentBadgeStyle = (type) => {
+  const normalized = (type || '').trim().toLowerCase();
+  if (normalized.includes('fire')) return 'bg-red-600 text-white border-red-700';
+  if (normalized.includes('flood')) return 'bg-blue-600 text-white border-blue-700';
+  if (normalized.includes('accident')) return 'bg-violet-600 text-white border-violet-700';
+  return 'bg-orange-600 text-white border-orange-700';
 };
 
 export default function VerifyIncidentModal({
@@ -441,8 +448,7 @@ export default function VerifyIncidentModal({
             <div ref={mapElement} className="w-full h-full absolute inset-0 z-10" />
 
             {/* Instruction Overlay Banner */}
-            <div className="absolute top-3 left-3 right-3 z-20 bg-white/90 backdrop-blur-md px-3.5 py-2.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-2.5 text-xs text-slate-700 pointer-events-none">
-              <FiLayers className="text-blue-600 w-4 h-4 shrink-0" />
+            <div className="absolute top-3 left-14 right-3 z-20 bg-white/90 backdrop-blur-md px-3.5 py-2.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-2.5 text-xs text-slate-700 pointer-events-none">
               <span className="font-medium">
                 {(isFlood || isAccident || (isOthers && othersMode === 'polyline'))
                   ? 'Click two points directly on the map to plot the affected road or route.'
@@ -460,8 +466,7 @@ export default function VerifyIncidentModal({
               <div className="space-y-3 pb-4 border-b border-slate-100 dark:border-slate-800">
                 <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center justify-between">
                   <span>Incident Type</span>
-                  <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1.5">
-                    <FiLock className="w-3 h-3 text-blue-500" />
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold border shadow-xs ${getIncidentBadgeStyle(incidentType)}`}>
                     {incidentType}
                   </span>
                 </h4>

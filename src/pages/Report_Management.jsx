@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { io } from 'socket.io-client';
+import { toast } from 'sonner';
 import { useReportStore } from '../useReportStore'; 
 
 // Firestore & Firebase Auth Imports
@@ -34,13 +35,12 @@ import {
   RefreshCw, 
   Search, 
   Archive, 
-  CheckCircle2, 
   AlertTriangle,
   FileText,
   ShieldAlert,
   ChevronLeft,
   ChevronRight,
-  Eye,
+  ExternalLink,
   XCircle,
   MapPin,
   Clock,
@@ -55,6 +55,9 @@ const API_BASE_URL = CLEAN_SERVER_URL.endsWith('/api')
   ? CLEAN_SERVER_URL
   : `${CLEAN_SERVER_URL}/api`;
 const SOCKET_SERVER_URL = CLEAN_SERVER_URL.replace(/\/api$/, '');
+
+// How long the success/error pop-ups stay on screen (ms)
+const TOAST_DURATION = 10000;
 
 const REPORT_LIMIT = 100; // Cache & query payload limit per active tab
 
@@ -174,6 +177,7 @@ export default function Report_Management() {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('active'); // 'active' | 'duplicate' | 'archived'
   const [duplicateCount, setDuplicateCount] = useState(0);
+  const [rejectedCount, setRejectedCount] = useState(null);
 
   // Filtering & Pagination
   const [searchQuery, setSearchQuery] = useState('');
@@ -434,8 +438,12 @@ export default function Report_Management() {
       selectedReport?.reportId;
 
     if (!sourceDocumentId || sourceDocumentId === '_') {
-      alert('Unable to verify this report because its document ID is missing.');
-      return;
+      toast.error('Unable to verify report', {
+        description: 'The report document ID is missing. Please reopen the report and try again.',
+        duration: TOAST_DURATION,
+      });
+      // Throw so the modal knows the save failed and does not dispatch or close
+      throw new Error('Missing report document ID');
     }
 
     const reportIdentifier = selectedReport?.reportID || sourceDocumentId;
@@ -457,6 +465,8 @@ export default function Report_Management() {
       selectedReport?.CID ||
       selectedReport?.cid ||
       '';
+
+    let failureHandled = false;
 
     try {
       const payload = {
@@ -526,12 +536,30 @@ export default function Report_Management() {
 
         // 🛑 Unmount/reset modal ONLY AFTER emitting socket events
         resetModalState();
+
+        toast.success('Report verified and dispatched', {
+          description: `#${reportIdentifier} was verified and sent to ${selectedAgencies.length} agenc${selectedAgencies.length === 1 ? 'y' : 'ies'}. You can find it in Send Reports.`,
+          duration: TOAST_DURATION,
+        });
       } else {
-        alert("Failed to save report: " + result.message);
+        failureHandled = true;
+        toast.error('Unable to verify report', {
+          description: result.message || 'The report could not be saved. Please try again.',
+          duration: TOAST_DURATION,
+        });
+        // Throw so the modal does not dispatch or close when saving failed
+        throw new Error(result.message || 'Failed to save report');
       }
     } catch (err) {
       console.error("Final submission error:", err);
-      alert("An error occurred during submission.");
+      // Server rejections already showed a toast above; this covers network / unexpected errors
+      if (!failureHandled) {
+        toast.error('Unable to verify report', {
+          description: 'An error occurred during submission. Please try again.',
+          duration: TOAST_DURATION,
+        });
+      }
+      throw err;
     }
   };
 
@@ -549,7 +577,10 @@ export default function Report_Management() {
       const token = await getAuthToken();
 
       if (!token) {
-        alert("Session expired. Please log in again.");
+        toast.error('Session expired', {
+          description: 'Please log in again to continue.',
+          duration: TOAST_DURATION,
+        });
         return;
       }
       
@@ -612,12 +643,24 @@ export default function Report_Management() {
         reportCacheRef.current[activeTab] = null;
         setIsRejectDialogOpen(false);
         setReportToReject(null);
+
+        const rejectedDisplayId = rejectedReport?.reportID || rejectedReport?.reportId || reportToReject;
+        toast.success('Report rejected', {
+          description: `#${rejectedDisplayId} was rejected and moved to the Rejected Reports tab.`,
+          duration: TOAST_DURATION,
+        });
       } else {
-        alert(result.message || 'Failed to reject report.');
+        toast.error('Unable to reject report', {
+          description: result.message || 'The report could not be rejected. Please try again.',
+          duration: TOAST_DURATION,
+        });
       }
     } catch (err) {
       console.error("Reject error:", err);
-      alert("An error occurred while rejecting the report.");
+      toast.error('Unable to reject report', {
+        description: 'An error occurred while rejecting the report. Please try again.',
+        duration: TOAST_DURATION,
+      });
     } finally {
       setIsRejecting(false);
     }
@@ -735,6 +778,11 @@ export default function Report_Management() {
           >
             <Archive className="h-4 w-4" />
             Rejected Reports
+            {activeTab === 'archived' && rejectedCount !== null && (
+              <span className="ml-1 rounded-full bg-slate-200/80 dark:bg-slate-800 px-2 py-0.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                {rejectedCount}
+              </span>
+            )}
           </button>
         </div>
 
@@ -785,7 +833,7 @@ export default function Report_Management() {
         {/* Table Content & Dynamic Transitions */}
         <AnimatePresence mode="wait">
           {activeTab === 'archived' ? (
-            <Archived_Routes key="archived-tab" cachedData={reportCacheRef.current.archived} onDataFetched={(data) => { reportCacheRef.current.archived = data; }} />
+            <Archived_Routes key="archived-tab" cachedData={reportCacheRef.current.archived} onDataFetched={(data) => { reportCacheRef.current.archived = data; }} onCountChange={setRejectedCount} />
           ) : activeTab === 'duplicate' ? (
             <DuplicateReports key="duplicate-tab" onCountChange={setDuplicateCount} />
           ) : loading || isRefreshing ? (
@@ -896,27 +944,10 @@ export default function Report_Management() {
                                     onClick={() => handleOpenViewModal(report)}
                                     className="text-xs font-medium inline-flex items-center gap-1"
                                   >
-                                    <Eye className="h-3 w-3" />
+                                    <ExternalLink className="h-3 w-3" />
                                     <span>View</span>
                                   </Button>
 
-                                  <Button
-                                    size="sm"
-                                    onClick={() => openVerifyWorkflow(report)}
-                                    className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1 shadow-sm"
-                                  >
-                                    <CheckCircle2 className="h-3 w-3" />
-                                    <span>Verify</span>
-                                  </Button>
-
-                                  <Button
-                                    size="sm"
-                                    onClick={() => triggerReject(report.id)}
-                                    className="bg-red-800 hover:bg-red-900 text-white text-xs font-medium inline-flex items-center gap-1 shadow-sm"
-                                  >
-                                    <XCircle className="h-3 w-3" />
-                                    <span>Reject</span>
-                                  </Button>
                                 </div>
                               </td>
                             </motion.tr>
@@ -971,6 +1002,8 @@ export default function Report_Management() {
           isOpen={isViewModalOpen}
           onClose={handleCloseViewModal}
           report={selectedViewReport}
+          onVerify={openVerifyWorkflow}
+          onReject={triggerReject}
         />
       )}
 

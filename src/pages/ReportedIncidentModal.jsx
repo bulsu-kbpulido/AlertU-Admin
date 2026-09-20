@@ -16,7 +16,6 @@ import { Style, Icon } from 'ol/style';
 // Modern Icons
 import { 
   FiMaximize2, 
-  FiAlertTriangle, 
   FiChevronDown, 
   FiX, 
   FiZoomIn,
@@ -200,7 +199,6 @@ export default function ReportedIncidentModal({
     selectedReport?.createdAt || selectedReport?.timestamp || selectedReport?.submittedAt
   );
 
-  const originalHazard = selectedReport?.hazard || selectedReport?.incidentType || 'Not specified';
 
   const reporterName = 
     selectedReport?.submitterName || 
@@ -353,7 +351,7 @@ export default function ReportedIncidentModal({
             <div className="space-y-3 flex flex-col">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-2">
-                  <FiFileText className="text-blue-600 w-4 h-4" /> Media Attachments
+                  Media Attachments
                 </h4>
               </div>
 
@@ -442,7 +440,7 @@ export default function ReportedIncidentModal({
             <div className="space-y-3 flex flex-col">
               <div className="flex justify-between items-center">
                 <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-2">
-                  <FiMapPin className="text-blue-600 w-4 h-4" /> Incident Location
+                  Incident Location
                 </h4>
                 <button 
                   onClick={() => setIsMapChangerOpen(true)}
@@ -453,14 +451,14 @@ export default function ReportedIncidentModal({
                 </button>
               </div>
 
-              <div className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 shadow-sm flex flex-col justify-between space-y-3">
+              <div className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 shadow-sm flex flex-col gap-3">
                 <div className="text-xs bg-slate-50 dark:bg-slate-800/70 p-3 rounded-xl border border-slate-100 dark:border-slate-700 text-slate-700 dark:text-slate-200 flex items-start gap-2">
                   <FiMapPin className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
                   <span className="font-medium text-slate-800 dark:text-slate-200 break-words">{currentAddress}</span>
                 </div>
 
-                <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 h-56">
-                  <div ref={mapRef} className="w-full h-full bg-slate-100" />
+                <div className="relative flex-1 min-h-[14rem] rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
+                  <div ref={mapRef} className="absolute inset-0 bg-slate-100" />
                   <a 
                     href={liveGoogleMapsLink} 
                     target="_blank" 
@@ -480,26 +478,15 @@ export default function ReportedIncidentModal({
             {/* Left: Reported Information & Submitter Profile */}
             <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
               <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2">
-                Reported Information
+                Reporter Information
               </h4>
 
-              <div className="space-y-1.5">
-                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block">Reported Hazard Category:</span>
-                <div className="text-xs font-bold text-slate-900 dark:text-slate-100 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 px-3 py-2 rounded-xl inline-flex items-center gap-2">
-                  <FiAlertTriangle className="w-4 h-4 text-amber-600" />
-                  <span>{originalHazard}</span>
-                </div>
-              </div>
-
               {/* Submitter / Citizen Details Card */}
-              <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-slate-800">
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider block">
-                  Reporter Information
-                </span>
+              <div className="space-y-2">
                 <div className="p-3 bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 rounded-xl space-y-2.5">
                   <div className="flex items-center gap-2.5 text-xs text-slate-800 dark:text-slate-100 font-semibold">
                     <FiUser className="w-4 h-4 text-blue-600 shrink-0" />
-                    <span className="truncate">{reporterName}</span>
+                    <span className="truncate uppercase">{reporterName}</span>
                   </div>
                   <div className="flex items-center gap-2.5 text-xs text-slate-600 dark:text-slate-300 font-medium">
                     <FiMail className="w-4 h-4 text-slate-400 shrink-0" />
@@ -523,7 +510,7 @@ export default function ReportedIncidentModal({
                 {/* Verified Incident Category */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
-                    Verified Hazard
+                    Incident Type
                   </label>
                   <div className="relative">
                     <select 
@@ -553,7 +540,11 @@ export default function ReportedIncidentModal({
                         onClick={() => setVerifiedSeverity(sev)}
                         className={`py-2 rounded-xl text-xs font-bold transition-all border ${
                           verifiedSeverity === sev 
-                            ? 'bg-blue-600 border-blue-600 text-white shadow-sm' 
+                            ? (sev === 'Low'
+                                ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm'
+                                : sev === 'Medium'
+                                  ? 'bg-amber-500 border-amber-500 text-white shadow-sm'
+                                  : 'bg-red-600 border-red-600 text-white shadow-sm')
                             : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'
                         }`}
                       >
@@ -566,13 +557,13 @@ export default function ReportedIncidentModal({
 
               {selectionMode === 'Others' && (
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Custom Category</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Custom Type</label>
                   <input 
                     type="text" 
                     placeholder="e.g. Earthquake, Landslide" 
                     value={customName}
                     onChange={(e) => handleCustomNameChange(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                   />
                 </div>
               )}

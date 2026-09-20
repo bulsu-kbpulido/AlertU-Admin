@@ -4,7 +4,6 @@ import {
   Shield, 
   CheckCircle2, 
   AlertTriangle, 
-  Layers, 
   ArrowLeft, 
   Send,
   Building2,
@@ -13,11 +12,12 @@ import {
   Ambulance,
   Home,
   X,
-  FileText,
   Loader2
 } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { BorderBeam } from "@/components/ui/border-beam";
+// Agency logos + colors, same as the Create Report tab
+import { AGENCIES as CREATE_REPORT_AGENCIES } from '@/create_utilities/SetAgencies';
 
 // 🌐 Dynamic Environment & Server Configuration
 const RAW_SERVER_URL = 
@@ -57,6 +57,7 @@ export default function ReportTitle({
   const [warning, setWarning] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [localNotes, setLocalNotes] = useState('');
+  const [showConfirm, setShowConfirm] = useState(false);
 
   // Manage notes state smoothly whether controlled or uncontrolled
   const notesValue = adminNotes !== undefined && adminNotes !== '' ? adminNotes : localNotes;
@@ -118,6 +119,13 @@ export default function ReportTitle({
       }
       setSelectedAgencies([...selectedAgencies, agency]);
     }
+  };
+
+  // ✅ Select / clear every agency at once
+  const allAgenciesSelected = selectedAgencies.length === AGENCIES.length;
+  const handleToggleSelectAll = () => {
+    setWarning('');
+    setSelectedAgencies(allAgenciesSelected ? [] : [...AGENCIES]);
   };
 
   // 🚀 Final Submission Handler inside ReportTitle.jsx
@@ -235,7 +243,6 @@ export default function ReportTitle({
             {/* Title Input */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                <Layers className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 Official Report Title <span className="text-rose-500">*</span>
               </label>
               <input 
@@ -252,7 +259,6 @@ export default function ReportTitle({
             {/* Operational Notes */}
             <div className="space-y-1.5 flex-1 flex flex-col">
               <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 Admin Notes & Instructions
               </label>
               <textarea
@@ -283,10 +289,21 @@ export default function ReportTitle({
                 Select the dispatch agencies that need to be deployed to the incident scene.
               </p>
 
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  disabled={isSubmitting}
+                  onClick={handleToggleSelectAll}
+                  className="text-[11px] font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {allAgenciesSelected ? 'Clear all' : 'Select all'}
+                </button>
+              </div>
+
               {/* Agency List */}
               <div className="space-y-2">
                 {AGENCIES.map((agency) => {
-                  const IconComponent = agency.icon;
+                  const logo = CREATE_REPORT_AGENCIES.find((a) => a.id === agency.id);
                   const isSelected = selectedAgencies.some((item) => item.id === agency.id);
 
                   return (
@@ -302,9 +319,9 @@ export default function ReportTitle({
                       }`}
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className={`p-2 rounded-lg border shrink-0 ${agency.color}`}>
-                          <IconComponent className="w-4 h-4" />
-                        </div>
+                        <span className={`text-base p-1.5 rounded border shrink-0 ${logo?.color || agency.color}`}>
+                          {logo?.icon}
+                        </span>
                         <div className="min-w-0">
                           <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
                             {agency.name}
@@ -353,7 +370,7 @@ export default function ReportTitle({
           <button 
             type="button"
             disabled={isSubmitDisabled}
-            onClick={handleSubmit}
+            onClick={() => setShowConfirm(true)}
             className={`px-5 py-2 text-xs font-bold uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center gap-2 active:scale-95 ${
               isSubmitDisabled 
                 ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 border border-slate-300 dark:border-slate-800 cursor-not-allowed shadow-none' 
@@ -368,6 +385,55 @@ export default function ReportTitle({
             )}
           </button>
         </footer>
+
+        {/* Save & Dispatch confirmation */}
+        {showConfirm && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+            <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+              <h4 className="text-base font-bold text-slate-900 dark:text-white">
+                Save and dispatch this report?
+              </h4>
+              <p className="mt-1.5 text-sm text-slate-600 dark:text-slate-400">
+                Once saved, the report will be verified and sent to the selected agencies.
+              </p>
+
+              <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm dark:border-slate-700 dark:bg-slate-800/60 space-y-2">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Report Title</p>
+                  <p className="font-bold text-slate-900 dark:text-slate-100 break-words">{reportTitle.trim()}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Agencies ({selectedAgencies.length})
+                  </p>
+                  <p className="font-semibold text-slate-800 dark:text-slate-200">
+                    {selectedAgencies.map((a) => a.id).join(', ')}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(false)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
+                >
+                  Go back
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowConfirm(false);
+                    handleSubmit();
+                  }}
+                  className="px-5 py-2 text-xs font-bold rounded-xl shadow-md bg-emerald-600 hover:bg-emerald-700 text-white transition-all"
+                >
+                  Yes, save & dispatch
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
