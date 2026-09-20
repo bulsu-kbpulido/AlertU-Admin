@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { getAuth } from 'firebase/auth';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import { fetchFromBackend } from '../api';
 import { 
   RotateCcw,
@@ -12,15 +13,15 @@ import {
   Square,
   Check,
   Search,
-  MapPin,
   Clock,
   Calendar,
-  Tag,
   Hash,
   Loader2,
   FileText,
   Users
 } from 'lucide-react';
+
+import { Button } from "@/components/ui/button";
 
 // Import Shadcn UI AlertDialog components
 import {
@@ -34,6 +35,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+
+// How long the success/error pop-ups stay on screen (ms)
+const TOAST_DURATION = 10000;
 
 /**
  * Format street and barangay helper for resolved addresses
@@ -53,6 +57,21 @@ const formatStreetAndBarangay = (fullAddress) => {
 };
 
 /**
+ * Incident type badge colors (same as the Approved table)
+ */
+const getIncidentBadgeStyle = (incidentType) => {
+  const normalized = (incidentType || '').trim().toLowerCase();
+  if (normalized.includes('fire')) {
+    return 'bg-red-600 text-white border-red-700';
+  } else if (normalized.includes('flood')) {
+    return 'bg-blue-600 text-white border-blue-700';
+  } else if (normalized.includes('accident')) {
+    return 'bg-violet-600 text-white border-violet-700';
+  }
+  return 'bg-orange-600 text-white border-orange-700';
+};
+
+/**
  * Date/time formatter for timestamps (Handles Firestore Timestamps and ISO strings)
  */
 const formatDateTime = (timestamp) => {
@@ -66,12 +85,12 @@ const formatDateTime = (timestamp) => {
   };
 };
 
-export default function Resolved_Incidents({ onRestoreSuccess }) {
+export default function Resolved_Incidents({ onRestoreSuccess, onCountChange }) {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
 
   // Selected row IDs state tracking
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -228,6 +247,9 @@ export default function Resolved_Incidents({ onRestoreSuccess }) {
   const handleRestore = async () => {
     if (!selectedReportId) return;
 
+    const target = reports.find((r) => (r.id || r.reportId || r.verifiedReportId) === selectedReportId);
+    const displayId = target?.verifiedReportId || target?.verifiedreportID || target?.id || selectedReportId;
+
     try {
       setIsSubmitting(true);
       const result = await fetchFromBackend(`/resolve/restore/${selectedReportId}`, {
@@ -240,12 +262,22 @@ export default function Resolved_Incidents({ onRestoreSuccess }) {
         if (typeof onRestoreSuccess === 'function') {
           onRestoreSuccess();
         }
+        toast.success('Incident restored', {
+          description: `#${displayId} was restored and moved back to the Approved tab.`,
+          duration: TOAST_DURATION,
+        });
       } else {
-        alert(result?.message || "Failed to restore incident.");
+        toast.error('Unable to restore incident', {
+          description: result?.message || `#${displayId} could not be restored. Please try again.`,
+          duration: TOAST_DURATION,
+        });
       }
     } catch (err) {
       console.error("Restore error:", err);
-      alert("Failed to restore incident. Please try again.");
+      toast.error('Unable to restore incident', {
+        description: 'Something went wrong while restoring the incident. Please try again.',
+        duration: TOAST_DURATION,
+      });
     } finally {
       setIsSubmitting(false);
       setIsRestoreDialogOpen(false);
@@ -276,12 +308,23 @@ export default function Resolved_Incidents({ onRestoreSuccess }) {
         if (typeof onRestoreSuccess === 'function') {
           onRestoreSuccess();
         }
+
+        toast.success(`${idsArray.length} incident${idsArray.length > 1 ? 's' : ''} restored`, {
+          description: 'The selected incidents were moved back to the Approved tab.',
+          duration: TOAST_DURATION,
+        });
       } else {
-        alert(result?.message || 'Failed to restore selected records.');
+        toast.error('Unable to restore incidents', {
+          description: result?.message || 'The selected incidents could not be restored. Please try again.',
+          duration: TOAST_DURATION,
+        });
       }
     } catch (err) {
       console.error('Error restoring selected incidents:', err);
-      alert('Failed to restore selected records. Please check server connectivity.');
+      toast.error('Unable to restore incidents', {
+        description: 'Failed to restore the selected records. Please check your connection and try again.',
+        duration: TOAST_DURATION,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -291,6 +334,13 @@ export default function Resolved_Incidents({ onRestoreSuccess }) {
     if (paginatedReports.length === 0) return false;
     return paginatedReports.every((r) => selectedIds.has(r.id || r.reportId || r.verifiedReportId));
   }, [paginatedReports, selectedIds]);
+
+  // Report the total number of resolved records up to the parent tab label
+  useEffect(() => {
+    if (!loading && !error && typeof onCountChange === 'function') {
+      onCountChange(reports.length);
+    }
+  }, [reports.length, loading, error, onCountChange]);
 
   // Loading Skeleton State
   if (loading) {
@@ -392,25 +442,23 @@ export default function Resolved_Incidents({ onRestoreSuccess }) {
 
       {/* Table Data */}
       <div className="w-full overflow-x-auto">
-        <table className="w-full text-left border-collapse text-sm">
+        <table className="w-full text-left border-collapse text-xs whitespace-nowrap lg:whitespace-normal">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-800/50 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              <th className="w-12 px-4 py-4 text-center">
+            <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider sticky top-0 z-10">
+              <th className="w-12 px-4 py-3.5 text-center">
                 <span className="sr-only">Select</span>
               </th>
-              <th className="px-6 py-4">Report ID</th>
-              <th className="px-6 py-4">Incident Type</th>
-              <th className="px-6 py-4">Location</th>
-              <th className="px-6 py-4">Status</th>
-              <th className="px-6 py-4">Casualties</th>
-              <th className="px-6 py-4">Resolved At</th>
-              <th className="px-6 py-4 text-right">Actions</th>
+              <th className="px-5 py-3.5 w-32">VRID</th>
+              <th className="px-5 py-3.5 w-32">Type</th>
+              <th className="px-5 py-3.5 min-w-[180px]">Report Title</th>
+              <th className="px-5 py-3.5 min-w-[220px]">Location</th>
+              <th className="px-5 py-3.5 text-right min-w-[200px]">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {paginatedReports.length === 0 ? (
               <tr>
-                <td colSpan={8} className="py-12 text-center text-slate-500 dark:text-slate-400">
+                <td colSpan={6} className="py-12 text-center text-slate-500 dark:text-slate-400">
                   <CheckCircle className="mx-auto h-8 w-8 text-slate-400 dark:text-slate-600 mb-2" />
                   No resolved incidents found in history.
                 </td>
@@ -422,8 +470,7 @@ export default function Resolved_Incidents({ onRestoreSuccess }) {
                 const isSelected = selectedIds.has(reportId);
                 const rawAddress = report.location?.address || report.address;
                 const formattedLocation = formatStreetAndBarangay(rawAddress);
-                const { date, time } = formatDateTime(report.resolvedAt || report.timestamp || report.updatedAt);
-                const casualtiesCount = typeof report.casualties === 'number' ? report.casualties : (Number(report.casualties) || 0);
+                const incidentType = report.incidentType || report.hazard || 'General';
 
                 return (
                   <motion.tr
@@ -433,7 +480,7 @@ export default function Resolved_Incidents({ onRestoreSuccess }) {
                       backgroundColor: isSelected ? 'rgba(59, 130, 246, 0.08)' : 'rgba(0,0,0,0)',
                     }}
                     transition={{ duration: 0.2 }}
-                    className={`group cursor-pointer transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/50 ${
+                    className={`group cursor-pointer transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40 ${
                       isSelected ? 'border-l-4 border-l-blue-500' : ''
                     }`}
                   >
@@ -452,73 +499,46 @@ export default function Resolved_Incidents({ onRestoreSuccess }) {
                       </button>
                     </td>
 
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-bold tracking-wide text-slate-800 dark:text-slate-100 border border-slate-200/80 dark:border-slate-700/80">
-                        <Hash className="h-3 w-3 text-slate-400" />
-                        {displayId}
+                    <td className="px-5 py-4 font-['Roboto',sans-serif] font-medium text-slate-700 dark:text-slate-300">
+                      {displayId}
+                    </td>
+
+                    <td className="px-5 py-4">
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border shadow-xs transition-colors ${getIncidentBadgeStyle(incidentType)}`}>
+                        <span>{incidentType}</span>
                       </span>
                     </td>
 
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-slate-900 dark:text-slate-100 capitalize">
-                        {report.reportTitle || report.incidentType || report.hazard || 'Resolved Incident'}
-                      </div>
+                    <td className="px-5 py-4 font-bold text-slate-900 dark:text-white">
+                      {report.reportTitle || report.incidentType || report.hazard || 'Resolved Incident'}
                     </td>
 
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 max-w-xs truncate">
-                        <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                        <span className="truncate">{formattedLocation}</span>
-                      </span>
+                    <td className="px-5 py-4 text-slate-600 dark:text-slate-300 max-w-xs xl:max-w-md truncate">
+                      {formattedLocation}
                     </td>
 
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 px-2.5 py-0.5 text-xs font-semibold">
-                        <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
-                        Resolved
-                      </span>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold border ${
-                        casualtiesCount > 0
-                          ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800/60'
-                          : 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
-                      }`}>
-                        <Users className="h-3 w-3" />
-                        {casualtiesCount}
-                      </span>
-                    </td>
-
-                    <td className="px-6 py-4 text-xs font-medium text-slate-600 dark:text-slate-300">
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1">
-                          <Calendar className="h-3 w-3 text-emerald-500" />
-                          {date}
-                        </span>
-                        <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
-                          <Clock className="h-3 w-3 text-slate-400" /> {time}
-                        </span>
-                      </div>
-                    </td>
-
-                    <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="inline-flex items-center justify-end gap-2">
+                    <td className="px-5 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="inline-flex items-center justify-end gap-2 flex-wrap xl:flex-nowrap">
                         {/* VIEW AFTERMATH DETAILS BUTTON */}
-                        <button
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => triggerViewDetails(report)}
-                          className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 px-2.5 py-1.5 text-xs font-medium shadow-sm transition-colors"
+                          className="text-xs font-medium inline-flex items-center gap-1"
                         >
-                          <FileText className="h-3.5 w-3.5" /> Details
-                        </button>
+                          <FileText className="h-3 w-3" />
+                          <span>Details</span>
+                        </Button>
 
                         {/* RESTORE BUTTON */}
-                        <button
+                        <Button
+                          size="sm"
                           onClick={() => triggerRestore(reportId)}
-                          className="inline-flex items-center gap-1 rounded-md border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-400 dark:hover:bg-emerald-900/60 px-2.5 py-1.5 text-xs font-medium shadow-sm transition-colors"
+                          className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1 shadow-sm"
                         >
-                          <RotateCcw className="h-3.5 w-3.5" /> Restore
-                        </button>
+                          <RotateCcw className="h-3 w-3" />
+                          <span>Restore</span>
+                        </Button>
                       </div>
                     </td>
                   </motion.tr>
@@ -576,10 +596,28 @@ export default function Resolved_Incidents({ onRestoreSuccess }) {
                   {detailsReport?.verifiedReportId || detailsReport?.verifiedreportID || detailsReport?.id || 'N/A'}
                 </div>
 
+                {(() => {
+                  const resolvedAt = formatDateTime(detailsReport?.resolvedAt || detailsReport?.timestamp || detailsReport?.updatedAt);
+                  return (
+                    <div className="flex items-center gap-3 text-xs font-medium text-slate-600 dark:text-slate-300">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5 text-emerald-500" />
+                        Resolved on <span className="font-semibold text-slate-900 dark:text-slate-100">{resolvedAt.date}</span>
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5 text-slate-400" />
+                        {resolvedAt.time}
+                      </span>
+                    </div>
+                  );
+                })()}
+
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4 text-rose-500" />
                   <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                    {typeof detailsReport?.casualties === 'number' ? detailsReport.casualties : (Number(detailsReport?.casualties) || 0)} Casualties / Injuries
+                    {Number(detailsReport?.casualties) || 0} Casualties
+                    <span className="mx-2 text-slate-300 dark:text-slate-600">•</span>
+                    {Number(detailsReport?.injuries) || 0} Injuries
                   </span>
                 </div>
 

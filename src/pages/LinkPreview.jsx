@@ -24,10 +24,7 @@ import {
   AlertTriangle,
   FileText,
   CheckCircle,
-  Building,
   Volume2,
-  Tag,
-  FolderHeart,
   User,
   Mail,
   Phone,
@@ -382,7 +379,7 @@ export default function LinkPreview({ isOpen, onClose, report }) {
             {/* Left Media Column */}
             <div className="space-y-2 flex flex-col">
               <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
-                <FileText className="text-blue-600 w-4 h-4" /> Photos & Multimedia Reports
+                Photos & Multimedia Reports
               </h4>
 
               <div className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-sm flex flex-col justify-between min-h-[280px]">
@@ -449,7 +446,7 @@ export default function LinkPreview({ isOpen, onClose, report }) {
             {/* Right Map Column */}
             <div className="space-y-2 flex flex-col">
               <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
-                <MapPin className="text-blue-600 w-4 h-4" /> Verified Geographic Location
+                Verified Geographic Location
               </h4>
 
               <div className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-sm flex flex-col justify-between space-y-3 min-h-[280px]">
@@ -481,7 +478,6 @@ export default function LinkPreview({ isOpen, onClose, report }) {
               
               <div className="space-y-3">
                 <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center gap-1.5">
-                  <FolderHeart className="w-4 h-4 text-blue-600" />
                   <span>Categorization Specifications</span>
                 </h4>
                 
@@ -489,7 +485,6 @@ export default function LinkPreview({ isOpen, onClose, report }) {
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Report Title</span>
                     <div className="text-xs font-bold text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2 rounded-lg truncate flex items-center gap-2">
-                      <FileText className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                       <span className="truncate">{reportTitleText}</span>
                     </div>
                   </div>
@@ -497,7 +492,6 @@ export default function LinkPreview({ isOpen, onClose, report }) {
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Incident Type</span>
                     <div className="text-xs font-bold text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2 rounded-lg truncate flex items-center gap-2">
-                      <Tag className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                       <span className="truncate capitalize">{incidentCategory}</span>
                     </div>
                   </div>
@@ -505,7 +499,6 @@ export default function LinkPreview({ isOpen, onClose, report }) {
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Hazard Status</span>
                     <div className="text-xs font-bold text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2 rounded-lg truncate flex items-center gap-2">
-                      <AlertTriangle className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                       <span className="truncate capitalize">{hazardType}</span>
                     </div>
                   </div>
@@ -515,7 +508,6 @@ export default function LinkPreview({ isOpen, onClose, report }) {
               {/* Submitter Info Placement Layout */}
               <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-                  <User className="w-4 h-4 text-slate-700" />
                   <span>Submitter Information</span>
                 </h4>
 
@@ -578,7 +570,6 @@ export default function LinkPreview({ isOpen, onClose, report }) {
               <div className="space-y-3">
                 <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center justify-between">
                   <span>Assigned Emergency Channels</span>
-                  <Building className="text-blue-600 w-4 h-4" />
                 </h4>
 
                 {matchedAgencies.length > 0 ? (
@@ -622,19 +613,8 @@ export default function LinkPreview({ isOpen, onClose, report }) {
 
         {/* Action Panel Footer */}
         <footer className="px-6 py-4 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
-          <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-semibold">
-            <Shield className="text-slate-400 dark:text-slate-500 w-4 h-4" />
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-semibold">
             <span>Read-Only Incident Record View</span>
-          </div>
-
-          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-
-            <button 
-              onClick={onClose} 
-              className="px-5 py-2 text-xs font-bold uppercase tracking-wider bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white dark:text-slate-950 rounded-xl shadow-md transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-950"
-            >
-              Close Preview
-            </button>
           </div>
         </footer>
 

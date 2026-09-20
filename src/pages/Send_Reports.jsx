@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import { fetchFromBackend } from '../api';
 import 'ol/ol.css';
 import { Map, View } from 'ol';
@@ -26,14 +27,14 @@ import {
   List,
   ArrowRight,
   AlertTriangle,
-  Tag,
   Clock,
   ChevronLeft,
   ChevronRight,
   Hash,
   Calendar,
   Loader2,
-  Users
+  Minus,
+  Plus
 } from 'lucide-react';
 
 // Import Shadcn UI AlertDialog components
@@ -60,6 +61,9 @@ import { useAuditLog } from '../useAuditLog'; // Adjust import path if needed
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 const ITEMS_PER_PAGE = 8; 
+
+// How long the success/error pop-ups stay on screen (ms)
+const TOAST_DURATION = 10000;
 
 // Helper to resolve the display ID (Prioritizes VRID over RID)
 const getDisplayId = (report) => {
@@ -141,6 +145,50 @@ const formatDateTime = (timestamp) => {
   });
 
   return { date, time };
+};
+
+// --- Themed number stepper (replaces the native number spinner, which looks bad in dark mode) ---
+const CountStepper = ({ id, label, hint, value, onChange, disabled = false }) => {
+  const num = Number(value) || 0;
+  const stepBtn = "h-9 w-9 shrink-0 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors";
+  return (
+    <div>
+      <label htmlFor={id} className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+        {label}
+      </label>
+      <p className="text-[11px] text-slate-500 dark:text-slate-400">{hint}</p>
+      <div className="mt-1.5 flex items-center overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus-within:ring-2 focus-within:ring-emerald-500 transition-shadow">
+        <button
+          type="button"
+          aria-label={`Decrease ${label}`}
+          disabled={disabled || num <= 0}
+          onClick={() => onChange(String(Math.max(0, num - 1)))}
+          className={stepBtn}
+        >
+          <Minus className="h-4 w-4" />
+        </button>
+        <input
+          id={id}
+          type="text"
+          inputMode="numeric"
+          value={value}
+          disabled={disabled}
+          onChange={(e) => onChange(e.target.value.replace(/\D/g, '').slice(0, 4))}
+          placeholder="0"
+          className="min-w-0 flex-1 h-9 bg-transparent text-center text-sm font-semibold text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none"
+        />
+        <button
+          type="button"
+          aria-label={`Increase ${label}`}
+          disabled={disabled}
+          onClick={() => onChange(String(num + 1))}
+          className={stepBtn}
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
 };
 
 // --- Magic UI Interactive Hover Button Component ---
@@ -338,6 +386,8 @@ export default function Send_Report() {
 
   const [activeTab, setActiveTab] = useState('approved'); 
   const [reports, setReports] = useState([]);
+  const [resolvedCount, setResolvedCount] = useState(null);
+  const [archivedCount, setArchivedCount] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState('grid'); 
@@ -362,6 +412,9 @@ export default function Send_Report() {
   // Aftermath details captured before a report can be resolved
   const [resolutionNotes, setResolutionNotes] = useState('');
   const [casualtiesCount, setCasualtiesCount] = useState('');
+  const [injuriesCount, setInjuriesCount] = useState('');
+  const [notesTouched, setNotesTouched] = useState(false);
+  const [resolveStep, setResolveStep] = useState('form'); // 'form' -> 'confirm'
 
   // Initialize Audit Logging Hook
   const { logMovement } = useAuditLog();
@@ -436,6 +489,9 @@ export default function Send_Report() {
     setReportToResolve(report);
     setResolutionNotes('');
     setCasualtiesCount('');
+    setInjuriesCount('');
+    setNotesTouched(false);
+    setResolveStep('form');
     setIsResolveDialogOpen(true);
   };
 
@@ -451,6 +507,7 @@ export default function Send_Report() {
     const displayId = getDisplayId(reportToResolve);
     const trimmedNotes = resolutionNotes.trim();
     const casualties = casualtiesCount ? Number(casualtiesCount) : 0;
+    const injuries = injuriesCount ? Number(injuriesCount) : 0;
 
     try {
       const json = await fetchFromBackend(`/resolve/${reportToResolve.id}`, {
@@ -459,6 +516,7 @@ export default function Send_Report() {
           sourceCollection: actualCollection,
           aftermathDetails: trimmedNotes,
           casualties,
+          injuries,
         }),
       });
       if (json.success) {
@@ -469,21 +527,38 @@ export default function Send_Report() {
           sourceCollection: actualCollection,
           aftermathDetails: trimmedNotes,
           casualties,
+          injuries,
           resolvedAt: new Date().toISOString()
         });
 
         setReports(prev => prev.filter(r => r.id !== reportToResolve.id));
+
+        toast.success('Report resolved', {
+          description: `#${displayId} was marked as resolved and moved to the Resolved tab.`,
+          duration: TOAST_DURATION,
+        });
       } else {
         console.error("Resolve error:", json.message);
+        toast.error('Unable to resolve report', {
+          description: json.message || `#${displayId} could not be resolved. Please try again.`,
+          duration: TOAST_DURATION,
+        });
       }
     } catch (err) {
       console.error("Resolve error:", err);
+      toast.error('Unable to resolve report', {
+        description: 'Something went wrong while resolving the report. Please try again.',
+        duration: TOAST_DURATION,
+      });
     } finally {
       setIsResolving(false);
       setIsResolveDialogOpen(false);
       setReportToResolve(null);
       setResolutionNotes('');
       setCasualtiesCount('');
+      setInjuriesCount('');
+      setNotesTouched(false);
+      setResolveStep('form');
     }
   };
 
@@ -516,11 +591,24 @@ export default function Send_Report() {
         });
 
         setReports(prev => prev.filter(r => r.id !== reportToArchive.id));
+
+        toast.success('Report archived', {
+          description: `#${displayId} was archived and moved to the Archived tab.`,
+          duration: TOAST_DURATION,
+        });
       } else {
         console.error("Archive error:", json.message);
+        toast.error('Unable to archive report', {
+          description: json.message || `#${displayId} could not be archived. Please try again.`,
+          duration: TOAST_DURATION,
+        });
       }
     } catch (err) {
       console.error("Archive error:", err);
+      toast.error('Unable to archive report', {
+        description: 'Something went wrong while archiving the report. Please try again.',
+        duration: TOAST_DURATION,
+      });
     } finally {
       setIsArchiving(false);
       setIsArchiveDialogOpen(false);
@@ -529,7 +617,7 @@ export default function Send_Report() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-4 sm:p-6 lg:p-8 xl:p-10 font-sans transition-all">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans transition-all">
       <div className="w-full max-w-[1920px] mx-auto space-y-6">
         
         {/* Responsive Header Section */}
@@ -568,7 +656,7 @@ export default function Send_Report() {
               }`}
             >
               <CheckCircle2 className="h-4 w-4" />
-              <span>Resolved</span>
+              <span>Resolved {activeTab === 'resolved' && resolvedCount !== null ? `(${resolvedCount})` : ''}</span>
             </button>
             <button
               onClick={() => setActiveTab('archived')}
@@ -579,17 +667,17 @@ export default function Send_Report() {
               }`}
             >
               <Inbox className="h-4 w-4" />
-              <span>Archived</span>
+              <span>Archived {activeTab === 'archived' && archivedCount !== null ? `(${archivedCount})` : ''}</span>
             </button>
           </div>
         </div>
 
         {/* CONDITIONALLY RENDER TAB CONTENTS */}
         {activeTab === 'archived' ? (
-          <Archived_Approved onRestoreSuccess={fetchReports} />
+          <Archived_Approved onRestoreSuccess={fetchReports} onCountChange={setArchivedCount} />
         ) : activeTab === 'resolved' ? (
           <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-            <Resolved_Incidents onRestoreSuccess={fetchReports} />
+            <Resolved_Incidents onRestoreSuccess={fetchReports} onCountChange={setResolvedCount} />
           </div>
         ) : (
           <>
@@ -690,15 +778,15 @@ export default function Send_Report() {
 
                             <div className="p-4 sm:p-5 flex-1 flex flex-col space-y-3 sm:space-y-4 min-w-0">
                               <div className="flex items-start justify-between gap-2 min-w-0">
-                                <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+                                <div className="flex flex-col items-start gap-1.5 min-w-0">
                                   {/* Display VRID badge */}
                                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium font-['Roboto',sans-serif] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0">
                                     <Hash className="h-2.5 w-2.5 text-slate-400" />
                                     {displayId}
                                   </span>
-                                  
-                                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border shadow-xs transition-colors shrink-0 max-w-[130px] ${getIncidentBadgeStyle(report.incidentType)}`}>
-                                    <Tag className="h-2.5 w-2.5 shrink-0 opacity-80" />
+
+                                  {/* Incident type badge: always right below the VRID */}
+                                  <span className={`inline-flex max-w-full items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border shadow-xs transition-colors ${getIncidentBadgeStyle(report.incidentType)}`}>
                                     <span className="truncate">{report.incidentType || 'General'}</span>
                                   </span>
                                 </div>
@@ -793,7 +881,6 @@ export default function Send_Report() {
                                   </td>
                                   <td className="px-5 py-4">
                                     <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border shadow-xs transition-colors ${getIncidentBadgeStyle(report.incidentType)}`}>
-                                      <Tag className="h-2.5 w-2.5 shrink-0 opacity-80" />
                                       <span>{report.incidentType || 'General'}</span>
                                     </span>
                                   </td>
@@ -926,69 +1013,130 @@ export default function Send_Report() {
         target={dispatchTarget} 
       />
 
-      {/* SHADCN RESOLVE CONFIRMATION ALERT DIALOG */}
-      <AlertDialog open={isResolveDialogOpen} onOpenChange={setIsResolveDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
-              <CheckCircle2 className="h-5 w-5 text-emerald-600" /> Mark Report as Resolved?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Before resolving <strong>#{getDisplayId(reportToResolve)}</strong>, add the aftermath details for this incident. This report will then be moved to the Resolved tab.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+      {/* SHADCN RESOLVE ALERT DIALOG (step 1: details, step 2: confirmation) */}
+      <AlertDialog
+        open={isResolveDialogOpen}
+        onOpenChange={(open) => { if (!isResolving) setIsResolveDialogOpen(open); }}
+      >
+        <AlertDialogContent className="sm:max-w-lg">
+          {resolveStep === 'form' ? (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600" /> Resolve Report
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  Add the aftermath details for <strong>#{getDisplayId(reportToResolve)}</strong> before resolving it. The report will then be moved to the Resolved tab.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
 
-          <div className="space-y-3.5 py-1">
-            <div>
-              <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5" />
-                Casualties / Injuries
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={casualtiesCount}
-                onChange={(e) => setCasualtiesCount(e.target.value)}
-                placeholder="0"
-                className="w-full mt-1 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
-            </div>
+              <div className="space-y-4 py-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <CountStepper
+                    id="resolve-casualties"
+                    label="Casualties"
+                    hint="Number of fatalities"
+                    value={casualtiesCount}
+                    onChange={setCasualtiesCount}
+                  />
+                  <CountStepper
+                    id="resolve-injuries"
+                    label="Injuries"
+                    hint="Number of injured persons"
+                    value={injuriesCount}
+                    onChange={setInjuriesCount}
+                  />
+                </div>
 
-            <div>
-              <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                Aftermath Details <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                value={resolutionNotes}
-                onChange={(e) => setResolutionNotes(e.target.value)}
-                placeholder="Describe what happened, response taken, and outcome..."
-                rows={4}
-                className={`w-full mt-1 px-3 py-2 text-sm rounded-lg border bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none ${
-                  !isResolveFormValid && resolutionNotes.length === 0 ? 'border-slate-200 dark:border-slate-700' : 'border-slate-200 dark:border-slate-700'
-                }`}
-              />
-              {!isResolveFormValid && (
-                <p className="text-[11px] text-red-500 mt-1">Aftermath details are required before this report can be resolved.</p>
-              )}
-            </div>
-          </div>
+                <div>
+                  <label htmlFor="resolve-aftermath" className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    Aftermath Details <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    id="resolve-aftermath"
+                    value={resolutionNotes}
+                    onChange={(e) => setResolutionNotes(e.target.value)}
+                    onBlur={() => setNotesTouched(true)}
+                    placeholder="Describe what happened, response taken, and outcome..."
+                    rows={4}
+                    className={`w-full mt-1.5 px-3 py-2 text-sm rounded-lg border bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none ${
+                      notesTouched && !isResolveFormValid
+                        ? 'border-red-400 dark:border-red-500/70'
+                        : 'border-slate-200 dark:border-slate-700'
+                    }`}
+                  />
+                  {notesTouched && !isResolveFormValid && (
+                    <p className="text-[11px] text-red-500 mt-1">Aftermath details are required before this report can be resolved.</p>
+                  )}
+                </div>
+              </div>
 
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isResolving}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmResolve}
-              disabled={isResolving || !isResolveFormValid}
-              className="bg-emerald-700 text-white hover:bg-emerald-800 dark:bg-emerald-700 dark:hover:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isResolving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Resolving...
-                </>
-              ) : (
-                'Mark as Resolved'
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <Button
+                  type="button"
+                  disabled={!isResolveFormValid}
+                  onClick={() => setResolveStep('confirm')}
+                  className="bg-emerald-700 text-white hover:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Continue
+                </Button>
+              </AlertDialogFooter>
+            </>
+          ) : (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600" /> Confirm Resolution
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  You are about to mark <strong>#{getDisplayId(reportToResolve)}</strong> as resolved. It will be moved to the Resolved tab, where you can still restore it later.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+
+              <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-3.5 space-y-2.5 text-sm">
+                <div className="flex items-center gap-6">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Casualties</p>
+                    <p className="font-bold text-slate-900 dark:text-slate-100">{Number(casualtiesCount) || 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Injuries</p>
+                    <p className="font-bold text-slate-900 dark:text-slate-100">{Number(injuriesCount) || 0}</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Aftermath Details</p>
+                  <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap line-clamp-4">{resolutionNotes.trim()}</p>
+                </div>
+              </div>
+
+              <AlertDialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isResolving}
+                  onClick={() => setResolveStep('form')}
+                >
+                  Go back
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleConfirmResolve}
+                  disabled={isResolving || !isResolveFormValid}
+                  className="bg-emerald-700 text-white hover:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isResolving ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Resolving...
+                    </>
+                  ) : (
+                    'Yes, mark as resolved'
+                  )}
+                </Button>
+              </AlertDialogFooter>
+            </>
+          )}
         </AlertDialogContent>
       </AlertDialog>
 

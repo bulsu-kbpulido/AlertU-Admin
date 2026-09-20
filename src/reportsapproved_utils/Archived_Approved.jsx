@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import { fetchFromBackend } from '../api';
 import { 
   RotateCcw, 
-  Trash2, 
   ChevronLeft, 
   ChevronRight, 
   ShieldAlert, 
@@ -13,12 +13,12 @@ import {
   Square,
   Check,
   Search,
-  MapPin,
   Clock,
   Calendar,
-  Tag,
   Hash
 } from 'lucide-react';
+
+import { Button } from "@/components/ui/button";
 
 // Import Shadcn UI AlertDialog components
 import {
@@ -32,6 +32,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+
+// How long the success/error pop-ups stay on screen (ms)
+const TOAST_DURATION = 10000;
 
 /**
  * Format street and barangay helper for archived addresses
@@ -51,6 +54,21 @@ const formatStreetAndBarangay = (fullAddress) => {
 };
 
 /**
+ * Incident type badge colors (same as the Approved table)
+ */
+const getIncidentBadgeStyle = (incidentType) => {
+  const normalized = (incidentType || '').trim().toLowerCase();
+  if (normalized.includes('fire')) {
+    return 'bg-red-600 text-white border-red-700';
+  } else if (normalized.includes('flood')) {
+    return 'bg-blue-600 text-white border-blue-700';
+  } else if (normalized.includes('accident')) {
+    return 'bg-violet-600 text-white border-violet-700';
+  }
+  return 'bg-orange-600 text-white border-orange-700';
+};
+
+/**
  * Date/time formatter for timestamps
  */
 const formatDateTime = (timestamp) => {
@@ -64,12 +82,12 @@ const formatDateTime = (timestamp) => {
   };
 };
 
-export default function Archived_Approved({ onRestoreSuccess }) {
+export default function Archived_Approved({ onRestoreSuccess, onCountChange }) {
   const [archivedReports, setArchivedReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
 
   // Selected row IDs state tracking
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -77,9 +95,7 @@ export default function Archived_Approved({ onRestoreSuccess }) {
   // Dialog state tracking
   const [selectedReportId, setSelectedReportId] = useState(null);
   const [isRestoreDialogOpen, setIsRestoreDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isBatchRestoreOpen, setIsBatchRestoreOpen] = useState(false);
-  const [isBatchDeleteOpen, setIsBatchDeleteOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Search filter term state
@@ -214,15 +230,13 @@ export default function Archived_Approved({ onRestoreSuccess }) {
     setIsRestoreDialogOpen(true);
   };
 
-  const triggerDelete = (reportId) => {
-    setSelectedReportId(reportId);
-    setIsDeleteDialogOpen(true);
-  };
-
   // --- API Execution Handlers ---
   const handleRestore = async () => {
     if (!selectedReportId) return;
   
+    const target = archivedReports.find((r) => (r.id || r.reportId || r.verifiedReportId) === selectedReportId);
+    const displayId = target?.verifiedReportId || target?.verifiedreportID || target?.id || selectedReportId;
+
     try {
       setIsSubmitting(true);
       const result = await fetchFromBackend(`/archived-approved/${selectedReportId}/restore`, {
@@ -235,41 +249,25 @@ export default function Archived_Approved({ onRestoreSuccess }) {
         if (typeof onRestoreSuccess === 'function') {
           onRestoreSuccess();
         }
+        toast.success('Report restored', {
+          description: `#${displayId} was restored and moved back to the Approved tab.`,
+          duration: TOAST_DURATION,
+        });
       } else {
-        alert(result?.message || "Failed to restore report.");
+        toast.error('Unable to restore report', {
+          description: result?.message || `#${displayId} could not be restored. Please try again.`,
+          duration: TOAST_DURATION,
+        });
       }
     } catch (err) {
       console.error("Restore error:", err);
-      alert("Failed to restore report. Please try again.");
+      toast.error('Unable to restore report', {
+        description: 'Something went wrong while restoring the report. Please try again.',
+        duration: TOAST_DURATION,
+      });
     } finally {
       setIsSubmitting(false);
       setIsRestoreDialogOpen(false);
-      setSelectedReportId(null);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!selectedReportId) return;
-
-    try {
-      setIsSubmitting(true);
-      const result = await fetchFromBackend(`/archived-approved/${selectedReportId}`, {
-        method: 'DELETE'
-      });
-
-      if (result && result.success) {
-        // Optimistically remove from view and update cache
-        updateLocalReportsAndCache([selectedReportId]);
-      } else {
-        console.error("Failed to delete report:", result?.message);
-        alert(result?.message || "Failed to delete report.");
-      }
-    } catch (err) {
-      console.error("Delete error:", err);
-      alert("Failed to delete report. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-      setIsDeleteDialogOpen(false);
       setSelectedReportId(null);
     }
   };
@@ -304,48 +302,28 @@ export default function Archived_Approved({ onRestoreSuccess }) {
         }
       }
       
-      if (successfulIds.length < idsArray.length) {
-        alert('Some selected records could not be restored.');
+      if (successfulIds.length === idsArray.length) {
+        toast.success(`${successfulIds.length} report${successfulIds.length > 1 ? 's' : ''} restored`, {
+          description: 'The selected reports were moved back to the Approved tab.',
+          duration: TOAST_DURATION,
+        });
+      } else if (successfulIds.length > 0) {
+        toast.warning('Some reports could not be restored', {
+          description: `${successfulIds.length} of ${idsArray.length} selected reports were restored. Please try the rest again.`,
+          duration: TOAST_DURATION,
+        });
+      } else {
+        toast.error('Unable to restore reports', {
+          description: 'None of the selected reports could be restored. Please try again.',
+          duration: TOAST_DURATION,
+        });
       }
     } catch (err) {
       console.error('Error restoring selected reports:', err);
-      alert('Failed to restore some selected records.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleConfirmBatchDelete = async () => {
-    if (selectedIds.size === 0) return;
-
-    const idsArray = Array.from(selectedIds);
-
-    try {
-      setIsSubmitting(true);
-      const results = await Promise.all(
-        idsArray.map((id) =>
-          fetchFromBackend(`/archived-approved/${id}`, { 
-            method: 'DELETE'
-          })
-        )
-      );
-
-      const successfulIds = idsArray.filter((_, idx) => results[idx]?.success);
-
-      setIsBatchDeleteOpen(false);
-      
-      if (successfulIds.length > 0) {
-        // Optimistically remove purged records from local state and cache
-        updateLocalReportsAndCache(successfulIds);
-        setSelectedIds(new Set());
-      }
-
-      if (successfulIds.length < idsArray.length) {
-        alert('Some selected records could not be deleted.');
-      }
-    } catch (err) {
-      console.error('Error deleting selected reports:', err);
-      alert('Failed to delete some selected records.');
+      toast.error('Unable to restore reports', {
+        description: 'Something went wrong while restoring the selected reports. Please try again.',
+        duration: TOAST_DURATION,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -355,6 +333,13 @@ export default function Archived_Approved({ onRestoreSuccess }) {
     if (paginatedReports.length === 0) return false;
     return paginatedReports.every((r) => selectedIds.has(r.id || r.reportId || r.verifiedReportId));
   }, [paginatedReports, selectedIds]);
+
+  // Report the total number of archived records up to the parent tab label
+  useEffect(() => {
+    if (!loading && !error && typeof onCountChange === 'function') {
+      onCountChange(archivedReports.length);
+    }
+  }, [archivedReports.length, loading, error, onCountChange]);
 
   // Loading Skeleton State
   if (loading) {
@@ -433,7 +418,7 @@ export default function Archived_Approved({ onRestoreSuccess }) {
             {areAllCurrentPageSelected ? 'Deselect All' : 'Select All'}
           </button>
 
-          {/* Animated Batch Restore & Purge Actions */}
+          {/* Animated Batch Restore Action */}
           <AnimatePresence>
             {selectedIds.size > 0 && (
               <motion.div
@@ -451,15 +436,6 @@ export default function Archived_Approved({ onRestoreSuccess }) {
                   <RotateCcw className="h-3.5 w-3.5" />
                   Restore ({selectedIds.size})
                 </button>
-
-                <button
-                  type="button"
-                  onClick={() => setIsBatchDeleteOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-rose-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-rose-700 focus:outline-none transition-colors"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Purge ({selectedIds.size})
-                </button>
               </motion.div>
             )}
           </AnimatePresence>
@@ -468,23 +444,24 @@ export default function Archived_Approved({ onRestoreSuccess }) {
 
       {/* Table Data */}
       <div className="w-full overflow-x-auto">
-        <table className="w-full text-left border-collapse text-sm">
+        <table className="w-full text-left border-collapse text-xs whitespace-nowrap lg:whitespace-normal">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-800/50 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              <th className="w-12 px-4 py-4 text-center">
+            <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider sticky top-0 z-10">
+              <th className="w-12 px-4 py-3.5 text-center">
                 <span className="sr-only">Select</span>
               </th>
-              <th className="px-6 py-4">Report ID</th>
-              <th className="px-6 py-4">Incident Type</th>
-              <th className="px-6 py-4">Location</th>
-              <th className="px-6 py-4">Archived At</th>
-              <th className="px-6 py-4 text-right">Actions</th>
+              <th className="px-5 py-3.5 w-32">VRID</th>
+              <th className="px-5 py-3.5 w-32">Type</th>
+              <th className="px-5 py-3.5 min-w-[180px]">Report Title</th>
+              <th className="px-5 py-3.5 min-w-[220px]">Location</th>
+              <th className="px-5 py-3.5 w-36">Archived At</th>
+              <th className="px-5 py-3.5 text-right min-w-[120px]">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {paginatedReports.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-12 text-center text-slate-500 dark:text-slate-400">
+                <td colSpan={7} className="py-12 text-center text-slate-500 dark:text-slate-400">
                   <Archive className="mx-auto h-8 w-8 text-slate-400 dark:text-slate-600 mb-2" />
                   No approved reports found in the archive partition.
                 </td>
@@ -497,6 +474,7 @@ export default function Archived_Approved({ onRestoreSuccess }) {
                 const rawAddress = report.location?.address || report.address;
                 const formattedLocation = formatStreetAndBarangay(rawAddress);
                 const { date, time } = formatDateTime(report.timestamp || report.archivedAt || report.updatedAt);
+                const incidentType = report.incidentType || report.hazard || 'General';
 
                 return (
                   <motion.tr
@@ -506,7 +484,7 @@ export default function Archived_Approved({ onRestoreSuccess }) {
                       backgroundColor: isSelected ? 'rgba(59, 130, 246, 0.08)' : 'rgba(0,0,0,0)',
                     }}
                     transition={{ duration: 0.2 }}
-                    className={`group cursor-pointer transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/50 ${
+                    className={`group cursor-pointer transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40 ${
                       isSelected ? 'border-l-4 border-l-blue-500' : ''
                     }`}
                   >
@@ -525,55 +503,48 @@ export default function Archived_Approved({ onRestoreSuccess }) {
                       </button>
                     </td>
 
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-bold tracking-wide text-slate-800 dark:text-slate-100 border border-slate-200/80 dark:border-slate-700/80">
-                        <Hash className="h-3 w-3 text-slate-400" />
-                        {displayId}
+                    <td className="px-5 py-4 font-['Roboto',sans-serif] font-medium text-slate-700 dark:text-slate-300">
+                      {displayId}
+                    </td>
+
+                    <td className="px-5 py-4">
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border shadow-xs transition-colors ${getIncidentBadgeStyle(incidentType)}`}>
+                        <span>{incidentType}</span>
                       </span>
                     </td>
 
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-slate-900 dark:text-slate-100 capitalize">
-                        {report.reportTitle || report.incidentType || report.hazard || 'Approved Incident'}
-                      </div>
+                    <td className="px-5 py-4 font-bold text-slate-900 dark:text-white">
+                      {report.reportTitle || report.incidentType || report.hazard || 'Approved Incident'}
                     </td>
 
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 max-w-xs truncate">
-                        <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                        <span className="truncate">{formattedLocation}</span>
-                      </span>
+                    <td className="px-5 py-4 text-slate-600 dark:text-slate-300 max-w-xs xl:max-w-md truncate">
+                      {formattedLocation}
                     </td>
 
-                    <td className="px-6 py-4 text-xs font-medium text-slate-600 dark:text-slate-300">
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1">
-                          <Calendar className="h-3 w-3 text-blue-500" />
+                    <td className="px-5 py-4">
+                      <div className="flex flex-col text-[11px]">
+                        <span className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1">
+                          <Calendar className="h-3 w-3 text-blue-500 shrink-0" />
                           {date}
                         </span>
                         <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
-                          <Clock className="h-3 w-3 text-slate-400" /> {time}
+                          <Clock className="h-3 w-3 shrink-0" />
+                          {time}
                         </span>
                       </div>
                     </td>
 
-                    <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="inline-flex items-center justify-end gap-2">
+                    <td className="px-5 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="inline-flex items-center justify-end gap-2 flex-wrap xl:flex-nowrap">
                         {/* RESTORE BUTTON */}
-                        <button
+                        <Button
+                          size="sm"
                           onClick={() => triggerRestore(reportId)}
-                          className="inline-flex items-center gap-1 rounded-md border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-400 dark:hover:bg-emerald-900/60 px-2.5 py-1.5 text-xs font-medium shadow-sm transition-colors"
+                          className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1 shadow-sm"
                         >
-                          <RotateCcw className="h-3.5 w-3.5" /> Restore
-                        </button>
-
-                        {/* DELETE BUTTON */}
-                        <button
-                          onClick={() => triggerDelete(reportId)}
-                          className="inline-flex items-center gap-1 rounded-md border border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-900/60 px-2.5 py-1.5 text-xs font-medium shadow-sm transition-colors"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" /> Delete
-                        </button>
+                          <RotateCcw className="h-3 w-3" />
+                          <span>Restore</span>
+                        </Button>
                       </div>
                     </td>
                   </motion.tr>
@@ -677,65 +648,6 @@ export default function Archived_Approved({ onRestoreSuccess }) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* SINGLE PERMANENT DELETE ALERT DIALOG */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
-              <Trash2 className="h-5 w-5" /> Permanently Delete Record?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              CRITICAL: This action <strong>cannot be undone</strong>. The incident record will be permanently erased from database archives.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isSubmitting}
-              className="bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-600 dark:hover:bg-rose-700"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Purging...
-                </>
-              ) : (
-                'Delete Permanently'
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* BATCH PERMANENT DELETE ALERT DIALOG */}
-      <AlertDialog open={isBatchDeleteOpen} onOpenChange={setIsBatchDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
-              <Trash2 className="h-5 w-5" /> Permanently Delete {selectedIds.size} Records
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              This action <strong>cannot be undone</strong>. You are about to permanently purge <strong>{selectedIds.size} selected reports</strong> from storage.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmBatchDelete}
-              disabled={isSubmitting}
-              className="bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-600 dark:hover:bg-rose-700"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Purging Selected...
-                </>
-              ) : (
-                `Purge Selected (${selectedIds.size})`
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
