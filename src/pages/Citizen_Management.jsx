@@ -559,9 +559,11 @@ const CitizenManagement = () => {
           >
             <Users className="h-4 w-4" />
             Active Accounts
-            <span className="ml-1 rounded-full bg-slate-200/80 dark:bg-slate-800 px-2 py-0.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
-              {activeCount}
-            </span>
+            {activeTab === 'active' && (
+              <span className="ml-1 rounded-full bg-slate-200/80 dark:bg-slate-800 px-2 py-0.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                {activeCount}
+              </span>
+            )}
           </button>
           <button
             onClick={() => setActiveTab('archived')}
@@ -573,9 +575,11 @@ const CitizenManagement = () => {
           >
             <Archive className="h-4 w-4" />
             Archived Vault
-            <span className="ml-1 rounded-full bg-slate-200/80 dark:bg-slate-800 px-2 py-0.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
-              {archivedCountLive ?? archivedCount}
-            </span>
+            {activeTab === 'archived' && (
+              <span className="ml-1 rounded-full bg-slate-200/80 dark:bg-slate-800 px-2 py-0.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                {archivedCountLive ?? archivedCount}
+              </span>
+            )}
           </button>
         </div>
 
