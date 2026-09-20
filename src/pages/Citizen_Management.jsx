@@ -411,7 +411,9 @@ const CitizenManagement = () => {
   };
 
   const triggerStatusConfirm = (citizen) => {
-    setToggleDialog({ isOpen: true, citizen });
+    const citizenId = getCitizenId(citizen);
+    const currentlyActive = checkIsAccountEnabled(citizen, disabledCitizens[citizenId]);
+    setToggleDialog({ isOpen: true, citizen, isCurrentlyActive: currentlyActive });
   };
 
   const confirmToggleStatus = async () => {
@@ -419,8 +421,7 @@ const CitizenManagement = () => {
     if (!citizen) return;
 
     const citizenId = getCitizenId(citizen);
-    const storeOverride = disabledCitizens[citizenId];
-    const currentlyActive = checkIsAccountEnabled(citizen, storeOverride);
+    const currentlyActive = toggleDialog.isCurrentlyActive;
     
     const nextIsDisabled = currentlyActive;
     const nextStatus = currentlyActive ? 'Disabled' : 'Active';
@@ -503,6 +504,7 @@ const CitizenManagement = () => {
 
   const activeCount = citizens.filter(c => !c.isArchived).length;
   const archivedCount = citizens.filter(c => c.isArchived).length;
+  const [archivedCountLive, setArchivedCountLive] = useState(null);
 
   // Filter options config for Segmented Control
   const filterOptions = [
@@ -572,7 +574,7 @@ const CitizenManagement = () => {
             <Archive className="h-4 w-4" />
             Archived Vault
             <span className="ml-1 rounded-full bg-slate-200/80 dark:bg-slate-800 px-2 py-0.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
-              {archivedCount}
+              {archivedCountLive ?? archivedCount}
             </span>
           </button>
         </div>
@@ -629,6 +631,7 @@ const CitizenManagement = () => {
             onViewCitizen={(citizen) => openModal('view', citizen)}
             onArchiveModal={(citizen) => openModal('archive', citizen)}
             onRefresh={() => loadCitizens(true, true)}
+            onCountChange={setArchivedCountLive}
           />
         ) : loading ? (
           <TableSkeleton />
@@ -855,7 +858,7 @@ const CitizenManagement = () => {
       <StatusToggleAlertDialog 
         isOpen={toggleDialog.isOpen}
         citizen={toggleDialog.citizen}
-        isCurrentlyActive={toggleDialog.citizen ? checkIsAccountEnabled(toggleDialog.citizen, disabledCitizens[getCitizenId(toggleDialog.citizen)]) : false}
+        isCurrentlyActive={toggleDialog.isCurrentlyActive ?? false}
         loading={actionLoadingId === getCitizenId(toggleDialog.citizen)}
         onConfirm={confirmToggleStatus}
         onClose={() => setToggleDialog({ isOpen: false, citizen: null })}

@@ -37,7 +37,8 @@ const getCitizenId = (c) => c?.citizenID || c?.cid || c?.id;
 
 const ArchivedCitizensTable = ({ 
   searchTerm, 
-  onRefresh 
+  onRefresh,
+  onCountChange
 }) => {
   const [archivedCitizens, setArchivedCitizens] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -65,6 +66,11 @@ const ArchivedCitizensTable = ({
       mountRef.current = false;
     };
   }, []);
+
+  // Keep the parent (Archived Vault tab badge) in sync with the real archived count
+  useEffect(() => {
+    onCountChange?.(archivedCitizens.length);
+  }, [archivedCitizens, onCountChange]);
 
   // --- Resilience Helper: Fetch with Auto-Retry for Render Cold-Starts ---
   const fetchWithRetry = useCallback(async (endpoint, options = {}, retries = 3, backoff = 1000) => {
