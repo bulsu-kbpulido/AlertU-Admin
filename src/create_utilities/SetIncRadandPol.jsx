@@ -23,7 +23,6 @@ import {
   Video,
   Image as ImageIcon,
   Compass,
-  Layers,
   Loader2,
   Info
 } from 'lucide-react';
@@ -73,6 +72,7 @@ export default function SetIncRadandPol({
   const [isDragging, setIsDragging] = useState(false);
   const [uploadStep, setUploadStep] = useState('idle');
   const [isSensitive, setIsSensitive] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const fileInputRef = useRef(null);
 
   // SPATIAL MODELING & LOCATION STATES
@@ -513,7 +513,7 @@ export default function SetIncRadandPol({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.98, y: 10 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
-        className="bg-white dark:bg-slate-900 w-full max-w-7xl h-[92vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800"
+        className="relative bg-white dark:bg-slate-900 w-full max-w-7xl h-[92vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800"
       >
         {/* HEADER BAR */}
         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-950/40">
@@ -583,7 +583,6 @@ export default function SetIncRadandPol({
               <div className="space-y-4">
                 <div>
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                    <Layers className="w-3.5 h-3.5 text-blue-500" />
                     <span>Impact Zone</span>
                   </h4>
                   <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
@@ -679,7 +678,6 @@ export default function SetIncRadandPol({
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                      <UploadCloud className="w-3.5 h-3.5 text-blue-500" />
                       <span>Add Photos or Videos</span>
                       <span className="text-rose-500 font-bold text-xs">*</span>
                     </h4>
@@ -687,13 +685,11 @@ export default function SetIncRadandPol({
                       {hasExistingMedia ? 'Report contains existing media.' : 'Upload required evidence media before saving.'}
                     </p>
                   </div>
-                  <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded ${
-                    file || hasExistingMedia 
-                      ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' 
-                      : 'bg-rose-500/10 text-rose-600 border border-rose-500/20'
-                  }`}>
-                    {file || hasExistingMedia ? 'Attached' : 'Required'}
-                  </span>
+                  {(file || hasExistingMedia) && (
+                    <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                      Attached
+                    </span>
+                  )}
                 </div>
 
                 {!file ? (
@@ -822,16 +818,8 @@ export default function SetIncRadandPol({
         {/* MODAL ACTION FOOTER */}
         <div className="bg-slate-50/80 dark:bg-slate-950 px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
           <button 
-            onClick={onClose} 
-            disabled={isUploading} 
-            className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-all disabled:opacity-50"
-          >
-            Cancel
-          </button>
-          
-          <button 
             disabled={loadingRoute || (clickedPoints.length === 1) || isUploading || (!file && !hasExistingMedia)} 
-            onClick={handleFinalSubmit} 
+            onClick={() => setShowConfirm(true)} 
             className={`px-5 py-2 text-xs font-bold rounded-xl shadow-md transition-all flex items-center gap-2 ${
               loadingRoute || clickedPoints.length === 1 || isUploading || (!file && !hasExistingMedia)
                 ? 'bg-slate-300 dark:bg-slate-800 text-slate-500 cursor-not-allowed' 
@@ -846,11 +834,58 @@ export default function SetIncRadandPol({
             ) : (
               <>
                 <CheckCircle2 className="w-4 h-4" />
-                <span>Confirm & Save</span>
+                <span>Save Report</span>
               </>
             )}
           </button>
         </div>
+
+        {/* CONFIRMATION DIALOG */}
+        <AnimatePresence>
+          {showConfirm && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4"
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 8 }}
+                transition={{ duration: 0.18, ease: 'easeOut' }}
+                className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900"
+              >
+                <h4 className="text-base font-bold text-slate-900 dark:text-white">
+                  Save this report?
+                </h4>
+                <p className="mt-1.5 text-sm text-slate-600 dark:text-slate-400">
+                  Please make sure the impact area and evidence are correct. Once saved, the report will be marked as verified.
+                </p>
+                <div className="mt-5 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm(false)}
+                    className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
+                  >
+                    Go back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowConfirm(false);
+                      handleFinalSubmit();
+                    }}
+                    className="px-5 py-2 text-xs font-bold rounded-xl shadow-md bg-emerald-600 hover:bg-emerald-700 text-white transition-all"
+                  >
+                    Yes, save report
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       </motion.div>
     </div>

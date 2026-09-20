@@ -10,9 +10,8 @@ import {
   RotateCcw, 
   Plus, 
   Sliders, 
-  Tag, 
   Loader2,
-  AlertTriangle
+  ChevronDown
 } from 'lucide-react';
 import 'ol/ol.css';
 import Map from 'ol/Map';
@@ -392,7 +391,7 @@ export default function Create_Reports() {
   };
 
   return (
-    <div className="w-full p-4 font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200">
+    <div className="w-full font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200">
       
       {/* Header */}
       <header className="mb-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
@@ -441,7 +440,6 @@ export default function Create_Reports() {
         <div className="lg:col-span-7 xl:col-span-8 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden flex flex-col h-[calc(100vh-230px)] min-h-[420px]">
           <div className="px-3 py-2 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
             <div className="flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5 text-rose-500" />
               <h2 className="text-[11px] font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
                 Map Picker
               </h2>
@@ -588,7 +586,7 @@ export default function Create_Reports() {
                       <option key={type} value={type} className="bg-white dark:bg-slate-900">{type}</option>
                     ))}
                   </select>
-                  <Tag className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none" />
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
                 </div>
                 {validationErrors.incidentType && (
                   <p className="text-[10px] text-rose-500 font-medium">{validationErrors.incidentType}</p>
@@ -657,7 +655,7 @@ export default function Create_Reports() {
                       <option key={type} value={type} className="bg-white dark:bg-slate-900">{type}</option>
                     ))}
                   </select>
-                  <AlertTriangle className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none" />
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
                 </div>
               </div>
 

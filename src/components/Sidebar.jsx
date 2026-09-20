@@ -207,7 +207,7 @@ export default function Sidebar({
             title={isCollapsed ? 'Dashboard' : undefined}
             onClick={() => handleItemClick('dashboard', true)}
             className={`group relative flex w-full items-center rounded-xl py-3 text-sm font-semibold tracking-wide transition-all outline-none duration-200 cursor-pointer overflow-hidden ${
-              isCollapsed ? 'justify-center px-0' : 'gap-3.5 px-3.5'
+              isCollapsed ? 'justify-center px-0' : 'gap-3 px-3'
             } ${
               isDashboardActive
                 ? 'bg-blue-50 text-blue-700 shadow-xs dark:bg-blue-500/10 dark:text-blue-400'
@@ -247,7 +247,7 @@ export default function Sidebar({
                   title={isCollapsed ? sub.label : undefined}
                   onClick={() => handleItemClick(sub.id, true)}
                   className={`group relative flex w-full items-center rounded-xl py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all outline-none duration-200 cursor-pointer overflow-hidden ${
-                    isCollapsed ? 'justify-center px-0' : 'gap-2 px-3.5'
+                    isCollapsed ? 'justify-center px-0' : 'gap-2.5 px-3'
                   } ${
                     isSubActive
                       ? 'text-blue-600 dark:text-blue-400'
@@ -286,7 +286,7 @@ export default function Sidebar({
               title={isCollapsed ? item.label : undefined}
               onClick={() => handleItemClick(item.id, false)}
               className={`group relative flex w-full items-center rounded-xl py-3 text-sm font-semibold tracking-wide transition-all outline-none duration-200 cursor-pointer overflow-hidden ${
-                isCollapsed ? 'justify-center px-0' : 'gap-3.5 px-3.5'
+                isCollapsed ? 'justify-center px-0' : 'gap-3 px-3'
               } ${
                 isActive
                   ? 'bg-blue-50 text-blue-700 shadow-xs dark:bg-blue-500/10 dark:text-blue-400'
@@ -323,7 +323,7 @@ export default function Sidebar({
           title={isCollapsed ? (darkMode ? 'Light Theme' : 'Dark Theme') : undefined}
           onClick={handleThemeToggle}
           className={`flex w-full items-center rounded-xl py-2.5 text-xs font-semibold text-slate-600 transition-all cursor-pointer hover:bg-slate-100/80 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-100 outline-none whitespace-nowrap ${
-            isCollapsed ? 'justify-center px-0' : 'gap-3.5 px-3.5'
+            isCollapsed ? 'justify-center px-0' : 'gap-3 px-3'
           }`}
         >
           {darkMode ? (
@@ -344,7 +344,7 @@ export default function Sidebar({
           title={isCollapsed ? 'Logout Session' : undefined}
           onClick={handleLogout}
           className={`flex w-full items-center rounded-xl py-2.5 text-xs font-semibold text-rose-600 transition-all cursor-pointer hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/30 outline-none whitespace-nowrap ${
-            isCollapsed ? 'justify-center px-0' : 'gap-3.5 px-3.5'
+            isCollapsed ? 'justify-center px-0' : 'gap-3 px-3'
           }`}
         >
           <LogOut className="h-4.5 w-4.5 shrink-0" />
