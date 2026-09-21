@@ -40,7 +40,8 @@ const getCitizenId = (c) => c?.citizenID || c?.cid || c?.id;
 const ArchivedCitizensTable = ({ 
   searchTerm, 
   onRefresh,
-  onCountChange
+  onCountChange,
+  refreshSignal = 0
 }) => {
   const [archivedCitizens, setArchivedCitizens] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -161,6 +162,14 @@ const ArchivedCitizensTable = ({
   useEffect(() => {
     loadArchivedCitizens();
   }, [loadArchivedCitizens]);
+
+  // Parent's "Refresh Data" button bumps refreshSignal -> force a fresh fetch
+  const lastRefreshSignalRef = useRef(refreshSignal);
+  useEffect(() => {
+    if (refreshSignal === lastRefreshSignalRef.current) return;
+    lastRefreshSignalRef.current = refreshSignal;
+    loadArchivedCitizens(true);
+  }, [refreshSignal, loadArchivedCitizens]);
 
   // Filter archived citizens based on search term
   const filteredCitizens = useMemo(() => {
@@ -371,16 +380,6 @@ const ArchivedCitizensTable = ({
               <Square className="h-4 w-4 text-slate-400" />
             )}
             {areAllCurrentPageSelected ? 'Deselect All' : 'Select All'}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => loadArchivedCitizens(true)}
-            title="Force refresh vault from server"
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border bg-white border-slate-300 text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
           </button>
 
           <span className="hidden sm:inline text-xs text-slate-500 dark:text-slate-400">

@@ -15,10 +15,12 @@ import {
   Search,
   Clock,
   Calendar,
-  Hash
+  Hash,
+  FileText
 } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
+import View_Reports from '@/report_utilities/View_Reports';
 
 // Import Shadcn UI AlertDialog components
 import {
@@ -100,6 +102,10 @@ export default function Archived_Approved({ onRestoreSuccess, onCountChange }) {
 
   // Search filter term state
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Full report details (+ aftermath) view dialog state
+  const [detailsReport, setDetailsReport] = useState(null);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
 
   // Client-side cache ref (stores data and timestamp)
   const cacheRef = useRef({ data: null, timestamp: 0 });
@@ -225,6 +231,11 @@ export default function Archived_Approved({ onRestoreSuccess, onCountChange }) {
   };
 
   // --- Trigger Dialog Handlers ---
+  const triggerViewDetails = (report) => {
+    setDetailsReport(report);
+    setIsDetailsDialogOpen(true);
+  };
+
   const triggerRestore = (reportId) => {
     setSelectedReportId(reportId);
     setIsRestoreDialogOpen(true);
@@ -455,7 +466,7 @@ export default function Archived_Approved({ onRestoreSuccess, onCountChange }) {
               <th className="px-5 py-3.5 min-w-[180px]">Report Title</th>
               <th className="px-5 py-3.5 min-w-[220px]">Location</th>
               <th className="px-5 py-3.5 w-36">Archived At</th>
-              <th className="px-5 py-3.5 text-right min-w-[120px]">Actions</th>
+              <th className="px-5 py-3.5 text-right min-w-[190px]">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -536,6 +547,17 @@ export default function Archived_Approved({ onRestoreSuccess, onCountChange }) {
 
                     <td className="px-5 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="inline-flex items-center justify-end gap-2 flex-wrap xl:flex-nowrap">
+                        {/* VIEW DETAILS BUTTON */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => triggerViewDetails(report)}
+                          className="text-xs font-medium inline-flex items-center gap-1"
+                        >
+                          <FileText className="h-3 w-3" />
+                          <span>Details</span>
+                        </Button>
+
                         {/* RESTORE BUTTON */}
                         <Button
                           size="sm"
@@ -586,6 +608,27 @@ export default function Archived_Approved({ onRestoreSuccess, onCountChange }) {
             </button>
           </div>
         </div>
+      )}
+
+      {/* FULL REPORT DETAILS (+ AFTERMATH if the report was resolved before archiving) */}
+      {isDetailsDialogOpen && detailsReport && (
+        <View_Reports
+          isOpen
+          report={detailsReport}
+          onClose={() => setIsDetailsDialogOpen(false)}
+          aftermath={
+            detailsReport.casualties != null ||
+            detailsReport.injuries != null ||
+            detailsReport.aftermathDetails
+              ? {
+                  casualties: detailsReport.casualties,
+                  injuries: detailsReport.injuries,
+                  resolvedAt: detailsReport.resolvedAt || detailsReport.updatedAt,
+                  details: detailsReport.aftermathDetails,
+                }
+              : null
+          }
+        />
       )}
 
       {/* SINGLE RESTORE ALERT DIALOG */}

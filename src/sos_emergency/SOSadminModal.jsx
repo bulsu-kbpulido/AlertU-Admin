@@ -698,7 +698,7 @@ export default function SOSadminModal({
 
               {/* Floating Map Overlay Badge */}
               {currentLocation && !isMinimized && (
-                <div className="absolute top-4 left-4 z-10 bg-white/95 backdrop-blur-md border border-slate-200 p-3.5 rounded-2xl shadow-lg max-w-xs">
+                <div className="absolute top-4 left-16 z-10 bg-white/95 backdrop-blur-md border border-slate-200 p-3.5 rounded-2xl shadow-lg max-w-xs">
                   <div className="flex items-start gap-2.5">
                     <MapPin className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                     <div>

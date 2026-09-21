@@ -514,6 +514,23 @@ const CitizenManagement = () => {
   const archivedCount = citizens.filter(c => c.isArchived).length;
   const [archivedCountLive, setArchivedCountLive] = useState(null);
 
+  // Manual refresh state (header "Refresh Data" button)
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [archivedRefreshKey, setArchivedRefreshKey] = useState(0);
+
+  const handleManualRefresh = async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    setLoading(true); // show the table skeleton (blink) like the other tabs
+    // Tell the archived table to force-refetch its own data too
+    setArchivedRefreshKey((k) => k + 1);
+    try {
+      await loadCitizens(false, true);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   // Filter options config for Segmented Control
   const filterOptions = [
     { label: 'All', value: 'ALL' },
@@ -543,11 +560,12 @@ const CitizenManagement = () => {
             Register Citizen
           </button>
           <button 
-            onClick={() => loadCitizens(true, true)} 
-            className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+            onClick={handleManualRefresh} 
+            disabled={isRefreshing}
+            className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh Data
+            <RefreshCw className={`h-4 w-4 ${isRefreshing || loading ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
           </button>
         </div>
       </header>
@@ -639,6 +657,7 @@ const CitizenManagement = () => {
         {/* Table Content Switcher */}
         {activeTab === 'archived' ? (
           <ArchivedCitizensTable 
+            refreshSignal={archivedRefreshKey}
             searchTerm={searchTerm} 
             onViewCitizen={(citizen) => openModal('view', citizen)}
             onArchiveModal={(citizen) => openModal('archive', citizen)}
