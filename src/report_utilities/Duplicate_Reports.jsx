@@ -17,7 +17,6 @@ import {
   Clock,
   ExternalLink,
   Calendar,
-  X,
   RefreshCw
 } from 'lucide-react';
 
@@ -710,49 +709,12 @@ export default function Duplicate_Reports({ onCountChange } = {}) {
       )}
 
       {/* VIEW DETAILS MODAL */}
-      <AnimatePresence>
-        {viewingReport && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900"
-            >
-              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-                <div className="flex items-center gap-2">
-                  <span className="rounded-md bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
-                    {viewingReport.reportID || viewingReport.reportId || viewingReport.id || 'N/A'}
-                  </span>
-                  <h3 className="font-bold text-slate-900 dark:text-white capitalize">
-                    {viewingReport.reportTitle || viewingReport.incidentType || viewingReport.hazard || 'Duplicate Incident'}
-                  </h3>
-                </div>
-                <button
-                  onClick={() => setViewingReport(null)}
-                  className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {/* View Component Integration */}
-              <div className="mt-4">
-                <ViewDuplicate_Reports report={viewingReport} onClose={() => setViewingReport(null)} />
-              </div>
-
-              <div className="mt-6 flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
-                <button
-                  onClick={() => setViewingReport(null)}
-                  className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-                >
-                  Close
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {viewingReport && (
+        <ViewDuplicate_Reports
+          report={viewingReport}
+          onClose={() => setViewingReport(null)}
+        />
+      )}
 
       {/* SINGLE RESTORE ALERT DIALOG */}
       <AlertDialog open={isRestoreDialogOpen} onOpenChange={setIsRestoreDialogOpen}>

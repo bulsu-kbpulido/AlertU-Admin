@@ -80,6 +80,55 @@ const formatFirestoreTimestamp = (timestamp) => {
   return 'Date and time unavailable';
 };
 
+/**
+ * Finds the voice note / audio URL of a report. Checks the usual field names first, then any
+ * field whose name mentions voice/audio/recording (also one or two levels deep, e.g. inside `media`).
+ */
+const isPlayableUrl = (value) =>
+  typeof value === 'string' && /^(https?:\/\/|blob:|data:audio\/|\/)/i.test(value.trim());
+
+const pickUrl = (value) => {
+  if (value && typeof value === 'object') {
+    return value.url || value.downloadUrl || value.fileUrl || null;
+  }
+  return value;
+};
+
+const findAudioUrl = (report) => {
+  if (!report) return null;
+
+  const preferred = [
+    report.voicenoteUrl,
+    report.voiceNoteUrl,
+    report.audioUrl,
+    report.voicenote,
+    report.voiceNote,
+    report.voiceUrl,
+    report.audio,
+    report.voice,
+  ];
+  for (const candidate of preferred) {
+    const url = pickUrl(candidate);
+    if (isPlayableUrl(url)) return url.trim();
+  }
+
+  const scan = (obj, depth) => {
+    if (!obj || typeof obj !== 'object' || depth > 2) return null;
+    for (const [key, value] of Object.entries(obj)) {
+      if (/voice|audio|recording/i.test(key)) {
+        const url = pickUrl(value);
+        if (isPlayableUrl(url)) return url.trim();
+      }
+      if (value && typeof value === 'object' && !Array.isArray(value) && typeof value.toDate !== 'function') {
+        const nested = scan(value, depth + 1);
+        if (nested) return nested;
+      }
+    }
+    return null;
+  };
+  return scan(report, 0);
+};
+
 // Incident type badge colors (same as the Send Reports tables)
 const getIncidentBadgeStyle = (type) => {
   const normalized = (type || '').trim().toLowerCase();
@@ -225,8 +274,8 @@ export default function View_Reports({
   
   // Media Attachments
   const mediaUrl = report?.mediaUrl || report?.imageUrl || (report?.media && report.media[0]) || (report?.attachments && report.attachments[0]) || null;
-  const activeAudioUrl = report?.voicenoteUrl || report?.voiceNoteUrl || report?.audioUrl;
-  const hasValidAudio = Boolean(activeAudioUrl && activeAudioUrl !== "No voicenote attachments." && activeAudioUrl !== "");
+  const activeAudioUrl = findAudioUrl(report);
+  const hasValidAudio = Boolean(activeAudioUrl);
 
   // OpenLayers Map Initialization (Read-Only)
   useEffect(() => {
@@ -470,7 +519,7 @@ export default function View_Reports({
               </div>
 
               {/* Submitter / Citizen Details Card */}
-              <div className="space-y-2 pt-1 border-t border-slate-100">
+              <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-slate-800">
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider block">
                   Reporter Information
                 </span>

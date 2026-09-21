@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import { fetchFromBackend } from '../api';
+import View_Citizens from '@/citizen_utilities/View_Citizens';
 import { 
   RotateCcw, 
-  Trash2, 
   ChevronLeft, 
   ChevronRight, 
   ShieldAlert, 
@@ -12,6 +13,7 @@ import {
   CheckSquare,
   Square,
   Check,
+  Eye,
   RefreshCw
 } from 'lucide-react';
 
@@ -45,7 +47,7 @@ const ArchivedCitizensTable = ({
   const [error, setError] = useState(null);
   const [retrying, setRetrying] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
 
   // Selected row IDs state tracking
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -53,10 +55,12 @@ const ArchivedCitizensTable = ({
   // Dialog state tracking
   const [selectedCitizen, setSelectedCitizen] = useState(null);
   const [isRestoreOpen, setIsRestoreOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isBatchRestoreOpen, setIsBatchRestoreOpen] = useState(false);
-  const [isBatchDeleteOpen, setIsBatchDeleteOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // View modal state (matches the Active Accounts table's View_Citizens usage)
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [viewingCitizen, setViewingCitizen] = useState(null);
 
   const mountRef = useRef(true);
 
@@ -238,15 +242,16 @@ const ArchivedCitizensTable = ({
     setIsRestoreOpen(true);
   };
 
-  const openDeleteDialog = (citizen) => {
-    setSelectedCitizen(citizen);
-    setIsDeleteOpen(true);
+  const openViewModal = (citizen) => {
+    setViewingCitizen(citizen);
+    setIsViewOpen(true);
   };
 
   // Perform Single Restore Request
   const handleConfirmRestore = async () => {
     if (!selectedCitizen) return;
     const citizenId = getCitizenId(selectedCitizen);
+    const citizenLabel = selectedCitizen.fullName || citizenId;
 
     try {
       setIsSubmitting(true);
@@ -260,34 +265,10 @@ const ArchivedCitizensTable = ({
       setSelectedCitizen(null);
       await loadArchivedCitizens(true);
       if (onRefresh) onRefresh();
+      toast.success(`${citizenLabel} restored to active citizen records.`, { duration: 10000 });
     } catch (err) {
       console.error('Error restoring citizen:', err);
-      alert('Failed to restore citizen. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Perform Single Permanent Delete Request
-  const handleConfirmDelete = async () => {
-    if (!selectedCitizen) return;
-    const citizenId = getCitizenId(selectedCitizen);
-
-    try {
-      setIsSubmitting(true);
-      await fetchWithRetry(`/citizens/${citizenId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ actionTag: `PERMANENT_DELETE_${citizenId}` })
-      });
-
-      setIsDeleteOpen(false);
-      setSelectedCitizen(null);
-      await loadArchivedCitizens(true);
-      if (onRefresh) onRefresh();
-    } catch (err) {
-      console.error('Error deleting citizen permanently:', err);
-      alert('Failed to permanently delete record. Please try again.');
+      toast.error('Failed to restore citizen. Please try again.', { duration: 10000 });
     } finally {
       setIsSubmitting(false);
     }
@@ -296,6 +277,7 @@ const ArchivedCitizensTable = ({
   // Perform Batch Restore Request
   const handleConfirmBatchRestore = async () => {
     if (selectedIds.size === 0) return;
+    const restoredCount = selectedIds.size;
 
     try {
       setIsSubmitting(true);
@@ -313,37 +295,10 @@ const ArchivedCitizensTable = ({
       setSelectedIds(new Set());
       await loadArchivedCitizens(true);
       if (onRefresh) onRefresh();
+      toast.success(`${restoredCount} citizen record${restoredCount === 1 ? '' : 's'} restored successfully.`, { duration: 10000 });
     } catch (err) {
       console.error('Error restoring selected citizens:', err);
-      alert('Failed to restore some selected records. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Perform Batch Permanent Delete Request
-  const handleConfirmBatchDelete = async () => {
-    if (selectedIds.size === 0) return;
-
-    try {
-      setIsSubmitting(true);
-      const deletePromises = Array.from(selectedIds).map((id) =>
-        fetchWithRetry(`/citizens/${id}`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ actionTag: `BATCH_DELETE_${id}` })
-        })
-      );
-
-      await Promise.all(deletePromises);
-
-      setIsBatchDeleteOpen(false);
-      setSelectedIds(new Set());
-      await loadArchivedCitizens(true);
-      if (onRefresh) onRefresh();
-    } catch (err) {
-      console.error('Error deleting selected citizens:', err);
-      alert('Failed to delete some selected records. Please try again.');
+      toast.error('Failed to restore some selected records. Please try again.', { duration: 10000 });
     } finally {
       setIsSubmitting(false);
     }
@@ -425,22 +380,12 @@ const ArchivedCitizensTable = ({
             {areAllCurrentPageSelected ? 'Deselect All' : 'Select All'}
           </button>
 
-          <button
-            type="button"
-            onClick={() => loadArchivedCitizens(true)}
-            title="Force refresh vault from server"
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border bg-white border-slate-300 text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
-
           <span className="hidden sm:inline text-xs text-slate-500 dark:text-slate-400">
             Tip: Double-click any row to toggle selection
           </span>
         </div>
 
-        {/* 🔹 Framer Motion Animated Action Buttons (Restore & Delete) */}
+        {/* 🔹 Framer Motion Animated Action Buttons (Restore) */}
         <AnimatePresence>
           {selectedIds.size > 0 && (
             <motion.div
@@ -458,16 +403,6 @@ const ArchivedCitizensTable = ({
               >
                 <RotateCcw className="h-3.5 w-3.5" />
                 Restore Selected ({selectedIds.size})
-              </button>
-
-              {/* 🟥 BATCH DELETE BUTTON */}
-              <button
-                type="button"
-                onClick={() => setIsBatchDeleteOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-md bg-rose-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-rose-700 focus:outline-none transition-colors"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Delete Selected ({selectedIds.size})
               </button>
             </motion.div>
           )}
@@ -564,20 +499,20 @@ const ArchivedCitizensTable = ({
 
                     <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="inline-flex items-center justify-end gap-2">
+                        {/* 🔵 VIEW BUTTON */}
+                        <button
+                          onClick={() => openViewModal(citizen)}
+                          className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 px-2.5 py-1.5 text-xs font-medium shadow-sm transition-colors"
+                        >
+                          <Eye className="h-3.5 w-3.5" /> View
+                        </button>
+
                         {/* 🟩 RESTORE BUTTON */}
                         <button
                           onClick={() => openRestoreDialog(citizen)}
                           className="inline-flex items-center gap-1 rounded-md border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-400 dark:hover:bg-emerald-900/60 px-2.5 py-1.5 text-xs font-medium shadow-sm transition-colors"
                         >
                           <RotateCcw className="h-3.5 w-3.5" /> Restore
-                        </button>
-
-                        {/* 🟥 DELETE BUTTON */}
-                        <button
-                          onClick={() => openDeleteDialog(citizen)}
-                          className="inline-flex items-center gap-1 rounded-md border border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-900/60 px-2.5 py-1.5 text-xs font-medium shadow-sm transition-colors"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" /> Delete
                         </button>
                       </div>
                     </td>
@@ -682,65 +617,15 @@ const ArchivedCitizensTable = ({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* 🟥 PERMANENT DELETE ALERT DIALOG */}
-      <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
-              <Trash2 className="h-5 w-5" /> Permanently Delete Citizen
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              This action <strong>cannot be undone</strong>. This will permanently delete <strong>{selectedCitizen?.fullName || getCitizenId(selectedCitizen)}</strong> from both the archived Firestore database and Firebase Authentication.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDelete}
-              disabled={isSubmitting}
-              className="bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-600 dark:hover:bg-rose-700"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting...
-                </>
-              ) : (
-                'Permanently Delete'
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* 🟥 BATCH DELETE ALERT DIALOG */}
-      <AlertDialog open={isBatchDeleteOpen} onOpenChange={setIsBatchDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
-              <Trash2 className="h-5 w-5" /> Permanently Delete {selectedIds.size} Records
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              This action <strong>cannot be undone</strong>. You are about to permanently remove <strong>{selectedIds.size} selected citizen records</strong> from both the database and authentication services.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmBatchDelete}
-              disabled={isSubmitting}
-              className="bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-600 dark:hover:bg-rose-700"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting Selected...
-                </>
-              ) : (
-                `Permanently Delete (${selectedIds.size})`
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* 🔵 VIEW CITIZEN MODAL (same component used by the Active Accounts table) */}
+      <View_Citizens
+        isOpen={isViewOpen}
+        citizen={viewingCitizen}
+        onClose={() => {
+          setIsViewOpen(false);
+          setViewingCitizen(null);
+        }}
+      />
     </>
   );
 };

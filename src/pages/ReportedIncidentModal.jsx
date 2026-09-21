@@ -83,6 +83,9 @@ const formatFirestoreTimestamp = (timestamp) => {
   return 'Date and time unavailable';
 };
 
+// Same options as the Create Report tab
+const HAZARD_TYPES = ['None', 'Electrical', 'Chemical', 'Fire', 'Others'];
+
 export default function ReportedIncidentModal({
   isOpen,
   onClose,
@@ -94,8 +97,10 @@ export default function ReportedIncidentModal({
   setVerifiedIncidentType,
   verifiedSeverity,
   setVerifiedSeverity,
-  adminNotes,
-  setAdminNotes,
+  secondaryHazard = 'None',
+  setSecondaryHazard,
+  customSecondaryHazard = '',
+  setCustomSecondaryHazard,
   isSensitive,
   setIsSensitive,
 }) {
@@ -105,6 +110,7 @@ export default function ReportedIncidentModal({
   const [isMapChangerOpen, setIsMapChangerOpen] = useState(false);
   const [selectionMode, setSelectionMode] = useState('Fire'); 
   const [customName, setCustomName] = useState('');
+  const [hazardError, setHazardError] = useState('');
   
   // 🎯 Media Fullscreen State
   const [fullScreenMedia, setFullScreenMedia] = useState(null);
@@ -568,17 +574,46 @@ export default function ReportedIncidentModal({
                 </div>
               )}
 
-              {/* Admin Internal Remarks Input */}
+              {/* Associated Secondary Hazard (same options as Create Report) */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
-                  Verification Remarks / Dispatch Notes
+                  Associated Secondary Hazard
                 </label>
-                <textarea 
-                  placeholder="Enter notes or instructions for response teams..." 
-                  value={adminNotes}
-                  onChange={(e) => setAdminNotes(e.target.value)}
-                  className="w-full h-20 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-xs font-medium text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-none"
-                />
+                <div className="relative">
+                  <select
+                    value={secondaryHazard}
+                    onChange={(e) => {
+                      setHazardError('');
+                      if (typeof setSecondaryHazard === 'function') setSecondaryHazard(e.target.value);
+                      if (e.target.value !== 'Others' && typeof setCustomSecondaryHazard === 'function') {
+                        setCustomSecondaryHazard('');
+                      }
+                    }}
+                    className="w-full appearance-none bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 pr-9 text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  >
+                    {HAZARD_TYPES.map((type) => (
+                      <option key={type} value={type} className="bg-white dark:bg-slate-900">{type}</option>
+                    ))}
+                  </select>
+                  <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none w-4 h-4" />
+                </div>
+
+                {secondaryHazard === 'Others' && (
+                  <input
+                    type="text"
+                    placeholder="Specify custom secondary hazard..."
+                    value={customSecondaryHazard}
+                    onChange={(e) => {
+                      setHazardError('');
+                      if (typeof setCustomSecondaryHazard === 'function') setCustomSecondaryHazard(e.target.value);
+                    }}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  />
+                )}
+
+                {hazardError && (
+                  <p className="text-[11px] font-medium text-red-500">{hazardError}</p>
+                )}
               </div>
             </div>
           </div>
@@ -600,6 +635,10 @@ export default function ReportedIncidentModal({
             </button>
             <button 
               onClick={() => {
+                if (secondaryHazard === 'Others' && !customSecondaryHazard.trim()) {
+                  setHazardError('Please specify the secondary hazard.');
+                  return;
+                }
                 logAdminAction('VERIFY_STEP_ADVANCE', { step: 2 });
                 setCurrentStep(2);
               }} 

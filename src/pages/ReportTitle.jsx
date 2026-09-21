@@ -130,7 +130,7 @@ export default function ReportTitle({
 
   // 🚀 Final Submission Handler inside ReportTitle.jsx
   const handleSubmit = async () => {
-    if (!reportTitle.trim() || selectedAgencies.length === 0 || isSubmitting) return;
+    if (!reportTitle.trim() || !notesValue.trim() || selectedAgencies.length === 0 || isSubmitting) return;
 
     // Guard against invalid or missing target document IDs
     if (!resolvedReportId || resolvedReportId === '_') {
@@ -190,7 +190,7 @@ export default function ReportTitle({
     }
   };
 
-  const isSubmitDisabled = !reportTitle.trim() || selectedAgencies.length === 0 || isSubmitting;
+  const isSubmitDisabled = !reportTitle.trim() || !notesValue.trim() || selectedAgencies.length === 0 || isSubmitting;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/70 backdrop-blur-sm text-slate-800 dark:text-slate-100 font-sans antialiased overflow-y-auto">
@@ -259,7 +259,7 @@ export default function ReportTitle({
             {/* Operational Notes */}
             <div className="space-y-1.5 flex-1 flex flex-col">
               <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                Admin Notes & Instructions
+                Admin Notes & Instructions <span className="text-rose-500">*</span>
               </label>
               <textarea
                 disabled={isSubmitting}

@@ -145,6 +145,8 @@ export default function VerifyIncidentModal({
 
   const [orsRoutes, setOrsRoutes] = useState([]);
   const [clickedPoints, setClickedPoints] = useState([]);
+  const [routeError, setRouteError] = useState('');
+  const [routeFailed, setRouteFailed] = useState(false);
   const [loadingRoute, setLoadingRoute] = useState(false);
 
   const mapElement = useRef(null);
@@ -181,6 +183,11 @@ export default function VerifyIncidentModal({
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
+  // Clear the route message as soon as the admin pins (or clears) a point
+  useEffect(() => {
+    setRouteError('');
+  }, [clickedPoints.length]);
+
   const handleConfirm = async () => {
     let geometryPayload = {};
 
@@ -194,7 +201,7 @@ export default function VerifyIncidentModal({
       };
     } else if (isFlood || isAccident || (isOthers && othersMode === 'polyline')) {
       if (clickedPoints.length < 2) {
-        alert("Please click two points on the map to define the route path.");
+        setRouteError('Pin the start and end points on the map before confirming the route.');
         return;
       }
       geometryPayload = {
@@ -224,6 +231,7 @@ export default function VerifyIncidentModal({
 
   const fetchORSGeometries = async (startPair, endPair) => {
     setLoadingRoute(true);
+    setRouteFailed(false);
     try {
       const backendUrl = `${API_BASE_URL}/ors/directions?start=${startPair[0]},${startPair[1]}&end=${endPair[0]},${endPair[1]}`;
       const response = await fetch(backendUrl, {
@@ -239,9 +247,14 @@ export default function VerifyIncidentModal({
 
       if (data.features && data.features.length > 0 && data.features[0].geometry) {
         setOrsRoutes([data.features[0].geometry.coordinates]);
+      } else {
+        setOrsRoutes([]);
+        setRouteFailed(true);
       }
     } catch (err) {
       console.error("Route calculation error via proxy:", err);
+      setOrsRoutes([]);
+      setRouteFailed(true);
     } finally {
       setLoadingRoute(false);
     }
@@ -347,6 +360,17 @@ export default function VerifyIncidentModal({
       }
     }
 
+    // No road route found: show the straight line between the two pins (this is what gets saved)
+    if (showPolyline && routeFailed && clickedPoints.length === 2) {
+      const straightLine = new Feature({
+        geometry: new LineString(clickedPoints.map((pt) => fromLonLat(pt)))
+      });
+      straightLine.setStyle(new Style({
+        stroke: new Stroke({ color: activeColor, width: 4, lineDash: [10, 10], lineCap: 'round' })
+      }));
+      featuresToAdd.push(straightLine);
+    }
+
     clickedPoints.forEach((pt) => {
       const pointFeature = new Feature({ geometry: new Point(fromLonLat(pt)) });
       pointFeature.setStyle(new Style({
@@ -368,11 +392,12 @@ export default function VerifyIncidentModal({
     }));
     markerSource.current.addFeature(mainMarker);
 
-  }, [incidentType, radius, othersMode, orsRoutes, clickedPoints, activeLat, activeLng, markerMap, isFire, isOthers]);
+  }, [incidentType, radius, othersMode, orsRoutes, routeFailed, clickedPoints, activeLat, activeLng, markerMap, isFire, isOthers]);
 
   const handleResetWorkspace = () => {
     setClickedPoints([]);
     setOrsRoutes([]);
+    setRouteFailed(false);
   };
 
   const handleClose = () => {
@@ -480,7 +505,11 @@ export default function VerifyIncidentModal({
                 
                 {/* Polyline Route Controls (Flood, Accident, or Custom Polyline) */}
                 {(isFlood || isAccident || (isOthers && othersMode === 'polyline')) && (
-                  <div className="bg-slate-50 dark:bg-slate-800/70 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+                  <div className={`bg-slate-50 dark:bg-slate-800/70 p-4 rounded-xl border space-y-3 transition-colors ${
+                    routeError
+                      ? 'border-amber-400 dark:border-amber-600'
+                      : 'border-slate-200 dark:border-slate-700'
+                  }`}>
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-slate-800 dark:text-slate-100">
                         Route Line Points
@@ -493,8 +522,28 @@ export default function VerifyIncidentModal({
                     <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                       {clickedPoints.length === 0 && 'Click start point on map.'}
                       {clickedPoints.length === 1 && 'Click end point on map.'}
-                      {clickedPoints.length === 2 && '✓ Route created between points.'}
+                      {clickedPoints.length === 2 && loadingRoute && 'Calculating road route...'}
+                      {clickedPoints.length === 2 && !loadingRoute && orsRoutes.length > 0 && '✓ Route created between points.'}
+                      {clickedPoints.length === 2 && !loadingRoute && routeFailed && 'No road route was found between these points.'}
                     </p>
+
+                    {clickedPoints.length === 2 && !loadingRoute && routeFailed && (
+                      <div
+                        role="alert"
+                        className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
+                      >
+                        A dashed straight line between the two pins is shown instead, and that is what will be saved. To follow the road, clear the points and pin them closer to a road.
+                      </div>
+                    )}
+
+                    {routeError && (
+                      <div
+                        role="alert"
+                        className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
+                      >
+                        {routeError}
+                      </div>
+                    )}
 
                     {clickedPoints.length > 0 && (
                       <button

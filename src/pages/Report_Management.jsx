@@ -61,6 +61,19 @@ const TOAST_DURATION = 10000;
 
 const REPORT_LIMIT = 100; // Cache & query payload limit per active tab
 
+// Incident type badge colors (same as the Send Reports tables)
+const getIncidentBadgeStyle = (incidentType) => {
+  const normalized = (incidentType || '').trim().toLowerCase();
+  if (normalized.includes('fire')) {
+    return 'bg-red-600 text-white border-red-700';
+  } else if (normalized.includes('flood')) {
+    return 'bg-blue-600 text-white border-blue-700';
+  } else if (normalized.includes('accident')) {
+    return 'bg-violet-600 text-white border-violet-700';
+  }
+  return 'bg-orange-600 text-white border-orange-700';
+};
+
 const formatStreetAndBarangay = (fullAddress) => {
   if (!fullAddress || fullAddress === 'No location specified' || fullAddress === 'Location unavailable') {
     return 'Location unavailable';
@@ -168,6 +181,8 @@ export default function Report_Management() {
   const [selectedViewReport, setSelectedViewReport] = useState(null);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [reportToReject, setReportToReject] = useState(null);
+  const [secondaryHazard, setSecondaryHazard] = useState('None');
+  const [customSecondaryHazard, setCustomSecondaryHazard] = useState('');
   const [isRejecting, setIsRejecting] = useState(false);
 
   // Data & Refetch Loading States
@@ -376,6 +391,8 @@ export default function Report_Management() {
     setVerifiedIncidentType(report.incidentType || report.hazard || 'Fire');
     setVerifiedSeverity(report.severity || 'Medium');
     setAdminNotes(report.notes || '');
+    setSecondaryHazard('None');
+    setCustomSecondaryHazard('');
     
     setVerifyModalOpen(true);
 
@@ -474,6 +491,7 @@ export default function Report_Management() {
         verifiedReportID: verifiedReportID,
         incidentType: verifiedIncidentType.toLowerCase(),
         verifiedSeverity,
+        hazard: secondaryHazard === 'Others' ? customSecondaryHazard.trim() : secondaryHazard,
         adminNotes,
         reportTitle,
         selectedAgencies: selectedAgencies.map(agency => ({ id: agency.id, name: agency.name })), 
@@ -862,7 +880,7 @@ export default function Report_Management() {
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-800/50 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     <th className="px-6 py-4">Report ID</th>
-                    <th className="px-6 py-4">Incident Type</th>
+                    <th className="px-6 py-4">Type</th>
                     <th className="px-6 py-4">Severity</th>
                     <th className="px-6 py-4">Location (Street & Brgy)</th>
                     <th className="px-6 py-4">Date & Time</th>
@@ -886,7 +904,7 @@ export default function Report_Management() {
                     ) : (
                       <React.Fragment key="report-list-container">
                         {paginatedReports.map((report) => {
-                          const displayType = report.reportTitle || report.incidentType || report.hazard || 'General Incident';
+                          const displayType = report.incidentType || report.hazard || report.reportTitle || 'General';
                           const fullAddress = report.location?.address || report.address || report.correctedAddress;
                           const formattedLocation = formatStreetAndBarangay(fullAddress);
                           const severity = (report.severity || 'Medium').toLowerCase();
@@ -906,8 +924,10 @@ export default function Report_Management() {
                                 {report.reportID || report.id}
                               </td>
 
-                              <td className="px-6 py-4 font-medium capitalize text-slate-900 dark:text-slate-100">
-                                {displayType}
+                              <td className="px-6 py-4">
+                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border shadow-xs transition-colors ${getIncidentBadgeStyle(displayType)}`}>
+                                  <span>{displayType}</span>
+                                </span>
                               </td>
 
                               <td className="px-6 py-4">
@@ -1022,8 +1042,10 @@ export default function Report_Management() {
               setVerifiedIncidentType={setVerifiedIncidentType}
               verifiedSeverity={verifiedSeverity}
               setVerifiedSeverity={setVerifiedSeverity}
-              adminNotes={adminNotes}
-              setAdminNotes={setAdminNotes}
+              secondaryHazard={secondaryHazard}
+              setSecondaryHazard={setSecondaryHazard}
+              customSecondaryHazard={customSecondaryHazard}
+              setCustomSecondaryHazard={setCustomSecondaryHazard}
               isSensitive={isSensitive}
               setIsSensitive={setIsSensitive}
               socketInstance={socketRef.current}
