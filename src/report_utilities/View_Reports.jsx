@@ -139,6 +139,7 @@ const getIncidentBadgeStyle = (type) => {
 };
 
 export default function View_Reports({
+  aftermath = null,
   isOpen = true,
   onClose,
   report,
@@ -274,6 +275,9 @@ export default function View_Reports({
   
   // Media Attachments
   const mediaUrl = report?.mediaUrl || report?.imageUrl || (report?.media && report.media[0]) || (report?.attachments && report.attachments[0]) || null;
+  // Resolution details (only passed from the Resolved tab in Send Reports)
+  const aftermathResolvedOn = aftermath ? formatFirestoreTimestamp(aftermath.resolvedAt) : null;
+
   const activeAudioUrl = findAudioUrl(report);
   const hasValidAudio = Boolean(activeAudioUrl);
 
@@ -579,6 +583,50 @@ export default function View_Reports({
                   </div>
                 </div>
               </div>
+
+              {/* Aftermath Report (Resolved tab only) */}
+              {aftermath && (
+                <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <h5 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+                    Aftermath Report
+                  </h5>
+
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider block">
+                      Resolved On
+                    </span>
+                    <div className="px-3 py-2 rounded-xl text-xs font-semibold border bg-slate-50 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100">
+                      {aftermathResolvedOn}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider block">
+                        Casualties
+                      </span>
+                      <div className="px-3 py-2 rounded-xl text-xs font-bold border bg-slate-50 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100">
+                        {Number(aftermath.casualties) || 0}
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider block">
+                        Injuries
+                      </span>
+                      <div className="px-3 py-2 rounded-xl text-xs font-bold border bg-slate-50 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100">
+                        {Number(aftermath.injuries) || 0}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block">Aftermath Details:</span>
+                    <div className="text-xs text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 p-3 rounded-xl leading-relaxed whitespace-pre-line">
+                      {aftermath.details?.trim() || 'No aftermath details were recorded for this report.'}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
