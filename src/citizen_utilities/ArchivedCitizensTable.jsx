@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'sonner';
 import { fetchFromBackend } from '../api';
-import View_Citizens from '@/citizen_utilities/View_Citizens';
 import { 
   RotateCcw, 
+  Trash2, 
   ChevronLeft, 
   ChevronRight, 
   ShieldAlert, 
@@ -13,7 +12,6 @@ import {
   CheckSquare,
   Square,
   Check,
-  Eye,
   RefreshCw
 } from 'lucide-react';
 
@@ -28,6 +26,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { toast } from 'sonner';
 
 // Cache Configuration matching CitizenManagement pattern
 const CACHE_KEY = 'ALERTU_ARCHIVED_CITIZENS_CACHE';
@@ -57,10 +57,6 @@ const ArchivedCitizensTable = ({
   const [isRestoreOpen, setIsRestoreOpen] = useState(false);
   const [isBatchRestoreOpen, setIsBatchRestoreOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // View modal state (matches the Active Accounts table's View_Citizens usage)
-  const [isViewOpen, setIsViewOpen] = useState(false);
-  const [viewingCitizen, setViewingCitizen] = useState(null);
 
   const mountRef = useRef(true);
 
@@ -242,16 +238,10 @@ const ArchivedCitizensTable = ({
     setIsRestoreOpen(true);
   };
 
-  const openViewModal = (citizen) => {
-    setViewingCitizen(citizen);
-    setIsViewOpen(true);
-  };
-
   // Perform Single Restore Request
   const handleConfirmRestore = async () => {
     if (!selectedCitizen) return;
     const citizenId = getCitizenId(selectedCitizen);
-    const citizenLabel = selectedCitizen.fullName || citizenId;
 
     try {
       setIsSubmitting(true);
@@ -262,10 +252,13 @@ const ArchivedCitizensTable = ({
       });
 
       setIsRestoreOpen(false);
+      toast.success(
+        `${selectedCitizen.fullName || 'Citizen'} restored successfully.`,
+        { duration: 10000 }
+      );
       setSelectedCitizen(null);
       await loadArchivedCitizens(true);
       if (onRefresh) onRefresh();
-      toast.success(`${citizenLabel} restored to active citizen records.`, { duration: 10000 });
     } catch (err) {
       console.error('Error restoring citizen:', err);
       toast.error('Failed to restore citizen. Please try again.', { duration: 10000 });
@@ -292,10 +285,10 @@ const ArchivedCitizensTable = ({
       await Promise.all(restorePromises);
 
       setIsBatchRestoreOpen(false);
+      toast.success(`${restoredCount} citizen record(s) restored successfully.`, { duration: 10000 });
       setSelectedIds(new Set());
       await loadArchivedCitizens(true);
       if (onRefresh) onRefresh();
-      toast.success(`${restoredCount} citizen record${restoredCount === 1 ? '' : 's'} restored successfully.`, { duration: 10000 });
     } catch (err) {
       console.error('Error restoring selected citizens:', err);
       toast.error('Failed to restore some selected records. Please try again.', { duration: 10000 });
@@ -380,12 +373,22 @@ const ArchivedCitizensTable = ({
             {areAllCurrentPageSelected ? 'Deselect All' : 'Select All'}
           </button>
 
+          <button
+            type="button"
+            onClick={() => loadArchivedCitizens(true)}
+            title="Force refresh vault from server"
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border bg-white border-slate-300 text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+
           <span className="hidden sm:inline text-xs text-slate-500 dark:text-slate-400">
             Tip: Double-click any row to toggle selection
           </span>
         </div>
 
-        {/* 🔹 Framer Motion Animated Action Buttons (Restore) */}
+        {/* 🔹 Framer Motion Animated Action Buttons (Restore & Delete) */}
         <AnimatePresence>
           {selectedIds.size > 0 && (
             <motion.div
@@ -471,13 +474,8 @@ const ArchivedCitizensTable = ({
                       </button>
                     </td>
 
-                    <td className="px-6 py-4">
-                      <span 
-                        style={{ fontFamily: "'Roboto', sans-serif" }} 
-                        className="inline-block rounded-md bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-sm font-bold tracking-wide text-slate-800 dark:text-slate-100 border border-slate-200/80 dark:border-slate-700/80"
-                      >
-                        {citizenId || 'N/A'}
-                      </span>
+                    <td className="px-6 py-4 font-['Roboto',sans-serif] font-medium text-slate-700 dark:text-slate-300">
+                      {citizenId || 'N/A'}
                     </td>
 
                     <td className="px-6 py-4">
@@ -487,10 +485,8 @@ const ArchivedCitizensTable = ({
                       <div className="text-xs text-slate-500 dark:text-slate-400">{citizen.email}</div>
                     </td>
 
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center rounded-md border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700">
-                        {citizen.zone || 'Unassigned'}
-                      </span>
+                    <td className="px-6 py-4 text-slate-600 dark:text-slate-300 max-w-xs xl:max-w-md truncate">
+                      {citizen.zone || 'Unassigned'}
                     </td>
 
                     <td className="px-6 py-4 text-xs text-slate-500 dark:text-slate-400 font-medium">
@@ -499,21 +495,14 @@ const ArchivedCitizensTable = ({
 
                     <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="inline-flex items-center justify-end gap-2">
-                        {/* 🔵 VIEW BUTTON */}
-                        <button
-                          onClick={() => openViewModal(citizen)}
-                          className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 px-2.5 py-1.5 text-xs font-medium shadow-sm transition-colors"
-                        >
-                          <Eye className="h-3.5 w-3.5" /> View
-                        </button>
-
-                        {/* 🟩 RESTORE BUTTON */}
-                        <button
+                        <Button
+                          size="sm"
                           onClick={() => openRestoreDialog(citizen)}
-                          className="inline-flex items-center gap-1 rounded-md border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-400 dark:hover:bg-emerald-900/60 px-2.5 py-1.5 text-xs font-medium shadow-sm transition-colors"
+                          className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1 shadow-sm"
                         >
-                          <RotateCcw className="h-3.5 w-3.5" /> Restore
-                        </button>
+                          <RotateCcw className="h-3 w-3" />
+                          <span>Restore</span>
+                        </Button>
                       </div>
                     </td>
                   </motion.tr>
@@ -616,16 +605,6 @@ const ArchivedCitizensTable = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* 🔵 VIEW CITIZEN MODAL (same component used by the Active Accounts table) */}
-      <View_Citizens
-        isOpen={isViewOpen}
-        citizen={viewingCitizen}
-        onClose={() => {
-          setIsViewOpen(false);
-          setViewingCitizen(null);
-        }}
-      />
     </>
   );
 };

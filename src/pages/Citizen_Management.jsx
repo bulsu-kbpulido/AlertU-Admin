@@ -13,7 +13,7 @@ import {
   Search, 
   Users, 
   Archive, 
-  Eye, 
+  ExternalLink, 
   Edit3, 
   FolderArchive, 
   ChevronLeft, 
@@ -734,7 +734,7 @@ const CitizenManagement = () => {
                               onClick={() => openModal('view', citizen)}
                               className="text-xs font-medium inline-flex items-center gap-1"
                             >
-                              <Eye className="h-3 w-3" />
+                              <ExternalLink className="h-3 w-3" />
                               <span>View</span>
                             </Button>
 

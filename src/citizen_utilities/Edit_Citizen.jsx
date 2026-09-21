@@ -51,6 +51,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from 'sonner';
 
 const robotoStyle = { fontFamily: "'Roboto', sans-serif" };
 
@@ -420,10 +421,15 @@ const Edit_Citizen = ({ isOpen, onClose, citizen, onRefresh }) => {
       }
 
       if (onRefresh) onRefresh();
+      toast.success(
+        `${updateData.fullName || citizen.fullName || 'Resident'} profile updated successfully.`,
+        { duration: 10000 }
+      );
       handleClose();
     } catch (err) {
       console.error("Error updating resident profile:", err);
       setError(err.message || 'Failed to update resident profile. Please try again.');
+      toast.error('Failed to update resident profile. Please try again.', { duration: 10000 });
     } finally {
       setLoading(false);
     }
