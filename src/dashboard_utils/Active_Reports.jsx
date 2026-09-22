@@ -90,7 +90,7 @@ export default function Active_Reports() {
         {/* Left Column: Label, Big Number, & Sub-label */}
         <div className="min-w-0 flex flex-col justify-center">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-            Active Reports
+            Verified Reports
           </p>
 
           <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight my-1.5 leading-none">
@@ -105,7 +105,7 @@ export default function Active_Reports() {
           </h3>
 
           <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400 truncate">
-            Verified reports
+            Approved, not yet resolved
           </p>
         </div>
 
