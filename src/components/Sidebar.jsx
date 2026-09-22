@@ -16,6 +16,7 @@ import {
   BarChart3,
   Building2,
   X,
+  Siren,
 } from 'lucide-react';
 import { auth } from '../firebase'; // Adjust path to your firebase config
 import useAuditLog from '../useAuditLog'; // Adjust path if needed
@@ -67,6 +68,7 @@ export default function Sidebar({
     { id: 'create-reports', label: 'Create Report', icon: FilePlus2 },
     { id: 'send-reports', label: 'Send Reports', icon: Radio },
     { id: 'report-management', label: 'Manage Reports', icon: FolderKanban },
+    { id: 'alerts', label: 'Alerts', icon: Siren },
     { id: 'citizen-management', label: 'Manage Citizens', icon: Users },
     { id: 'settings', label: 'Profile Settings', icon: SettingsIcon },
   ];
@@ -353,7 +355,7 @@ export default function Sidebar({
               isCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
             }`}
           >
-            Logout Session
+            Log Out
           </span>
         </button>
       </div>

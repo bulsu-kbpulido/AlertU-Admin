@@ -9,6 +9,7 @@ import Navbar from './components/Navbar';
 import Send_Reports from './pages/Send_Reports';
 import Report_Management from './pages/Report_Management';
 import Citizen_Management from './pages/Citizen_Management';
+import Alert_Management from './pages/Alert_Management';
 import Settings from './pages/Settings';
 import PublicReportPage from './pages/PublicReportPage';
 import PublicReportPage2 from './pages/PublicReportPage2';
@@ -421,6 +422,8 @@ function AppRoutes() {
       document.title = 'Manage Reports – AlertU';
     } else if (path.startsWith('/admin/citizen-management')) {
       document.title = 'Manage Citizens – AlertU';
+    } else if (path.startsWith('/admin/alerts')) {
+      document.title = 'Alerts – AlertU';
     } else if (path.startsWith('/admin/settings')) {
       document.title = 'Profile Settings – AlertU';
     } else if (path.startsWith('/admin/dashboard')) {
@@ -684,6 +687,22 @@ function AppRoutes() {
               onSelectSos={selectSosAlert}
             >
               <Citizen_Management />
+            </AdminDashboardShell>
+          ) : <Navigate to="/" replace />
+        } />
+
+        <Route path="/admin/alerts" element={
+          isAuthenticated ? (
+            <AdminDashboardShell
+              currentPage="alerts"
+              onNavigate={handleNavigation}
+              pageTitle={staticTitle}
+              darkMode={darkMode}
+              setDarkMode={setDarkMode}
+              onLogout={handleLogout}
+              onSelectSos={selectSosAlert}
+            >
+              <Alert_Management />
             </AdminDashboardShell>
           ) : <Navigate to="/" replace />
         } />
