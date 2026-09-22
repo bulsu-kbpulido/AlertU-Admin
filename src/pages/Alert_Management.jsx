@@ -37,6 +37,7 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 import { useAuditLog } from '../useAuditLog';
+import { fetchFromBackend } from '../api';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -435,6 +436,15 @@ export default function Alert_Management() {
       console.warn('Firestore update warning:', err.message);
     }
 
+    // Direct FCM broadcast trigger via Backend
+    fetchFromBackend('/alerts/broadcast', {
+      method: 'POST',
+      body: JSON.stringify({
+        alertId: alertItem.id,
+        alertData: { ...alertItem, status: 'active' },
+      }),
+    }).catch(() => {});
+
     logMovement('ALERT_BROADCAST_NOW', alertItem.id, { title: alertItem.title });
     toast.success('Alert Broadcasted', {
       description: `"${alertItem.title}" is now active in the system.`,
@@ -475,6 +485,15 @@ export default function Alert_Management() {
     } catch (err) {
       console.warn('Firestore update warning:', err.message);
     }
+
+    // Direct FCM broadcast trigger via Backend
+    fetchFromBackend('/alerts/broadcast', {
+      method: 'POST',
+      body: JSON.stringify({
+        alertId: alertItem.id,
+        alertData: { ...alertItem, status: 'active' },
+      }),
+    }).catch(() => {});
 
     logMovement('ALERT_RESENT', alertItem.id, { title: alertItem.title });
     toast.success('Alert Resent', {
@@ -680,6 +699,20 @@ export default function Alert_Management() {
       toast.success(asDraft ? 'Draft Saved' : 'Alert Created & Broadcasted', {
         description: `"${newAlert.title}" is now ${calculatedStatus}.`,
       });
+    }
+
+    // Direct FCM broadcast trigger via Backend if alert is active
+    if (calculatedStatus === 'active') {
+      const activePayload = selectedAlertForEdit
+        ? { ...selectedAlertForEdit, ...formData, status: 'active' }
+        : { ...formData, status: 'active' };
+      fetchFromBackend('/alerts/broadcast', {
+        method: 'POST',
+        body: JSON.stringify({
+          alertId: selectedAlertForEdit ? selectedAlertForEdit.id : undefined,
+          alertData: activePayload,
+        }),
+      }).catch(() => {});
     }
 
     setCurrentView('list');
