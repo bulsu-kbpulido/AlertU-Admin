@@ -251,13 +251,12 @@ export default function BaranggayRanking_Charts({
       <div className="flex items-center justify-between mb-4">
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-2">
-            <div className="h-4 w-4 text-amber-500" />
             <h3 className="text-sm font-semibold tracking-wide text-slate-800 dark:text-slate-200 uppercase">
-              Most Affected Barangays Based on Months
+              Most Affected Barangays This Month
             </h3>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Real-time tally of approved & resolved incident reports
+            Ranked by resolved incident reports
           </p>
         </div>
 
@@ -318,7 +317,7 @@ export default function BaranggayRanking_Charts({
               <AnimatePresence mode="popLayout">
                 {rankings.map((row) => (
                   <motion.tr
-                    key={row.name}
+                    key={row.rank}
                     layout
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}

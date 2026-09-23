@@ -4,7 +4,7 @@ import { Badge } from '@mantine/core';
 import {
   LayoutDashboard,
   FilePlus2,
-  Radio,
+  Send,
   FolderKanban,
   Users,
   Settings as SettingsIcon,
@@ -66,8 +66,8 @@ export default function Sidebar({
   // Core structural views
   const menuItems = [
     { id: 'create-reports', label: 'Create Report', icon: FilePlus2 },
-    { id: 'send-reports', label: 'Send Reports', icon: Radio },
-    { id: 'report-management', label: 'Manage Reports', icon: FolderKanban },
+    { id: 'send-reports', label: 'Dispatch Report', icon: Send },
+    { id: 'report-management', label: 'Verify Reports', icon: FolderKanban },
     { id: 'alerts', label: 'Alerts', icon: Siren },
     { id: 'citizen-management', label: 'Manage Citizens', icon: Users },
     { id: 'settings', label: 'Profile Settings', icon: SettingsIcon },

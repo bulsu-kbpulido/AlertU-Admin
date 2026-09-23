@@ -196,10 +196,10 @@ export default function Agencies_RankingTable() {
       <div className="flex items-start justify-between">
         <div className="flex flex-col gap-0.5">
           <h3 className="text-sm font-semibold tracking-wide text-slate-800 dark:text-slate-200 uppercase">
-            Most Agencies in this Month
+            Top Agencies This Month
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Monthly agency incident workload distributions.
+            Ranked by total incidents handled this month
           </p>
         </div>
 

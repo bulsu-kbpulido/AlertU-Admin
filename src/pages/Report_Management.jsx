@@ -730,9 +730,9 @@ export default function Report_Management() {
       {/* Header */}
       <header className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Report Management</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Verify Reports</h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Monitor, verify incoming citizen emergency reports, manage duplicates, dispatch agency responses, and review archives.
+            Verify incoming citizen emergency reports, manage duplicates, dispatch agency responses, and review archives.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -761,7 +761,7 @@ export default function Report_Management() {
             }`}
           >
             <FileText className="h-4 w-4" />
-            Active Reports
+            For Verification
             {activeTab === 'active' && (
               <span className="ml-1 rounded-full bg-slate-200/80 dark:bg-slate-800 px-2 py-0.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
                 {reports.length}
@@ -898,7 +898,7 @@ export default function Report_Management() {
                       >
                         <td colSpan={6} className="py-12 text-center text-slate-500 dark:text-slate-400">
                           <AlertTriangle className="mx-auto h-8 w-8 text-slate-400 dark:text-slate-600 mb-2" />
-                          No active reports match your selected criteria.
+                          No reports currently need verification.
                         </td>
                       </motion.tr>
                     ) : (

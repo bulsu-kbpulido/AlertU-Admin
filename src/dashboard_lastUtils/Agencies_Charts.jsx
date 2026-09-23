@@ -268,10 +268,10 @@ export default function Agencies_Charts({ initialDateValue = null }) {
       <div className="flex items-start justify-between mb-2 z-20">
         <div className="flex flex-col gap-0.5">
           <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 tracking-wide uppercase">
-            Agency Daily Dispatch Volumes
+            Daily Reports per Agency
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Real-time daily tally of approved and resolved incidents assigned per agency.
+            How many reports each agency handled today
           </p>
         </div>
 
