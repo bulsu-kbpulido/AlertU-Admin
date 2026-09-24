@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
-import { useGesture } from '@use-gesture/react';
 import { useSpring, animated } from 'react-spring';
 
 const Dashboard_Wrapper = forwardRef(({ children }, ref) => {
@@ -69,70 +68,15 @@ const Dashboard_Wrapper = forwardRef(({ children }, ref) => {
     };
   }, [api]);
 
-  const isTargetingInteractiveUI = (event, direction = 0) => {
-    if (!event || !event.target) return false;
-    
-    // Only target actual map viewport, not Chart.js canvas elements
-    const isMap = !!event.target.closest('.ol-viewport');
-    const isPopover = !!(
-      event.target.closest('[data-radix-popper-content-wrapper]') || 
-      event.target.closest('[role="dialog"]') ||
-      event.target.tagName === 'SELECT' ||
-      event.target.tagName === 'OPTION'
-    );
-
-    if (isMap || isPopover) return true;
-
-    const scrollableParent = event.target.closest('.overflow-y-auto, .overflow-auto, [data-scrollable="true"], tbody');
-    
-    if (scrollableParent) {
-      const { scrollTop, scrollHeight, clientHeight } = scrollableParent;
-      const canScrollDown = scrollHeight - clientHeight > 1 && scrollTop + clientHeight < scrollHeight - 2;
-      const canScrollUp = scrollHeight - clientHeight > 1 && scrollTop > 2;
-
-      if (direction > 0 && canScrollDown) return true;
-      if (direction < 0 && canScrollUp) return true;
-    }
-
-    return false;
-  };
-
-  const bind = useGesture(
-    {
-      onWheel: ({ velocity: [, vy], direction: [, dy], event }) => {
-        if (isTargetingInteractiveUI(event, dy)) return;
-        if (isTransitioning.current || vy < 0.3) return;
-        
-        const currentIndex = activeIndexRef.current;
-        if (dy > 0) {
-          scrollToSection(currentIndex + 1);
-        } else if (dy < 0) {
-          scrollToSection(currentIndex - 1);
-        }
-      },
-      onDrag: ({ velocity: [, vy], direction: [, dy], last, event }) => {
-        const moveDir = dy < 0 ? 1 : dy > 0 ? -1 : 0;
-        if (isTargetingInteractiveUI(event, moveDir)) return;
-        if (!last || isTransitioning.current || vy < 0.3) return;
-
-        const currentIndex = activeIndexRef.current;
-        if (dy < 0) {
-          scrollToSection(currentIndex + 1);
-        } else if (dy > 0) {
-          scrollToSection(currentIndex - 1);
-        }
-      }
-    },
-    { 
-      wheel: { eventOptions: { passive: false } },
-      drag: { filterTaps: true }
-    }
-  );
+  // Navigation between subsections is now click/route-driven only (via
+  // scrollToSection, called from Dashboard.jsx on route change). The
+  // previous wheel/drag gesture handling that snapped between sections
+  // on scroll has been removed so normal scrolling inside each section
+  // (overflow-y-auto panels, tables, etc.) never gets intercepted.
 
   return (
     <div 
-      {...bind()} 
-      className="w-full h-full overflow-hidden bg-transparent text-slate-800 touch-none select-none"
+      className="w-full h-full overflow-hidden bg-transparent text-slate-800"
     >
       <animated.div 
         style={{ transform: styles.y.to(y => `translateY(${y}%)`) }}
