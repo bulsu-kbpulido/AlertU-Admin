@@ -201,7 +201,11 @@ export default function Sidebar({
         </div>
 
       {/* NAVIGATION AREA */}
-      <nav className="flex-1 space-y-1.5 overflow-y-auto overflow-x-hidden px-3 py-5">
+      <nav className="flex-1 space-y-1.5 overflow-y-auto overflow-x-hidden px-3 py-5
+        [scrollbar-width:thin] [scrollbar-color:theme(colors.slate.300)_transparent] dark:[scrollbar-color:theme(colors.slate.700)_transparent]
+        [&::-webkit-scrollbar]:w-[6px]
+        [&::-webkit-scrollbar-track]:bg-transparent
+        [&::-webkit-scrollbar-thumb]:bg-slate-300 dark:[&::-webkit-scrollbar-thumb]:bg-slate-700 [&::-webkit-scrollbar-thumb]:rounded-full">
         
         {/* DASHBOARD PARENT ELEMENT */}
         <div className="space-y-1">
