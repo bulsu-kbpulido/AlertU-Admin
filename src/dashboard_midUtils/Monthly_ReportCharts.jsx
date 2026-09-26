@@ -655,7 +655,7 @@ export default function Monthly_ReportCharts({ reports: propReports = [] }) {
             </span>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
-            Incident types and resolution status for the month
+            Categorical & resolved distribution for the selected month
           </p>
         </div>
 

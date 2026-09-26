@@ -385,7 +385,7 @@ const ReportMapPreview = ({ report, isTerminalState }) => {
 };
 
 export default function Send_Report() {
-  useDocumentTitle('Dispatch Report – AlertU');
+  useDocumentTitle('Send Reports – AlertU');
 
   const [activeTab, setActiveTab] = useState('approved'); 
   const [reports, setReports] = useState([]);
@@ -628,10 +628,10 @@ export default function Send_Report() {
           <div className="space-y-1">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
               <Send className="h-7 w-7 text-blue-600 dark:text-blue-400 shrink-0" />
-              <span>Dispatch Report</span>
+              <span>Send Reports</span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-              {activeTab === 'approved' && 'View verified incident reports and dispatch them to responding agencies.'}
+              {activeTab === 'approved' && 'View verified incident reports and share updates.'}
               {activeTab === 'resolved' && 'View reports that have been completed and resolved.'}
               {activeTab === 'archived' && 'View older archived incident records.'}
             </p>
@@ -648,7 +648,7 @@ export default function Send_Report() {
               }`}
             >
               <Send className="h-4 w-4" />
-              <span>For Dispatch {activeTab === 'approved' ? `(${reports.length})` : ''}</span>
+              <span>Approved {activeTab === 'approved' ? `(${reports.length})` : ''}</span>
             </button>
             <button
               onClick={() => setActiveTab('resolved')}
@@ -753,7 +753,7 @@ export default function Send_Report() {
                 <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mt-1">
                   {searchTerm 
                     ? 'No reports matched your search keyword.' 
-                    : 'There are currently no reports ready for dispatch.'}
+                    : 'There are currently no reports in the approved section.'}
                 </p>
               </div>
             ) : (

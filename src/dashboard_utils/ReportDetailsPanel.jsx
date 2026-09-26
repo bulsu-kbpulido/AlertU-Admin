@@ -124,7 +124,7 @@ export default function ReportDetailsPanel({
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">
-              Live Incident Feed
+              Live Maps Feed
             </span>
           </div>
         </div>

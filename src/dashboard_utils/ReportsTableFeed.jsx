@@ -158,7 +158,7 @@ export default function ReportsTableFeed({
   filteredReports = [], 
   setSelectedReport
 }) {
-  // Managed local state for pagination
+  // Managed local state for pagination (locked at 2 rows per page)
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 2,
@@ -349,10 +349,10 @@ export default function ReportsTableFeed({
       <CardHeader className="py-3 px-4 sm:px-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/40 dark:bg-slate-900/30">
         <div className="flex items-baseline gap-2 sm:flex-col sm:items-start sm:gap-0 min-w-0">
           <CardTitle className="text-sm font-bold tracking-tight text-slate-900 dark:text-slate-50 uppercase truncate">
-            Recent Incidents
+            Incident Reports Feed
           </CardTitle>
           <CardDescription className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 hidden sm:block truncate">
-            Latest active and resolved reports
+            Real-time feed filtered by active criteria and tab context
           </CardDescription>
         </div>
         
