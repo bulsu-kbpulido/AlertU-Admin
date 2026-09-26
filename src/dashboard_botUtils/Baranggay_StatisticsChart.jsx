@@ -421,10 +421,10 @@ export default function Baranggay_StatisticsChart({ reports = [] }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 z-20">
         <div>
           <h3 className="text-xs font-bold tracking-tight text-slate-900 dark:text-slate-100 uppercase">
-            Incidents by Barangay
+            Reports per Barangay
           </h3>
           <p className="text-[11px] text-slate-500 dark:text-slate-400">
-            Breakdown of emergency reports by area
+            Emergency reports by area
           </p>
         </div>
 

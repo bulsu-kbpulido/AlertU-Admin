@@ -711,7 +711,7 @@ export default function Weekly_ReportCharts({
         <div className="flex flex-col gap-0.5 w-full">
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 tracking-wide uppercase whitespace-nowrap">
-              Weekly Report Charts
+              Weekly Reports
             </h3>
             <span
               className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide border shrink-0 ${
@@ -725,7 +725,7 @@ export default function Weekly_ReportCharts({
             </span>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
-            Combined active vs resolved metrics visualization.
+            Fire, flood, and accident reports this week
           </p>
         </div>
 

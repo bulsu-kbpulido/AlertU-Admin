@@ -4,7 +4,7 @@ import { Badge } from '@mantine/core';
 import {
   LayoutDashboard,
   FilePlus2,
-  Radio,
+  Send,
   FolderKanban,
   Users,
   Settings as SettingsIcon,
@@ -66,8 +66,8 @@ export default function Sidebar({
   // Core structural views
   const menuItems = [
     { id: 'create-reports', label: 'Create Report', icon: FilePlus2 },
-    { id: 'send-reports', label: 'Send Reports', icon: Radio },
-    { id: 'report-management', label: 'Manage Reports', icon: FolderKanban },
+    { id: 'send-reports', label: 'Dispatch Report', icon: Send },
+    { id: 'report-management', label: 'Verify Reports', icon: FolderKanban },
     { id: 'alerts', label: 'Alerts', icon: Siren },
     { id: 'citizen-management', label: 'Manage Citizens', icon: Users },
     { id: 'settings', label: 'Profile Settings', icon: SettingsIcon },
@@ -201,7 +201,11 @@ export default function Sidebar({
         </div>
 
       {/* NAVIGATION AREA */}
-      <nav className="flex-1 space-y-1.5 overflow-y-auto overflow-x-hidden px-3 py-5">
+      <nav className="flex-1 space-y-1.5 overflow-y-auto overflow-x-hidden px-3 py-5
+        [scrollbar-width:thin] [scrollbar-color:theme(colors.slate.300)_transparent] dark:[scrollbar-color:theme(colors.slate.700)_transparent]
+        [&::-webkit-scrollbar]:w-[6px]
+        [&::-webkit-scrollbar-track]:bg-transparent
+        [&::-webkit-scrollbar-thumb]:bg-slate-300 dark:[&::-webkit-scrollbar-thumb]:bg-slate-700 [&::-webkit-scrollbar-thumb]:rounded-full">
         
         {/* DASHBOARD PARENT ELEMENT */}
         <div className="space-y-1">
