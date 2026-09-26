@@ -40,7 +40,7 @@ const BULACAN_BOUNDS = {
 
 const HAZARD_TYPES = ['None', 'Electrical', 'Chemical', 'Fire', 'Others'];
 const SEVERITY_LEVELS = ['Low', 'Medium', 'High'];
-const INCIDENT_TYPES = ['Fire', 'Flood', 'Accident', 'Others'];
+const INCIDENT_TYPES = ['Fire', 'Flood', 'Accident', 'Earthquake', 'Others'];
 
 export default function Create_Reports() {
   useDocumentTitle('Create Reports – AlertU');

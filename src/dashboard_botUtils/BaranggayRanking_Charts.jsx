@@ -79,7 +79,7 @@ function parseAddressToBarangay(text) {
   if (!text) return 'Unknown Location';
   let str = text.trim();
   // Clean off prefixed incident descriptors if present
-  str = str.replace(/^(fire|accident|flood|incident|medical|crime)\s+(at|in|near)\s+/i, '');
+  str = str.replace(/^(fire|accident|flood|earthquake|quake|incident|medical|crime)\s+(at|in|near)\s+/i, '');
   str = str.replace(/\s+/g, ' ').trim();
   return str.replace(/\b\w/g, char => char.toUpperCase());
 }

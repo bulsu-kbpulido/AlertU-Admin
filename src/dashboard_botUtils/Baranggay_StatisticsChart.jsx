@@ -271,9 +271,10 @@ export default function Baranggay_StatisticsChart({ reports = [] }) {
       if (rawType.includes('fire')) type = 'fire';
       else if (rawType.includes('flood')) type = 'flood';
       else if (rawType.includes('accident')) type = 'accident';
+      else if (rawType.includes('quake') || rawType.includes('earthquake')) type = 'earthquake';
 
       if (!brgyMap[brgyName]) {
-        brgyMap[brgyName] = { fire: 0, flood: 0, accident: 0, others: 0, total: 0 };
+        brgyMap[brgyName] = { fire: 0, flood: 0, accident: 0, earthquake: 0, others: 0, total: 0 };
       }
 
       brgyMap[brgyName][type] += 1;
@@ -289,6 +290,7 @@ export default function Baranggay_StatisticsChart({ reports = [] }) {
         fire: [0, 0, 0, 0, 0, 0],
         flood: [0, 0, 0, 0, 0, 0],
         accident: [0, 0, 0, 0, 0, 0],
+        earthquake: [0, 0, 0, 0, 0, 0],
         others: [0, 0, 0, 0, 0, 0],
         totalLogs: 0
       };
@@ -297,10 +299,11 @@ export default function Baranggay_StatisticsChart({ reports = [] }) {
     const fire = labels.map(l => brgyMap[l].fire);
     const flood = labels.map(l => brgyMap[l].flood);
     const accident = labels.map(l => brgyMap[l].accident);
+    const earthquake = labels.map(l => brgyMap[l].earthquake);
     const others = labels.map(l => brgyMap[l].others);
     const totalLogs = labels.reduce((sum, l) => sum + brgyMap[l].total, 0);
 
-    return { labels, fire, flood, accident, others, totalLogs };
+    return { labels, fire, flood, accident, earthquake, others, totalLogs };
   }, [filteredReports]);
 
   // Stacked Chart Config
@@ -328,6 +331,14 @@ export default function Baranggay_StatisticsChart({ reports = [] }) {
         data: barangayData.accident,
         backgroundColor: 'rgba(245, 158, 11, 0.85)',
         borderColor: 'rgb(245, 158, 11)',
+        borderWidth: 1,
+        borderRadius: 4,
+      },
+      {
+        label: 'Earthquake',
+        data: barangayData.earthquake,
+        backgroundColor: 'rgba(120, 53, 15, 0.85)',
+        borderColor: 'rgb(120, 53, 15)',
         borderWidth: 1,
         borderRadius: 4,
       },
