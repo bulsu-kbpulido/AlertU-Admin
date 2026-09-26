@@ -178,7 +178,7 @@ export default function ReportedIncidentModal({
   useEffect(() => {
     if (isOpen && selectedReport) {
       const initialType = selectedReport?.verifiedIncidentType || selectedReport?.incidentType || selectedReport?.hazard || 'Fire';
-      const predefined = ['Fire', 'Flood', 'Accident'];
+      const predefined = ['Fire', 'Flood', 'Accident', 'Earthquake'];
       
       if (predefined.includes(initialType)) {
         setSelectionMode(initialType);
@@ -527,6 +527,7 @@ export default function ReportedIncidentModal({
                       <option value="Fire">Fire</option>
                       <option value="Flood">Flood</option>
                       <option value="Accident">Accident</option>
+                      <option value="Earthquake">Earthquake</option>
                       <option value="Others">Others (Custom)</option>
                     </select>
                     <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none w-4 h-4" />

@@ -13,6 +13,7 @@ const INCIDENT_STYLE_MAP = {
   fire: { bg: 'bg-red-500/10 dark:bg-red-500/15', text: 'text-red-600 dark:text-red-400', border: 'border-red-200 dark:border-red-900/50' },
   flood: { bg: 'bg-blue-500/10 dark:bg-blue-500/15', text: 'text-blue-600 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-900/50' },
   accident: { bg: 'bg-purple-500/10 dark:bg-purple-500/15', text: 'text-purple-600 dark:text-purple-400', border: 'border-purple-200 dark:border-purple-900/50' },
+  earthquake: { bg: 'bg-amber-800/10 dark:bg-amber-800/15', text: 'text-amber-800 dark:text-amber-500', border: 'border-amber-800/20 dark:border-amber-800/50' },
   others: { bg: 'bg-orange-500/10 dark:bg-orange-500/15', text: 'text-orange-600 dark:text-orange-400', border: 'border-orange-200 dark:border-orange-900/50' }
 };
 

@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardDescription, CardTitle } from "@/com
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableHeader, TableRow, TableCell } from "@/components/ui/table";
 import { Pagination } from '@mantine/core';
-import { MapPin, Inbox, Clock, Hash, AlertTriangle, Flame, Waves, Car, HelpCircle } from 'lucide-react';
+import { MapPin, Inbox, Clock, Hash, AlertTriangle, Flame, Waves, Car, HelpCircle, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { parseISO, format } from 'date-fns';
 
@@ -35,6 +35,13 @@ const typeDesignMap = {
     border: 'border-amber-200/60 dark:border-amber-800/50',
     icon: Car,
     label: 'accident'
+  },
+  earthquake: {
+    bg: 'bg-stone-100 dark:bg-stone-900/40',
+    text: 'text-stone-700 dark:text-stone-300',
+    border: 'border-stone-300/60 dark:border-stone-700/50',
+    icon: Activity,
+    label: 'earthquake'
   },
   others: {
     bg: 'bg-slate-100 dark:bg-slate-800/60',
@@ -218,6 +225,7 @@ export default function ReportsTableFeed({
           if (raw.includes('fire')) return 'fire';
           if (raw.includes('flood')) return 'flood';
           if (raw.includes('accident')) return 'accident';
+          if (raw.includes('quake') || raw.includes('earthquake')) return 'earthquake';
           return 'others';
         },
         cell: ({ getValue }) => {

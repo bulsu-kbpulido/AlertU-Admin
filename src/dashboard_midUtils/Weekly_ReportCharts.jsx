@@ -354,7 +354,7 @@ export default function Weekly_ReportCharts({
 
   // Generate chart data matrix grouping active and resolved items together
   const chartData = useMemo(() => {
-    const categories = ['fire', 'flood', 'accident', 'others'];
+    const categories = ['fire', 'flood', 'accident', 'earthquake', 'others'];
 
     let labels = [];
     let matrix = [];
@@ -400,10 +400,11 @@ export default function Weekly_ReportCharts({
         'others'
       ).toLowerCase();
 
-      let catIndex = 3;
+      let catIndex = 4;
       if (type.includes('fire')) catIndex = 0;
       else if (type.includes('flood')) catIndex = 1;
       else if (type.includes('accident')) catIndex = 2;
+      else if (type.includes('quake') || type.includes('earthquake')) catIndex = 3;
 
       if (pickerType === 'single') {
         matrix[0][catIndex] += 1;
@@ -439,7 +440,8 @@ export default function Weekly_ReportCharts({
         { label: 'Fire', data: matrix.map(r => r[0]), backgroundColor: 'rgba(239, 68, 68, 0.85)', borderColor: 'rgb(239, 68, 68)', borderWidth: 1 },
         { label: 'Flood', data: matrix.map(r => r[1]), backgroundColor: 'rgba(59, 130, 246, 0.85)', borderColor: 'rgb(59, 130, 246)', borderWidth: 1 },
         { label: 'Accident', data: matrix.map(r => r[2]), backgroundColor: 'rgba(245, 158, 11, 0.85)', borderColor: 'rgb(245, 158, 11)', borderWidth: 1 },
-        { label: 'Others', data: matrix.map(r => r[3]), backgroundColor: 'rgba(100, 116, 139, 0.85)', borderColor: 'rgb(100, 116, 139)', borderWidth: 1 },
+        { label: 'Earthquake', data: matrix.map(r => r[3]), backgroundColor: 'rgba(120, 53, 15, 0.85)', borderColor: 'rgb(120, 53, 15)', borderWidth: 1 },
+        { label: 'Others', data: matrix.map(r => r[4]), backgroundColor: 'rgba(100, 116, 139, 0.85)', borderColor: 'rgb(100, 116, 139)', borderWidth: 1 },
       ],
     };
   }, [filteredReports, dateValue, pickerType]);

@@ -60,6 +60,7 @@ const getIncidentBadgeStyle = (incidentType) => {
   if (normalized.includes('fire')) return 'bg-red-600 text-white border-red-700';
   if (normalized.includes('flood')) return 'bg-blue-600 text-white border-blue-700';
   if (normalized.includes('accident')) return 'bg-purple-600 text-white border-purple-700';
+  if (normalized.includes('quake') || normalized.includes('earthquake')) return 'bg-amber-800 text-white border-amber-900';
   return 'bg-orange-600 text-white border-orange-700';
 };
 
@@ -126,7 +127,8 @@ export default function PublicReportPage() {
     const iconFile = selectedMarkerIcon || 
       (incidentType?.toLowerCase() === 'fire' ? 'fireicon.png' : 
        incidentType?.toLowerCase() === 'flood' ? 'floodicon.png' : 
-       incidentType?.toLowerCase() === 'accident' ? 'accicon.png' : 'warnicon.png');
+       incidentType?.toLowerCase() === 'accident' ? 'accicon.png' : 
+       incidentType?.toLowerCase().includes('quake') ? 'quakeicon.png' : 'warnicon.png');
     const activeColor = ICON_COLOR_MAP[iconFile] || '#3b82f6';
     setMapPulseColor(activeColor);
 

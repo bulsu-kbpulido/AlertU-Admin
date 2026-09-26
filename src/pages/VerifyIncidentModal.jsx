@@ -60,7 +60,8 @@ const ICON_COLOR_MAP = {
 const DEFAULT_COLOR_MAP = {
   Fire: '#ef4444',
   Flood: '#2563eb',
-  Accident: '#d97706'
+  Accident: '#d97706',
+  Earthquake: '#78350f'
 };
 
 /**
@@ -90,6 +91,7 @@ const getIncidentBadgeStyle = (type) => {
   if (normalized.includes('fire')) return 'bg-red-600 text-white border-red-700';
   if (normalized.includes('flood')) return 'bg-blue-600 text-white border-blue-700';
   if (normalized.includes('accident')) return 'bg-violet-600 text-white border-violet-700';
+  if (normalized.includes('quake') || normalized.includes('earthquake')) return 'bg-amber-800 text-white border-amber-900';
   return 'bg-orange-600 text-white border-orange-700';
 };
 
@@ -131,7 +133,8 @@ export default function VerifyIncidentModal({
   const isFire = incidentType === 'Fire';
   const isFlood = incidentType === 'Flood';
   const isAccident = incidentType === 'Accident';
-  const isOthers = !isFire && !isFlood && !isAccident;
+  const isEarthquake = incidentType === 'Earthquake';
+  const isOthers = !isFire && !isFlood && !isAccident && !isEarthquake;
 
   const [radius, setRadius] = useState(300);
   const [othersMode, setOthersMode] = useState('radius');
@@ -140,6 +143,7 @@ export default function VerifyIncidentModal({
     Fire: 'fireicon.png',
     Flood: 'floodicon.png',
     Accident: 'accicon.png',
+    Earthquake: 'quakeicon.png',
     Others: 'warnicon.png'
   });
 
@@ -191,7 +195,7 @@ export default function VerifyIncidentModal({
   const handleConfirm = async () => {
     let geometryPayload = {};
 
-    if (isFire || (isOthers && othersMode === 'radius')) {
+    if (isFire || isEarthquake || (isOthers && othersMode === 'radius')) {
       geometryPayload = {
         radius: {
           centerLat: activeLat,
@@ -335,8 +339,8 @@ export default function VerifyIncidentModal({
       ? (ICON_COLOR_MAP[currentSelectedIcon] || '#a855f7')
       : (DEFAULT_COLOR_MAP[incidentType] || '#2563eb');
 
-    if (isFire || isOthers) {
-      const showRadius = isFire || (isOthers && othersMode !== 'polyline');
+    if (isFire || isEarthquake || isOthers) {
+      const showRadius = isFire || isEarthquake || (isOthers && othersMode !== 'polyline');
       if (showRadius) {
         const circleZone = new Feature({ geometry: new CircleGeom(centerMeters, radius) });
         circleZone.setStyle(new Style({
@@ -347,7 +351,7 @@ export default function VerifyIncidentModal({
       }
     }
 
-    const showPolyline = !isFire && (!isOthers || othersMode !== 'radius');
+    const showPolyline = !isFire && !isEarthquake && (!isOthers || othersMode !== 'radius');
     if (showPolyline && orsRoutes && orsRoutes.length > 0) {
       const route = orsRoutes[0];
       if (Array.isArray(route)) {
@@ -392,7 +396,7 @@ export default function VerifyIncidentModal({
     }));
     markerSource.current.addFeature(mainMarker);
 
-  }, [incidentType, radius, othersMode, orsRoutes, routeFailed, clickedPoints, activeLat, activeLng, markerMap, isFire, isOthers]);
+  }, [incidentType, radius, othersMode, orsRoutes, routeFailed, clickedPoints, activeLat, activeLng, markerMap, isFire, isEarthquake, isOthers]);
 
   const handleResetWorkspace = () => {
     setClickedPoints([]);
@@ -557,8 +561,8 @@ export default function VerifyIncidentModal({
                   </div>
                 )}
 
-                {/* Radius Containment Controls (Fire, or Custom Radius) */}
-                {(isFire || (isOthers && othersMode === 'radius')) && (
+                {/* Radius Containment Controls (Fire, Earthquake, or Custom Radius) */}
+                {(isFire || isEarthquake || (isOthers && othersMode === 'radius')) && (
                   <div className="bg-slate-50 dark:bg-slate-800/70 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">

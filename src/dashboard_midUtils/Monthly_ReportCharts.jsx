@@ -269,6 +269,7 @@ export default function Monthly_ReportCharts({ reports: propReports = [] }) {
     let fire = 0;
     let flood = 0;
     let accident = 0;
+    let earthquake = 0;
     let others = 0;
     let resolved = 0;
 
@@ -280,24 +281,26 @@ export default function Monthly_ReportCharts({ reports: propReports = [] }) {
         if (type.includes('fire')) fire++;
         else if (type.includes('flood')) flood++;
         else if (type.includes('accident')) accident++;
+        else if (type.includes('quake') || type.includes('earthquake')) earthquake++;
         else others++;
       }
     });
 
-    const total = fire + flood + accident + others + resolved;
+    const total = fire + flood + accident + earthquake + others + resolved;
 
-    return { fire, flood, accident, others, resolved, total };
+    return { fire, flood, accident, earthquake, others, resolved, total };
   }, [filteredReports]);
 
   const chartData = useMemo(() => {
     return {
-      labels: ['Fire (Active)', 'Flood (Active)', 'Accident (Active)', 'Others (Active)', 'Resolved Incidents'],
+      labels: ['Fire (Active)', 'Flood (Active)', 'Accident (Active)', 'Earthquake (Active)', 'Others (Active)', 'Resolved Incidents'],
       datasets: [
         {
           data: [
             categoryCounts.fire,
             categoryCounts.flood,
             categoryCounts.accident,
+            categoryCounts.earthquake,
             categoryCounts.others,
             categoryCounts.resolved
           ],
@@ -305,6 +308,7 @@ export default function Monthly_ReportCharts({ reports: propReports = [] }) {
             'rgba(239, 68, 68, 0.85)',   // Fire Red
             'rgba(59, 130, 246, 0.85)',  // Flood Blue
             'rgba(245, 158, 11, 0.85)',  // Accident Amber
+            'rgba(120, 53, 15, 0.85)',   // Earthquake Brown
             'rgba(100, 116, 139, 0.85)', // Others Gray
             'rgba(16, 185, 129, 0.90)',  // 🟢 Resolved Emerald Green
           ],
@@ -312,6 +316,7 @@ export default function Monthly_ReportCharts({ reports: propReports = [] }) {
             'rgb(239, 68, 68)',
             'rgb(59, 130, 246)',
             'rgb(245, 158, 11)',
+            'rgb(120, 53, 15)',
             'rgb(100, 116, 139)',
             'rgb(16, 185, 129)',
           ],
@@ -431,6 +436,7 @@ export default function Monthly_ReportCharts({ reports: propReports = [] }) {
       excelRows.push(["Fire Incidents (Active)", categoryCounts.fire, "", "", "", "", ""]);
       excelRows.push(["Flood Incidents (Active)", categoryCounts.flood, "", "", "", "", ""]);
       excelRows.push(["Accident Incidents (Active)", categoryCounts.accident, "", "", "", "", ""]);
+      excelRows.push(["Earthquake Incidents (Active)", categoryCounts.earthquake, "", "", "", "", ""]);
       excelRows.push(["Other Incidents (Active)", categoryCounts.others, "", "", "", "", ""]);
       excelRows.push(["Resolved Incidents", categoryCounts.resolved, "", "", "", "", ""]);
       excelRows.push(["TOTAL MONTHLY REPORTS", categoryCounts.total, "", "", "", "", ""]);
@@ -594,6 +600,7 @@ export default function Monthly_ReportCharts({ reports: propReports = [] }) {
           ['Fire Incidents (Active)', String(categoryCounts.fire)],
           ['Flood Incidents (Active)', String(categoryCounts.flood)],
           ['Accident Incidents (Active)', String(categoryCounts.accident)],
+          ['Earthquake Incidents (Active)', String(categoryCounts.earthquake)],
           ['Other Incidents (Active)', String(categoryCounts.others)],
           ['Resolved Incidents', String(categoryCounts.resolved)],
           ['TOTAL MONTHLY REPORTS', String(categoryCounts.total)],

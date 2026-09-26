@@ -135,6 +135,7 @@ const getIncidentBadgeStyle = (type) => {
   if (normalized.includes('fire')) return 'bg-red-600 text-white border-red-700';
   if (normalized.includes('flood')) return 'bg-blue-600 text-white border-blue-700';
   if (normalized.includes('accident')) return 'bg-violet-600 text-white border-violet-700';
+  if (normalized.includes('quake') || normalized.includes('earthquake')) return 'bg-amber-800 text-white border-amber-900';
   return 'bg-orange-600 text-white border-orange-700';
 };
 

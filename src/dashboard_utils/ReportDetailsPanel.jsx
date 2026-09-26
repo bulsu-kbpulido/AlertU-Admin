@@ -7,6 +7,7 @@ const incidentThemeMap = {
   fire: { dot: '#b91c1c', bg: 'rgba(185, 28, 28, 0.08)', text: '#b91c1c' },
   flood: { dot: '#2563eb', bg: 'rgba(37, 99, 235, 0.08)', text: '#2563eb' },
   accident: { dot: '#7c3aed', bg: 'rgba(124, 58, 237, 0.08)', text: '#7c3aed' },
+  earthquake: { dot: '#78350f', bg: 'rgba(120, 53, 15, 0.08)', text: '#78350f' },
   others: { dot: '#f97316', bg: 'rgba(249, 115, 22, 0.08)', text: '#f97316' }
 };
 
@@ -16,6 +17,7 @@ const getIncidentCategory = (typeStr) => {
   if (clean.includes('fire')) return 'fire';
   if (clean.includes('flood')) return 'flood';
   if (clean.includes('acc') || clean.includes('car') || clean.includes('crash') || clean.includes('wreck')) return 'accident';
+  if (clean.includes('quake') || clean.includes('earthquake')) return 'earthquake';
   return 'others';
 };
 
