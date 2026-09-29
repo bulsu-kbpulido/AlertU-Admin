@@ -118,13 +118,24 @@ const compressImage = async (file, maxDim = 1600, quality = 0.82) => {
   }
 };
 
-// The alert is already saved to Firestore when the push broadcast is fired, so a
-// failure here must be visible: residents' phones may not get the push.
+// The alert is already saved to Firestore when the push broadcast is fired.
+// A failed push request is only logged (no toast) so the dashboard stays quiet.
 const notifyBroadcastFailed = (err) => {
   console.warn('Alert broadcast request failed:', err);
-  toast.warning('Alert saved, but the push broadcast failed', {
-    description: 'Phones with the app open may still receive it. Check the server /alerts/broadcast endpoint.',
-  });
+};
+
+// Minimum wait between two Resends of the same alert.
+const RESEND_COOLDOWN_MS = 60 * 1000;
+const RESEND_COOLDOWN_KEY = 'alertu_resend_cooldowns';
+
+const loadResendCooldowns = () => {
+  try {
+    const raw = JSON.parse(localStorage.getItem(RESEND_COOLDOWN_KEY) || '{}');
+    const now = Date.now();
+    return Object.fromEntries(Object.entries(raw).filter(([, until]) => until > now));
+  } catch {
+    return {};
+  }
 };
 
 // Alerts store photos as two parallel arrays: imageUrls (for display / mobile app)
@@ -141,6 +152,30 @@ export default function Alert_Management() {
   const [activeFilter, setActiveFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+
+  // Resend cooldown: alertId -> timestamp (ms) when Resend unlocks again
+  const [resendCooldowns, setResendCooldowns] = useState(loadResendCooldowns);
+  const [cooldownNow, setCooldownNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (Object.keys(resendCooldowns).length === 0) return undefined;
+    const timer = setInterval(() => {
+      const now = Date.now();
+      setCooldownNow(now);
+      setResendCooldowns((prev) => {
+        const next = Object.fromEntries(Object.entries(prev).filter(([, until]) => until > now));
+        if (Object.keys(next).length === Object.keys(prev).length) return prev;
+        try { localStorage.setItem(RESEND_COOLDOWN_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+        return next;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldowns]);
+
+  const getResendSecondsLeft = (id) => {
+    const until = resendCooldowns[id];
+    return until && until > cooldownNow ? Math.ceil((until - cooldownNow) / 1000) : 0;
+  };
 
   // Alerts database state (starts empty, synchronized with Firestore)
   const [alerts, setAlerts] = useState(() => {
@@ -526,6 +561,14 @@ export default function Alert_Management() {
 
   // Resend -> writes to Firestore
   const handleResend = async (alertItem) => {
+    if (getResendSecondsLeft(alertItem.id) > 0) return;
+    const until = Date.now() + RESEND_COOLDOWN_MS;
+    setCooldownNow(Date.now());
+    setResendCooldowns((prev) => {
+      const next = { ...prev, [alertItem.id]: until };
+      try { localStorage.setItem(RESEND_COOLDOWN_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
     const now = dayjs().tz(PHILIPPINE_TIMEZONE);
     const nowFormatted = now.format('MMM D, YYYY, hh:mm A');
     const expMs = calculateExpirationMs(alertItem.expiresIn || '1 Hour');
@@ -1226,18 +1269,27 @@ export default function Alert_Management() {
                             </button>
                           )}
 
-                          {/* Resend button (for active & sent alerts) */}
-                          {(itemStatus === 'active' || itemStatus === 'sent') && (
-                            <button
-                              type="button"
-                              onClick={() => handleResend(item)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-xs cursor-pointer"
-                              title="Resend Alert"
-                            >
-                              <RotateCw className="h-3.5 w-3.5" />
-                              <span>Resend</span>
-                            </button>
-                          )}
+                          {/* Resend button (for active & sent alerts) - 1 min cooldown */}
+                          {(itemStatus === 'active' || itemStatus === 'sent') && (() => {
+                            const secondsLeft = getResendSecondsLeft(item.id);
+                            const coolingDown = secondsLeft > 0;
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => handleResend(item)}
+                                disabled={coolingDown}
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white transition-colors shadow-xs ${
+                                  coolingDown
+                                    ? 'bg-slate-400 cursor-not-allowed'
+                                    : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
+                                }`}
+                                title={coolingDown ? `You can resend again in ${secondsLeft}s` : 'Resend Alert'}
+                              >
+                                <RotateCw className="h-3.5 w-3.5" />
+                                <span>{coolingDown ? `Resend in ${secondsLeft}s` : 'Resend'}</span>
+                              </button>
+                            );
+                          })()}
 
                           {/* Send Now button (for scheduled & draft alerts) */}
                           {(itemStatus === 'scheduled' || itemStatus === 'draft') && (
