@@ -92,12 +92,16 @@ const LOCAL_STORAGE_KEY = 'alertu_admin_alerts_cache_v3';
 const MAX_ALERT_PHOTOS = 5;
 const MAX_PHOTO_SIZE_MB = 10;
 
-// Downscale + re-encode photos before upload. Phone photos are often 3-10MB;
-// 1600px JPEG is plenty for an alert and uploads several times faster.
+// Convert every photo to WebP (and downscale it) before upload. WebP is much
+// smaller than JPEG/PNG at the same quality, keeps transparency, and both
+// Android and iOS load it natively. Animated GIFs and SVGs are left alone
+// because a canvas would flatten them.
 const compressImage = async (file, maxDim = 1600, quality = 0.82) => {
   try {
     if (!file.type.startsWith('image/') || file.type === 'image/gif' || file.type === 'image/svg+xml') return file;
-    if (file.size < 250 * 1024) return file; // already small
+    // Already a small WebP: nothing to gain from re-encoding.
+    if (file.type === 'image/webp' && file.size < 250 * 1024) return file;
+
     const bitmap = await createImageBitmap(file);
     const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
     const w = Math.round(bitmap.width * scale);
@@ -105,16 +109,15 @@ const compressImage = async (file, maxDim = 1600, quality = 0.82) => {
     const canvas = document.createElement('canvas');
     canvas.width = w;
     canvas.height = h;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#fff'; // flatten transparency for JPEG
-    ctx.fillRect(0, 0, w, h);
-    ctx.drawImage(bitmap, 0, 0, w, h);
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h); // WebP keeps transparency
     bitmap.close?.();
-    const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', quality));
-    if (!blob || blob.size >= file.size) return file;
-    return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+
+    const blob = await new Promise((res) => canvas.toBlob(res, 'image/webp', quality));
+    // Browsers without WebP encoding silently return PNG; keep the original then.
+    if (!blob || blob.type !== 'image/webp') return file;
+    return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.webp', { type: 'image/webp' });
   } catch {
-    return file; // fall back to the original if anything goes wrong
+    return file; // fall back to the original if the browser can't decode it (e.g. HEIC)
   }
 };
 
