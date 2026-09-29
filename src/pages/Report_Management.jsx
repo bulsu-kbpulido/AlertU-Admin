@@ -343,6 +343,20 @@ export default function Report_Management() {
     setSelectedViewReport(null);
   };
 
+  // Prefill the official title from what the resident wrote when reporting.
+  // Uses the same fields the View modal shows as the resident's details.
+  // Returns '' when the resident added nothing, so the admin can leave it blank.
+  const getResidentDetailsTitle = (report) => {
+    const raw = [report?.notes, report?.description, report?.incidentDetails, report?.citizenNotes]
+      .find((v) => typeof v === 'string' && v.trim());
+    if (!raw) return '';
+    const firstLine = raw.trim().split(/\r?\n/)[0].trim();
+    const MAX = 100;
+    if (firstLine.length <= MAX) return firstLine;
+    const cut = firstLine.slice(0, MAX);
+    return `${cut.slice(0, Math.max(cut.lastIndexOf(' '), 60)).trim()}…`;
+  };
+
   const openVerifyWorkflow = (report) => {
     if (!report) return;
   
@@ -381,7 +395,7 @@ export default function Report_Management() {
   
     setSelectedReport(normalizedReport);
     setCurrentStep(1);
-    setReportTitle('');
+    setReportTitle(getResidentDetailsTitle(report));
     setSelectedAgencies([]);
     setIsSensitive(report.isSensitive || false);
     
@@ -494,8 +508,8 @@ export default function Report_Management() {
         incidentType: verifiedIncidentType.toLowerCase(),
         verifiedSeverity,
         hazard: secondaryHazard === 'Others' ? customSecondaryHazard.trim() : secondaryHazard,
-        adminNotes,
-        reportTitle,
+        adminNotes: (adminNotes || '').trim(),
+        reportTitle: (reportTitle || '').trim(),
         selectedAgencies: selectedAgencies.map(agency => ({ id: agency.id, name: agency.name })), 
         verifiedAt: new Date().toISOString(),
         correctedLatitude: customLocation.lat,
@@ -531,7 +545,7 @@ export default function Report_Management() {
           userId: targetAuthUid,                  // Firebase UID room
           authUid: targetAuthUid,
           citizenID: targetCitizenId,              // Legacy citizenID room
-          title: reportTitle,
+          title: reportTitle.trim() || verifiedIncidentType,
           severity: verifiedSeverity,
           agencies: selectedAgencies,
           location: customLocation,

@@ -3,6 +3,7 @@ import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";            // Added for Login
 import { getFirestore } from "firebase/firestore";  // Added for Database
+import { getStorage } from "firebase/storage";      // Added for alert photo uploads
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -21,3 +22,4 @@ const analytics = getAnalytics(app);
 // Export instances to pull into your React Admin Management panel
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const storage = getStorage(app);

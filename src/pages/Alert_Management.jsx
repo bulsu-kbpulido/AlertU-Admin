@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Bell,
   Clock,
@@ -21,13 +21,16 @@ import {
   MapPin,
   X,
   Siren,
-  ChevronDown
+  ChevronDown,
+  ImagePlus,
+  Loader2
 } from 'lucide-react';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import { toast } from 'sonner';
-import { db, auth } from '../firebase';
+import { db, auth, storage } from '../firebase';
+import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import {
   collection,
   onSnapshot,
@@ -86,6 +89,18 @@ const calculateExpirationMs = (expiresIn) => {
 
 const LOCAL_STORAGE_KEY = 'alertu_admin_alerts_cache_v3';
 
+// Photo attachment limits for alerts / announcements
+const MAX_ALERT_PHOTOS = 5;
+const MAX_PHOTO_SIZE_MB = 10;
+
+// Alerts store photos as two parallel arrays: imageUrls (for display / mobile app)
+// and imagePaths (Storage paths, used for cleanup). Zip them back into objects.
+const getAlertImages = (item) => {
+  const urls = Array.isArray(item?.imageUrls) ? item.imageUrls : [];
+  const paths = Array.isArray(item?.imagePaths) ? item.imagePaths : [];
+  return urls.map((url, i) => ({ url, path: paths[i] || null }));
+};
+
 export default function Alert_Management() {
   // Navigation sub-views: 'list' | 'archive' | 'create' | 'edit'
   const [currentView, setCurrentView] = useState('list');
@@ -122,6 +137,12 @@ export default function Alert_Management() {
     scheduledDateTime: '',
     expiresIn: '1 Hour',
   });
+
+  // Photo attachments: already-saved images (edit mode) + newly picked files not yet uploaded
+  const [existingImages, setExistingImages] = useState([]); // [{ url, path }]
+  const [pendingPhotos, setPendingPhotos] = useState([]);   // [{ id, file, previewUrl }]
+  const [isSaving, setIsSaving] = useState(false);
+  const photoInputRef = useRef(null);
 
   const currentUser = auth.currentUser;
   const { logMovement } = useAuditLog({
@@ -344,7 +365,22 @@ export default function Alert_Management() {
   // Action Handlers Connected to Firestore
   // ---------------------------------------------------------------------------
 
+  const clearPendingPhotos = () => {
+    setPendingPhotos((prev) => {
+      prev.forEach((p) => URL.revokeObjectURL(p.previewUrl));
+      return [];
+    });
+  };
+
+  const closeForm = () => {
+    clearPendingPhotos();
+    setExistingImages([]);
+    setCurrentView('list');
+  };
+
   const handleOpenCreateForm = () => {
+    clearPendingPhotos();
+    setExistingImages([]);
     setSelectedAlertForEdit(null);
     setFormData({
       type: 'General',
@@ -360,6 +396,8 @@ export default function Alert_Management() {
   };
 
   const handleOpenEditForm = (alertItem) => {
+    clearPendingPhotos();
+    setExistingImages(getAlertImages(alertItem));
     setSelectedAlertForEdit(alertItem);
     setFormData({
       type: alertItem.type || 'General',
@@ -586,8 +624,75 @@ export default function Alert_Management() {
     });
   };
 
-  // Form submission: Save changes or publish
+  // ---------------------------------------------------------------------------
+  // Photo attachments
+  // ---------------------------------------------------------------------------
+  const handlePickPhotos = (e) => {
+    const picked = Array.from(e.target.files || []);
+    e.target.value = ''; // allow re-picking the same file
+    if (picked.length === 0) return;
+
+    const slotsLeft = MAX_ALERT_PHOTOS - existingImages.length - pendingPhotos.length;
+    if (slotsLeft <= 0) {
+      toast.error(`You can attach up to ${MAX_ALERT_PHOTOS} photos.`);
+      return;
+    }
+
+    const accepted = [];
+    for (const file of picked) {
+      if (!file.type.startsWith('image/')) {
+        toast.error(`"${file.name}" is not an image.`);
+        continue;
+      }
+      if (file.size > MAX_PHOTO_SIZE_MB * 1024 * 1024) {
+        toast.error(`"${file.name}" is larger than ${MAX_PHOTO_SIZE_MB}MB.`);
+        continue;
+      }
+      accepted.push(file);
+    }
+
+    if (accepted.length > slotsLeft) {
+      toast.warning(`Only ${slotsLeft} more photo${slotsLeft === 1 ? '' : 's'} allowed. Extra files were skipped.`);
+    }
+
+    const toAdd = accepted.slice(0, slotsLeft).map((file) => ({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      file,
+      previewUrl: URL.createObjectURL(file),
+    }));
+    setPendingPhotos((prev) => [...prev, ...toAdd]);
+  };
+
+  const handleRemovePendingPhoto = (id) => {
+    setPendingPhotos((prev) => {
+      const target = prev.find((p) => p.id === id);
+      if (target) URL.revokeObjectURL(target.previewUrl);
+      return prev.filter((p) => p.id !== id);
+    });
+  };
+
+  const handleRemoveExistingPhoto = (url) => {
+    setExistingImages((prev) => prev.filter((img) => img.url !== url));
+  };
+
+  // Upload newly picked files to Firebase Storage under alerts/<alertId>/
+  const uploadPendingPhotos = async (alertId) => {
+    return Promise.all(
+      pendingPhotos.map(async (p, idx) => {
+        const rawExt = (p.file.name.split('.').pop() || 'jpg').toLowerCase();
+        const ext = rawExt.replace(/[^a-z0-9]/g, '') || 'jpg';
+        const path = `alerts/${alertId}/${Date.now()}-${idx}.${ext}`;
+        const fileRef = storageRef(storage, path);
+        await uploadBytes(fileRef, p.file, { contentType: p.file.type });
+        const url = await getDownloadURL(fileRef);
+        return { url, path };
+      })
+    );
+  };
+
+  // Form submission: validate, upload photos, then save / publish
   const handleSaveForm = async (asDraft = false) => {
+    if (isSaving) return;
     if (!formData.title.trim()) {
       toast.error('Please enter an alert title.');
       return;
@@ -600,6 +705,43 @@ export default function Alert_Management() {
       toast.error('Please select at least one Barangay.');
       return;
     }
+
+    setIsSaving(true);
+    try {
+      const targetId = selectedAlertForEdit ? selectedAlertForEdit.id : `alert-${Date.now()}`;
+
+      // Upload first: if this fails we abort so an alert never goes out missing its photos.
+      let uploaded = [];
+      try {
+        uploaded = await uploadPendingPhotos(targetId);
+      } catch (err) {
+        console.error('Alert photo upload failed:', err);
+        toast.error('Photo upload failed', {
+          description: 'Could not upload the photos. Check your connection and try again.',
+        });
+        return;
+      }
+
+      const finalImages = [...existingImages, ...uploaded];
+      await commitAlert(asDraft, targetId, finalImages);
+
+      // Best-effort cleanup of photos the admin removed while editing
+      if (selectedAlertForEdit) {
+        const keptUrls = new Set(finalImages.map((img) => img.url));
+        getAlertImages(selectedAlertForEdit)
+          .filter((img) => img.path && !keptUrls.has(img.url))
+          .forEach((img) => deleteObject(storageRef(storage, img.path)).catch(() => {}));
+      }
+
+      closeForm();
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const commitAlert = async (asDraft, targetId, finalImages) => {
+    const imageUrls = finalImages.map((img) => img.url);
+    const imagePaths = finalImages.map((img) => img.path || '');
 
     const now = dayjs().tz(PHILIPPINE_TIMEZONE);
     const nowFormatted = now.format('MMM D, YYYY, hh:mm A');
@@ -643,6 +785,8 @@ export default function Alert_Management() {
         expiresAt: calculatedExpiresAt,
         targetLocation: locLabel,
         recipientsCount: recipientsLabel,
+        imageUrls,
+        imagePaths,
         updatedAt: new Date().toISOString(),
       };
 
@@ -663,7 +807,7 @@ export default function Alert_Management() {
       toast.success('Alert Updated', { description: `"${updatedAlert.title}" was saved successfully.` });
     } else {
       // CREATE NEW FIRESTORE DOCUMENT
-      const newId = `alert-${Date.now()}`;
+      const newId = targetId;
       const newAlert = {
         id: newId,
         type: formData.type,
@@ -677,6 +821,8 @@ export default function Alert_Management() {
         expiresAt: calculatedExpiresAt,
         targetLocation: locLabel,
         recipientsCount: recipientsLabel,
+        imageUrls,
+        imagePaths,
         createdAt: now.toISOString(),
         isArchived: false,
         createdBy: currentUser?.email || 'admin',
@@ -704,8 +850,8 @@ export default function Alert_Management() {
     // Direct FCM broadcast trigger via Backend if alert is active
     if (calculatedStatus === 'active') {
       const activePayload = selectedAlertForEdit
-        ? { ...selectedAlertForEdit, ...formData, status: 'active' }
-        : { ...formData, status: 'active' };
+        ? { ...selectedAlertForEdit, ...formData, imageUrls, status: 'active' }
+        : { ...formData, imageUrls, status: 'active' };
       fetchFromBackend('/alerts/broadcast', {
         method: 'POST',
         body: JSON.stringify({
@@ -714,8 +860,6 @@ export default function Alert_Management() {
         }),
       }).catch(() => {});
     }
-
-    setCurrentView('list');
   };
 
   // Toggle specific barangay
@@ -963,6 +1107,31 @@ export default function Alert_Management() {
                             {item.message}
                           </p>
 
+                          {/* Photo thumbnails */}
+                          {getAlertImages(item).length > 0 && (
+                            <div className="flex items-center gap-2 pt-1">
+                              {getAlertImages(item).slice(0, 4).map((img, i, arr) => {
+                                const extra = getAlertImages(item).length - arr.length;
+                                return (
+                                  <button
+                                    key={img.url}
+                                    type="button"
+                                    onClick={() => setSelectedAlertForView(item)}
+                                    className="relative h-14 w-14 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 cursor-pointer"
+                                    title="View photos"
+                                  >
+                                    <img src={img.url} alt="Alert attachment" className="h-full w-full object-cover" />
+                                    {i === arr.length - 1 && extra > 0 && (
+                                      <span className="absolute inset-0 bg-black/55 text-white text-xs font-bold flex items-center justify-center">
+                                        +{extra}
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+
                           {/* Meta details row: Recipients | Location | Time */}
                           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-slate-400 pt-1">
                             {item.recipientsCount && (
@@ -1205,8 +1374,9 @@ export default function Alert_Management() {
 
               <button
                 type="button"
-                onClick={() => setCurrentView('list')}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                onClick={closeForm}
+                disabled={isSaving}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -1268,6 +1438,73 @@ export default function Alert_Management() {
                     {formData.message.length} characters
                   </span>
                 </div>
+              </div>
+
+              {/* Photos (optional) */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Photos <span className="normal-case font-medium tracking-normal text-slate-400">(optional)</span>
+                  </label>
+                  <span className="text-xs text-slate-400 dark:text-slate-500">
+                    {existingImages.length + pendingPhotos.length}/{MAX_ALERT_PHOTOS}
+                  </span>
+                </div>
+
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handlePickPhotos}
+                  className="hidden"
+                />
+
+                {(existingImages.length > 0 || pendingPhotos.length > 0) && (
+                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2.5">
+                    {existingImages.map((img) => (
+                      <div key={img.url} className="relative aspect-square rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800">
+                        <img src={img.url} alt="Alert attachment" className="h-full w-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveExistingPhoto(img.url)}
+                          disabled={isSaving}
+                          className="absolute top-1 right-1 h-5 w-5 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center cursor-pointer disabled:opacity-50"
+                          title="Remove photo"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                    {pendingPhotos.map((p) => (
+                      <div key={p.id} className="relative aspect-square rounded-xl overflow-hidden border border-blue-300 dark:border-blue-700 bg-slate-100 dark:bg-slate-800">
+                        <img src={p.previewUrl} alt={p.file.name} className="h-full w-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => handleRemovePendingPhoto(p.id)}
+                          disabled={isSaving}
+                          className="absolute top-1 right-1 h-5 w-5 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center cursor-pointer disabled:opacity-50"
+                          title="Remove photo"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {existingImages.length + pendingPhotos.length < MAX_ALERT_PHOTOS && (
+                  <button
+                    type="button"
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={isSaving}
+                    className="w-full flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 hover:border-blue-400 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 px-4 py-5 text-slate-500 dark:text-slate-400 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ImagePlus className="h-5 w-5" />
+                    <span className="text-xs font-semibold">Click to add photos</span>
+                    <span className="text-[11px] text-slate-400">Up to {MAX_ALERT_PHOTOS} images, {MAX_PHOTO_SIZE_MB}MB each</span>
+                  </button>
+                )}
               </div>
 
               {/* Recipients Radio Options */}
@@ -1403,9 +1640,13 @@ export default function Alert_Management() {
                 <button
                   type="button"
                   onClick={() => handleSaveForm(false)}
-                  className="px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-xs cursor-pointer"
+                  disabled={isSaving}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-xs cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  {currentView === 'edit'
+                  {isSaving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  {isSaving
+                    ? (pendingPhotos.length > 0 ? 'Uploading photos...' : 'Saving...')
+                    : currentView === 'edit'
                     ? 'Save Changes'
                     : formData.isScheduled
                     ? 'Schedule Alert'
@@ -1415,15 +1656,17 @@ export default function Alert_Management() {
                 <button
                   type="button"
                   onClick={() => handleSaveForm(true)}
-                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                  disabled={isSaving}
+                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   Save as Draft
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => setCurrentView('list')}
-                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                  onClick={closeForm}
+                  disabled={isSaving}
+                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
@@ -1455,7 +1698,7 @@ export default function Alert_Management() {
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
               <div>
                 <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                   Title & Status
@@ -1485,6 +1728,27 @@ export default function Alert_Management() {
                   {selectedAlertForView.message}
                 </div>
               </div>
+
+              {getAlertImages(selectedAlertForView).length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    Photos
+                  </p>
+                  <div className="mt-1.5 grid grid-cols-3 gap-2">
+                    {getAlertImages(selectedAlertForView).map((img) => (
+                      <a
+                        key={img.url}
+                        href={img.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block aspect-square rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700"
+                      >
+                        <img src={img.url} alt="Alert attachment" className="h-full w-full object-cover hover:scale-105 transition-transform" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4 text-xs pt-2">
                 <div>

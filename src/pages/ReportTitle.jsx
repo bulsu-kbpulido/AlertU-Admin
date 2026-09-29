@@ -130,7 +130,7 @@ export default function ReportTitle({
 
   // 🚀 Final Submission Handler inside ReportTitle.jsx
   const handleSubmit = async () => {
-    if (!reportTitle.trim() || !notesValue.trim() || selectedAgencies.length === 0 || isSubmitting) return;
+    if (selectedAgencies.length === 0 || isSubmitting) return;
 
     // Guard against invalid or missing target document IDs
     if (!resolvedReportId || resolvedReportId === '_') {
@@ -158,7 +158,7 @@ export default function ReportTitle({
           action: 'REPORT_VERIFIED', // Exactly matches Flutter's isApprovedAction check
           reportId: resolvedReportId,
           reportID: resolvedReportId,
-          title: reportTitle,
+          title: reportTitle.trim() || selectedReport?.incidentType || selectedReport?.hazard || 'Incident Report',
           agencies: selectedAgencies.map((a) => a.id),
           eventId: `verified_${resolvedReportId}_${Date.now()}`,
           timestamp: new Date().toISOString()
@@ -190,7 +190,7 @@ export default function ReportTitle({
     }
   };
 
-  const isSubmitDisabled = !reportTitle.trim() || !notesValue.trim() || selectedAgencies.length === 0 || isSubmitting;
+  const isSubmitDisabled = selectedAgencies.length === 0 || isSubmitting;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/70 backdrop-blur-sm text-slate-800 dark:text-slate-100 font-sans antialiased overflow-y-auto">
@@ -243,7 +243,7 @@ export default function ReportTitle({
             {/* Title Input */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                Official Report Title <span className="text-rose-500">*</span>
+                Official Report Title <span className="text-[10px] font-medium text-slate-400">(optional)</span>
               </label>
               <input 
                 type="text" 
@@ -259,7 +259,7 @@ export default function ReportTitle({
             {/* Operational Notes */}
             <div className="space-y-1.5 flex-1 flex flex-col">
               <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                Admin Notes & Instructions <span className="text-rose-500">*</span>
+                Admin Notes & Instructions <span className="text-[10px] font-medium text-slate-400">(optional)</span>
               </label>
               <textarea
                 disabled={isSubmitting}
@@ -400,7 +400,9 @@ export default function ReportTitle({
               <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm dark:border-slate-700 dark:bg-slate-800/60 space-y-2">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Report Title</p>
-                  <p className="font-bold text-slate-900 dark:text-slate-100 break-words">{reportTitle.trim()}</p>
+                  <p className="font-bold text-slate-900 dark:text-slate-100 break-words">
+                    {reportTitle.trim() || <span className="font-medium italic text-slate-400">No title</span>}
+                  </p>
                 </div>
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
