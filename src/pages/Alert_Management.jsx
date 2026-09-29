@@ -119,6 +119,15 @@ const compressImage = async (file, maxDim = 1600, quality = 0.82) => {
   }
 };
 
+// The alert is already saved to Firestore when the push broadcast is fired, so a
+// failure here must be visible: residents' phones may not get the push.
+const notifyBroadcastFailed = (err) => {
+  console.warn('Alert broadcast request failed:', err);
+  toast.warning('Alert saved, but the push broadcast failed', {
+    description: 'Phones with the app open may still receive it. Check the server /alerts/broadcast endpoint.',
+  });
+};
+
 // Alerts store photos as two parallel arrays: imageUrls (for display / mobile app)
 // and imagePaths (Storage paths, used for cleanup). Zip them back into objects.
 const getAlertImages = (item) => {
@@ -508,7 +517,7 @@ export default function Alert_Management() {
         alertId: alertItem.id,
         alertData: { ...alertItem, status: 'active' },
       }),
-    }).catch(() => {});
+    }).catch((err) => notifyBroadcastFailed(err));
 
     logMovement('ALERT_BROADCAST_NOW', alertItem.id, { title: alertItem.title });
     toast.success('Alert Broadcasted', {
@@ -558,7 +567,7 @@ export default function Alert_Management() {
         alertId: alertItem.id,
         alertData: { ...alertItem, status: 'active' },
       }),
-    }).catch(() => {});
+    }).catch((err) => notifyBroadcastFailed(err));
 
     logMovement('ALERT_RESENT', alertItem.id, { title: alertItem.title });
     toast.success('Alert Resent', {
@@ -911,7 +920,7 @@ export default function Alert_Management() {
           alertId: selectedAlertForEdit ? selectedAlertForEdit.id : undefined,
           alertData: activePayload,
         }),
-      }).catch(() => {});
+      }).catch((err) => notifyBroadcastFailed(err));
     }
   };
 
