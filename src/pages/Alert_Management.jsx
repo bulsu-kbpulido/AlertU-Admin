@@ -17,7 +17,6 @@ import {
   Ban,
   ArrowLeft,
   RotateCcw,
-  Users,
   MapPin,
   X,
   Siren,
@@ -1196,13 +1195,6 @@ export default function Alert_Management() {
 
                           {/* Meta details row: Recipients | Location | Time */}
                           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-slate-400 pt-1">
-                            {item.recipientsCount && (
-                              <span className="inline-flex items-center gap-1.5">
-                                <Users className="h-3.5 w-3.5 text-slate-400" />
-                                <span>{item.recipientsCount}</span>
-                              </span>
-                            )}
-
                             {item.targetLocation && (
                               <span className="inline-flex items-center gap-1.5">
                                 <MapPin className="h-3.5 w-3.5 text-slate-400" />
@@ -1372,13 +1364,6 @@ export default function Alert_Management() {
                             </p>
 
                             <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400 pt-1">
-                              {item.recipientsCount && (
-                                <span className="inline-flex items-center gap-1.5">
-                                  <Users className="h-3.5 w-3.5 text-slate-400" />
-                                  <span>{item.recipientsCount}</span>
-                                </span>
-                              )}
-
                               {item.archivedAtText && (
                                 <span className="inline-flex items-center gap-1.5">
                                   <Archive className="h-3.5 w-3.5 text-slate-400" />
@@ -1819,14 +1804,6 @@ export default function Alert_Management() {
                   </p>
                   <p className="font-medium text-slate-700 dark:text-slate-300 mt-1">
                     {selectedAlertForView.targetLocation || 'All Barangays'}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                    Recipients
-                  </p>
-                  <p className="font-medium text-slate-700 dark:text-slate-300 mt-1">
-                    {selectedAlertForView.recipientsCount || '15,000 residents'}
                   </p>
                 </div>
                 <div>
