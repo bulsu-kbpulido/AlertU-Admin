@@ -23,3 +23,6 @@ const analytics = getAnalytics(app);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+// Fail fast (30s) instead of silently retrying for 10 minutes if Storage rejects/blocks an upload
+storage.maxUploadRetryTime = 30000;
+storage.maxOperationRetryTime = 30000;

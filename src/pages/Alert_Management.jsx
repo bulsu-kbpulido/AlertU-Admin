@@ -30,7 +30,7 @@ import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import { toast } from 'sonner';
 import { db, auth, storage } from '../firebase';
-import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import {
   collection,
   onSnapshot,
@@ -93,6 +93,32 @@ const LOCAL_STORAGE_KEY = 'alertu_admin_alerts_cache_v3';
 const MAX_ALERT_PHOTOS = 5;
 const MAX_PHOTO_SIZE_MB = 10;
 
+// Downscale + re-encode photos before upload. Phone photos are often 3-10MB;
+// 1600px JPEG is plenty for an alert and uploads several times faster.
+const compressImage = async (file, maxDim = 1600, quality = 0.82) => {
+  try {
+    if (!file.type.startsWith('image/') || file.type === 'image/gif' || file.type === 'image/svg+xml') return file;
+    if (file.size < 250 * 1024) return file; // already small
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+    const w = Math.round(bitmap.width * scale);
+    const h = Math.round(bitmap.height * scale);
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff'; // flatten transparency for JPEG
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    bitmap.close?.();
+    const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', quality));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+  } catch {
+    return file; // fall back to the original if anything goes wrong
+  }
+};
+
 // Alerts store photos as two parallel arrays: imageUrls (for display / mobile app)
 // and imagePaths (Storage paths, used for cleanup). Zip them back into objects.
 const getAlertImages = (item) => {
@@ -142,6 +168,7 @@ export default function Alert_Management() {
   const [existingImages, setExistingImages] = useState([]); // [{ url, path }]
   const [pendingPhotos, setPendingPhotos] = useState([]);   // [{ id, file, previewUrl }]
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0); // 0-100
   const photoInputRef = useRef(null);
 
   const currentUser = auth.currentUser;
@@ -676,14 +703,38 @@ export default function Alert_Management() {
   };
 
   // Upload newly picked files to Firebase Storage under alerts/<alertId>/
+  // Files are compressed first, uploaded in parallel, with combined progress.
   const uploadPendingPhotos = async (alertId) => {
+    setUploadProgress(0);
+    const totals = pendingPhotos.map(() => ({ sent: 0, total: 1 }));
+    const report = () => {
+      const sent = totals.reduce((a, t) => a + t.sent, 0);
+      const total = totals.reduce((a, t) => a + t.total, 0);
+      setUploadProgress(total ? Math.round((sent / total) * 100) : 0);
+    };
+
     return Promise.all(
       pendingPhotos.map(async (p, idx) => {
-        const rawExt = (p.file.name.split('.').pop() || 'jpg').toLowerCase();
+        const file = await compressImage(p.file);
+        const rawExt = (file.name.split('.').pop() || 'jpg').toLowerCase();
         const ext = rawExt.replace(/[^a-z0-9]/g, '') || 'jpg';
         const path = `alerts/${alertId}/${Date.now()}-${idx}.${ext}`;
         const fileRef = storageRef(storage, path);
-        await uploadBytes(fileRef, p.file, { contentType: p.file.type });
+        totals[idx].total = file.size || 1;
+
+        await new Promise((resolve, reject) => {
+          const task = uploadBytesResumable(fileRef, file, { contentType: file.type });
+          task.on(
+            'state_changed',
+            (snap) => {
+              totals[idx] = { sent: snap.bytesTransferred, total: snap.totalBytes || file.size || 1 };
+              report();
+            },
+            reject,
+            resolve
+          );
+        });
+
         const url = await getDownloadURL(fileRef);
         return { url, path };
       })
@@ -717,7 +768,9 @@ export default function Alert_Management() {
       } catch (err) {
         console.error('Alert photo upload failed:', err);
         toast.error('Photo upload failed', {
-          description: 'Could not upload the photos. Check your connection and try again.',
+          description: err?.code
+            ? `${err.code} - check Firebase Storage rules/CORS, or your connection.`
+            : 'Could not upload the photos. Check your connection and try again.',
         });
         return;
       }
@@ -1645,7 +1698,7 @@ export default function Alert_Management() {
                 >
                   {isSaving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   {isSaving
-                    ? (pendingPhotos.length > 0 ? 'Uploading photos...' : 'Saving...')
+                    ? (pendingPhotos.length > 0 && uploadProgress < 100 ? `Uploading photos... ${uploadProgress}%` : 'Saving...')
                     : currentView === 'edit'
                     ? 'Save Changes'
                     : formData.isScheduled
