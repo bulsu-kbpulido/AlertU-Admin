@@ -29,7 +29,7 @@ import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import { toast } from 'sonner';
 import { db, auth, storage } from '../firebase';
-import { ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
+import { ref as storageRef, deleteObject } from 'firebase/storage'; // legacy photo cleanup only
 import {
   collection,
   onSnapshot,
@@ -39,7 +39,7 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 import { useAuditLog } from '../useAuditLog';
-import { fetchFromBackend } from '../api';
+import { fetchFromBackend, BASE_URL } from '../api';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -92,13 +92,73 @@ const LOCAL_STORAGE_KEY = 'alertu_admin_alerts_cache_v3';
 const MAX_ALERT_PHOTOS = 5;
 const MAX_PHOTO_SIZE_MB = 10;
 
+// Photos are uploaded through the AlertU server (Backblaze B2), NOT Firebase
+// Storage, so the free Firebase plan is enough. The server returns a permanent
+// public URL that the mobile app and the push notification can load.
+const SERVER_PHOTO_PREFIX = 'admin-reports/';
+const SERVER_ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+const getAuthToken = async () => {
+  try {
+    return auth.currentUser ? await auth.currentUser.getIdToken() : localStorage.getItem('authToken');
+  } catch {
+    return localStorage.getItem('authToken');
+  }
+};
+
+const uploadPhotoToServer = (file, alertId, token, onProgress) =>
+  new Promise((resolve, reject) => {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('reportId', alertId); // stored under admin-reports/<alertId>/
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${BASE_URL}/dispatch-media/upload`);
+    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    xhr.timeout = 120000;
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(e.loaded, e.total);
+    };
+    xhr.onload = () => {
+      let body = {};
+      try { body = JSON.parse(xhr.responseText); } catch { /* not JSON */ }
+      if (xhr.status >= 200 && xhr.status < 300 && body.fileUrl) {
+        resolve({ url: body.fileUrl, path: body.storagePath });
+      } else {
+        const err = new Error(body.error || body.message || `HTTP ${xhr.status}`);
+        err.code = `server/${xhr.status}`;
+        reject(err);
+      }
+    };
+    xhr.onerror = () => reject(Object.assign(new Error('Network error'), { code: 'server/network' }));
+    xhr.ontimeout = () => reject(Object.assign(new Error('Upload timed out'), { code: 'server/timeout' }));
+    xhr.send(form);
+  });
+
+// Removes a photo from wherever it was stored (server B2, or legacy Firebase Storage).
+const deleteStoredPhoto = async (path) => {
+  if (!path) return;
+  try {
+    if (path.startsWith(SERVER_PHOTO_PREFIX)) {
+      const token = await getAuthToken();
+      await fetch(`${BASE_URL}/dispatch-media/delete`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ storagePath: path }),
+      });
+    } else {
+      await deleteObject(storageRef(storage, path));
+    }
+  } catch {
+    /* best-effort cleanup */
+  }
+};
+
 // Convert every photo to WebP (and downscale it) before upload. WebP is much
 // smaller than JPEG/PNG at the same quality, keeps transparency, and both
-// Android and iOS load it natively. Animated GIFs and SVGs are left alone
-// because a canvas would flatten them.
+// Android and iOS load it natively. GIFs become a still WebP (first frame).
 const compressImage = async (file, maxDim = 1600, quality = 0.82) => {
   try {
-    if (!file.type.startsWith('image/') || file.type === 'image/gif' || file.type === 'image/svg+xml') return file;
+    if (!file.type.startsWith('image/')) return file;
     // Already a small WebP: nothing to gain from re-encoding.
     if (file.type === 'image/webp' && file.size < 250 * 1024) return file;
 
@@ -756,41 +816,34 @@ export default function Alert_Management() {
     setExistingImages((prev) => prev.filter((img) => img.url !== url));
   };
 
-  // Upload newly picked files to Firebase Storage under alerts/<alertId>/
-  // Files are compressed first, uploaded in parallel, with combined progress.
+  // Upload newly picked files through the AlertU server (stored in B2 under
+  // admin-reports/<alertId>/). Files are converted to WebP first, uploaded in
+  // parallel, with combined progress.
   const uploadPendingPhotos = async (alertId) => {
     setUploadProgress(0);
+    if (pendingPhotos.length === 0) return [];
     const totals = pendingPhotos.map(() => ({ sent: 0, total: 1 }));
     const report = () => {
       const sent = totals.reduce((a, t) => a + t.sent, 0);
       const total = totals.reduce((a, t) => a + t.total, 0);
       setUploadProgress(total ? Math.round((sent / total) * 100) : 0);
     };
+    const token = await getAuthToken();
 
     return Promise.all(
       pendingPhotos.map(async (p, idx) => {
         const file = await compressImage(p.file);
-        const rawExt = (file.name.split('.').pop() || 'jpg').toLowerCase();
-        const ext = rawExt.replace(/[^a-z0-9]/g, '') || 'jpg';
-        const path = `alerts/${alertId}/${Date.now()}-${idx}.${ext}`;
-        const fileRef = storageRef(storage, path);
-        totals[idx].total = file.size || 1;
-
-        await new Promise((resolve, reject) => {
-          const task = uploadBytesResumable(fileRef, file, { contentType: file.type });
-          task.on(
-            'state_changed',
-            (snap) => {
-              totals[idx] = { sent: snap.bytesTransferred, total: snap.totalBytes || file.size || 1 };
-              report();
-            },
-            reject,
-            resolve
+        if (!SERVER_ALLOWED_PHOTO_TYPES.includes(file.type)) {
+          throw Object.assign(
+            new Error(`"${p.file.name}" (${p.file.type || 'unknown type'}) can't be converted; use a JPG, PNG or WebP photo.`),
+            { code: 'photo/unsupported' }
           );
+        }
+        totals[idx].total = file.size || 1;
+        return uploadPhotoToServer(file, alertId, token, (loaded, total) => {
+          totals[idx] = { sent: loaded, total: total || file.size || 1 };
+          report();
         });
-
-        const url = await getDownloadURL(fileRef);
-        return { url, path };
       })
     );
   };
@@ -823,7 +876,7 @@ export default function Alert_Management() {
         console.error('Alert photo upload failed:', err);
         toast.error('Photo upload failed', {
           description: err?.code
-            ? `${err.code} - check Firebase Storage rules/CORS, or your connection.`
+            ? `${err.code}${err.message ? `: ${err.message}` : ''} - check your connection or the AlertU server.`
             : 'Could not upload the photos. Check your connection and try again.',
         });
         return;
@@ -837,7 +890,7 @@ export default function Alert_Management() {
         const keptUrls = new Set(finalImages.map((img) => img.url));
         getAlertImages(selectedAlertForEdit)
           .filter((img) => img.path && !keptUrls.has(img.url))
-          .forEach((img) => deleteObject(storageRef(storage, img.path)).catch(() => {}));
+          .forEach((img) => deleteStoredPhoto(img.path));
       }
 
       closeForm();
