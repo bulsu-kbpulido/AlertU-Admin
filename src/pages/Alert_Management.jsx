@@ -98,9 +98,11 @@ const MAX_PHOTO_SIZE_MB = 10;
 const SERVER_PHOTO_PREFIX = 'admin-reports/';
 const SERVER_ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
-const getAuthToken = async () => {
+// Same as Create Report: ask Firebase for a fresh ID token so an expired session
+// can't make the server reject the upload with 401/403.
+const getAuthToken = async (forceRefresh = false) => {
   try {
-    return auth.currentUser ? await auth.currentUser.getIdToken() : localStorage.getItem('authToken');
+    return auth.currentUser ? await auth.currentUser.getIdToken(forceRefresh) : localStorage.getItem('authToken');
   } catch {
     return localStorage.getItem('authToken');
   }
@@ -828,7 +830,7 @@ export default function Alert_Management() {
       const total = totals.reduce((a, t) => a + t.total, 0);
       setUploadProgress(total ? Math.round((sent / total) * 100) : 0);
     };
-    const token = await getAuthToken();
+    const token = await getAuthToken(true);
 
     return Promise.all(
       pendingPhotos.map(async (p, idx) => {
