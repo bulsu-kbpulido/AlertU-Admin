@@ -190,7 +190,7 @@ const notifyBroadcastFailed = (err) => {
 };
 
 // Minimum wait between two Resends of the same alert.
-const RESEND_COOLDOWN_MS = 60 * 1000;
+const RESEND_COOLDOWN_MS = 30 * 1000;
 const RESEND_COOLDOWN_KEY = 'alertu_resend_cooldowns';
 
 const loadResendCooldowns = () => {
