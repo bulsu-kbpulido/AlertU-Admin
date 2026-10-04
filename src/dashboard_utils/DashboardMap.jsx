@@ -464,7 +464,7 @@ export default function DashboardMap({ liveReports: liveReportsProp, selectedRep
                   const sevColor = severityColorMap[rawSev] || '#eab308';
                   return (
                     <span
-                      className="text-[10px] font-bold px-2.5 py-0.5 rounded-full border tracking-wide shrink-0 capitalize"
+                      className="text-xs font-bold px-2.5 py-0.5 rounded-full border tracking-wide shrink-0 capitalize"
                       style={{
                         backgroundColor: `${sevColor}15`,
                         color: sevColor,
@@ -481,7 +481,7 @@ export default function DashboardMap({ liveReports: liveReportsProp, selectedRep
               <div className="flex flex-col gap-2 text-xs">
                 {/* Location */}
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                     Location
                   </span>
                   <p className="font-medium text-slate-700 dark:text-slate-200 line-clamp-2 leading-relaxed">
@@ -493,7 +493,7 @@ export default function DashboardMap({ liveReports: liveReportsProp, selectedRep
 
                 {/* Date and Time */}
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                     Date & Time
                   </span>
                   <p className="font-medium text-slate-600 dark:text-slate-300">

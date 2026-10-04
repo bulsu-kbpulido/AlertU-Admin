@@ -713,7 +713,7 @@ const CitizenManagement = () => {
 
                     return (
                       <tr key={citizenId || citizen.email} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
-                        <td className="px-6 py-4 font-['Roboto',sans-serif] font-medium text-slate-700 dark:text-slate-300">
+                        <td className="px-6 py-4 font-medium text-slate-700 dark:text-slate-300">
                           {citizenId || 'N/A'}
                         </td>
 

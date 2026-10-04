@@ -273,7 +273,7 @@ export default function DashAction_Buttons({ onRefresh, isLoading, reports = [] 
         <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
           Control Panel
         </p>
-        <h3 className="text-lg font-extrabold text-slate-800 dark:text-slate-200 tracking-tight mt-1 mb-2.5 leading-tight">
+        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 tracking-tight mt-1 mb-2.5 leading-tight">
           Actions
         </h3>
       </div>

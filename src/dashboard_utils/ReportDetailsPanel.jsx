@@ -70,12 +70,12 @@ function ReportItem({ report, selectedReport, setSelectedReport, onViewClick }) 
         
         <div className="flex-1 min-w-0 flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-0.5 2xl:gap-2">
           <span 
-            className="text-xs sm:text-[13px] font-bold uppercase tracking-wider shrink-0 truncate"
+            className="text-xs sm:text-sm font-bold uppercase tracking-wider shrink-0 truncate"
             style={{ color: theme.text }}
           >
             {rawType}
           </span>
-          <p className="text-xs sm:text-[13px] font-medium text-slate-500 dark:text-slate-400 truncate leading-normal 2xl:text-right flex-1 min-w-0">
+          <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 truncate leading-normal 2xl:text-right flex-1 min-w-0">
             {compactAddress}
           </p>
         </div>
@@ -84,7 +84,7 @@ function ReportItem({ report, selectedReport, setSelectedReport, onViewClick }) 
       <div className="shrink-0 pl-1">
         <Button
           size="sm"
-          className="h-7 text-[11px] font-semibold px-3 bg-blue-900 hover:bg-blue-800 dark:bg-blue-800 dark:hover:bg-blue-700 text-white rounded-lg shadow-sm border-0 transition-colors cursor-pointer"
+          className="h-7 text-xs font-semibold px-3 bg-blue-900 hover:bg-blue-800 dark:bg-blue-800 dark:hover:bg-blue-700 text-white rounded-lg shadow-sm border-0 transition-colors cursor-pointer"
           onClick={(e) => {
             e.stopPropagation(); 
             if (onViewClick) onViewClick(report); 

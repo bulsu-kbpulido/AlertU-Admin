@@ -84,7 +84,7 @@ export default function Resolved_Reports() {
   }, []);
 
   return (
-    <Card className="h-full w-full font-['Roboto',sans-serif] overflow-hidden">
+    <Card className="h-full w-full overflow-hidden">
       <CardContent className="h-full flex items-center justify-between">
 
         {/* Left Column: Label, Big Number, & Sub-label */}
@@ -93,7 +93,7 @@ export default function Resolved_Reports() {
             Resolved Reports
           </p>
 
-          <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight my-1.5 leading-none">
+          <h3 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight my-1.5 leading-none">
             {loading ? (
               <span className="inline-flex items-center gap-1.5 text-slate-400 text-sm font-normal py-1">
                 <Loader2 className="h-5 w-5 animate-spin text-blue-600" />

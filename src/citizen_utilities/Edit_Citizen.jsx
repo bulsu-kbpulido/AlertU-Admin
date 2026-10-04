@@ -53,8 +53,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from 'sonner';
 
-const robotoStyle = { fontFamily: "'Roboto', sans-serif" };
-
 const MAX_PHONE_LENGTH = 15;
 const MAX_PASSWORD_LENGTH = 18;
 const MAX_CONTACTS = 3;
@@ -439,8 +437,7 @@ const Edit_Citizen = ({ isOpen, onClose, citizen, onRefresh }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent 
-        style={robotoStyle}
+      <DialogContent
         className="w-[96vw] sm:max-w-[1380px] max-h-[92vh] p-0 border-0 bg-transparent shadow-2xl font-sans overflow-hidden flex flex-col"
       >
         <Card className="w-full h-full border-0 bg-white dark:bg-slate-900 shadow-2xl rounded-2xl overflow-hidden p-0 flex flex-col max-h-[92vh]">
@@ -484,7 +481,7 @@ const Edit_Citizen = ({ isOpen, onClose, citizen, onRefresh }) => {
                 {/* General Info */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <h4 className="text-[11px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">
+                    <h4 className="text-xs uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">
                       Resident Details
                     </h4>
                   </div>
@@ -523,7 +520,6 @@ const Edit_Citizen = ({ isOpen, onClose, citizen, onRefresh }) => {
                             name="fullName"
                             type="text"
                             required
-                            style={robotoStyle}
                             value={formData.fullName}
                             onChange={handleChange}
                             placeholder="e.g. Juan Cruz"
@@ -544,7 +540,6 @@ const Edit_Citizen = ({ isOpen, onClose, citizen, onRefresh }) => {
                             name="email"
                             type="email"
                             required
-                            style={robotoStyle}
                             value={formData.email}
                             onChange={handleChange}
                             placeholder="e.g. juancruz@gmail.com"
@@ -554,7 +549,7 @@ const Edit_Citizen = ({ isOpen, onClose, citizen, onRefresh }) => {
                           />
                         </div>
                         {formData.email && !isEmailValid && (
-                          <p className="text-[11px] text-red-500 font-medium flex items-center gap-1 pt-0.5">
+                          <p className="text-xs text-red-500 font-medium flex items-center gap-1 pt-0.5">
                             <XCircle className="h-3 w-3" /> Please enter a valid email address
                           </p>
                         )}
@@ -568,7 +563,6 @@ const Edit_Citizen = ({ isOpen, onClose, citizen, onRefresh }) => {
                         
                         <PhoneInput
                           id="phoneNumber"
-                          style={robotoStyle}
                           defaultCountry="PH"
                           value={formData.phoneNumber}
                           onChange={handlePhoneChange}
@@ -598,7 +592,7 @@ const Edit_Citizen = ({ isOpen, onClose, citizen, onRefresh }) => {
                         />
 
                         {formData.phoneNumber && !isPhoneValid && (
-                          <p className="text-[11px] text-red-500 font-medium flex items-center gap-1 pt-0.5">
+                          <p className="text-xs text-red-500 font-medium flex items-center gap-1 pt-0.5">
                             <XCircle className="h-3 w-3" /> Please enter a valid phone number
                           </p>
                         )}
@@ -616,7 +610,6 @@ const Edit_Citizen = ({ isOpen, onClose, citizen, onRefresh }) => {
                             name="zone"
                             type="text"
                             required
-                            style={robotoStyle}
                             value={formData.zone}
                             onChange={handleChange}
                             placeholder="e.g. Street, Barangay, City"
@@ -631,7 +624,7 @@ const Edit_Citizen = ({ isOpen, onClose, citizen, onRefresh }) => {
                 {/* Account Security (Optional Password Update) */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <h4 className="text-[11px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">
+                    <h4 className="text-xs uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">
                       Security & Password (Optional)
                     </h4>
                   </div>
@@ -681,7 +674,6 @@ const Edit_Citizen = ({ isOpen, onClose, citizen, onRefresh }) => {
                             type={showConfirmPassword ? "text" : "password"}
                             disabled={!isPasswordProvided}
                             maxLength={MAX_PASSWORD_LENGTH}
-                            style={robotoStyle}
                             value={formData.confirmPassword}
                             onChange={handleConfirmPasswordChange}
                             placeholder="Type password again"
@@ -703,7 +695,7 @@ const Edit_Citizen = ({ isOpen, onClose, citizen, onRefresh }) => {
                         </div>
 
                         {isPasswordProvided && formData.confirmPassword && (
-                          <p className={`text-[11px] font-medium flex items-center gap-1 pt-0.5 ${isMatchValid ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
+                          <p className={`text-xs font-medium flex items-center gap-1 pt-0.5 ${isMatchValid ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
                             {isMatchValid ? (
                               <>
                                 <CheckCircle2 className="h-3 w-3" /> Passwords match
@@ -730,10 +722,10 @@ const Edit_Citizen = ({ isOpen, onClose, citizen, onRefresh }) => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div>
-                      <h4 className="text-[11px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">
+                      <h4 className="text-xs uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">
                         Emergency Contacts ({fetchingDoc ? '...' : `${emergencyContacts.length}/3`})
                       </h4>
-                      <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                      <p className="text-xs text-slate-400 dark:text-slate-500">
                         Add or modify up to 3 contacts notified during an emergency.
                       </p>
                     </div>
@@ -815,14 +807,13 @@ const Edit_Citizen = ({ isOpen, onClose, citizen, onRefresh }) => {
                             
                             {/* Contact Name */}
                             <div className="space-y-1">
-                              <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                              <Label className="text-xs font-semibold text-slate-600 dark:text-slate-400">
                                 Full Name <span className="text-red-500">*</span>
                               </Label>
                               <Input
                                 type="text"
                                 placeholder="e.g. Maria Cruz"
                                 value={contact.name}
-                                style={robotoStyle}
                                 onChange={(e) => handleContactChange(index, 'name', e.target.value)}
                                 className="h-8 text-xs border-slate-200 dark:border-slate-700 focus-visible:ring-1 focus-visible:ring-blue-600 rounded-lg bg-white dark:bg-slate-900"
                               />
@@ -830,13 +821,12 @@ const Edit_Citizen = ({ isOpen, onClose, citizen, onRefresh }) => {
 
                             {/* Contact Phone */}
                             <div className="space-y-1">
-                              <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                              <Label className="text-xs font-semibold text-slate-600 dark:text-slate-400">
                                 Phone Number <span className="text-red-500">*</span>
                               </Label>
                               <PhoneInput
                                 defaultCountry="PH"
                                 value={contact.phone}
-                                style={robotoStyle}
                                 onChange={(val) => handleContactChange(index, 'phone', val || '')}
                                 maxLength={MAX_PHONE_LENGTH}
                                 placeholder="e.g. 912 345 6789"
@@ -859,7 +849,7 @@ const Edit_Citizen = ({ isOpen, onClose, citizen, onRefresh }) => {
                                 `}
                               />
                               {contact.phone && !isContactPhoneValid && (
-                                <p className="text-[10px] text-red-500 font-medium">
+                                <p className="text-xs text-red-500 font-medium">
                                   Please enter a valid phone number.
                                 </p>
                               )}
@@ -867,13 +857,12 @@ const Edit_Citizen = ({ isOpen, onClose, citizen, onRefresh }) => {
 
                             {/* Relationship Selector */}
                             <div className="space-y-1">
-                              <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                              <Label className="text-xs font-semibold text-slate-600 dark:text-slate-400">
                                 Relationship <span className="text-red-500">*</span>
                               </Label>
                               <select
                                 value={contact.relation}
                                 onChange={(e) => handleContactChange(index, 'relation', e.target.value)}
-                                style={robotoStyle}
                                 className="w-full h-8 text-xs px-2.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 text-slate-800 dark:text-slate-200 font-medium"
                               >
                                 {RELATION_OPTIONS.map((rel) => (
@@ -902,7 +891,7 @@ const Edit_Citizen = ({ isOpen, onClose, citizen, onRefresh }) => {
                         <span className="text-xs font-semibold">
                           {emergencyContacts.length === 0 ? 'Add Emergency Contact' : `Add Contact #${emergencyContacts.length + 1}`}
                         </span>
-                        <span className="text-[10px] text-slate-400">Click to add person</span>
+                        <span className="text-xs text-slate-400">Click to add person</span>
                       </button>
                     )}
                   </div>
@@ -921,7 +910,6 @@ const Edit_Citizen = ({ isOpen, onClose, citizen, onRefresh }) => {
                 variant="outline"
                 onClick={handleClose}
                 disabled={loading}
-                style={robotoStyle}
                 className="h-9 px-4 text-xs font-medium border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-300"
               >
                 Cancel
@@ -930,7 +918,6 @@ const Edit_Citizen = ({ isOpen, onClose, citizen, onRefresh }) => {
               <Button
                 type="submit"
                 disabled={fetchingDoc || loading || !isFormValid}
-                style={robotoStyle}
                 className="h-9 px-5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (

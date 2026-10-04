@@ -68,7 +68,7 @@ export default function CitizenOrDepartments({
               <Layers className="w-5 h-5" />
             </div>
             <div>
-              <span className="block text-[11px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+              <span className="block text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
                 Share Updates (Generated Link)
               </span>
               <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight mt-0.5">
@@ -107,7 +107,7 @@ export default function CitizenOrDepartments({
                   <h4 className="text-xs font-bold uppercase tracking-wide text-slate-900 dark:text-white group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
                     Citizen
                   </h4>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">
+                  <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-0.5">
                     Generate incident report details for affected residents.
                   </p>
                 </div>
@@ -128,7 +128,7 @@ export default function CitizenOrDepartments({
                   <h4 className="text-xs font-bold uppercase tracking-wide text-slate-900 dark:text-white group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
                     Department
                   </h4>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">
+                  <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-0.5">
                     Generate incident report details for active responders.
                   </p>
                 </div>

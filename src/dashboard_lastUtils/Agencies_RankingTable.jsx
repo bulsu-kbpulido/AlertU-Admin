@@ -269,7 +269,7 @@ export default function Agencies_RankingTable() {
               >
                 {/* RANK BADGE */}
                 <TableCell className="px-3 py-1 text-left">
-                  <Badge variant="outline" className={`px-1.5 py-0.5 text-[11px] ${getRankBadge(row.rank)}`}>
+                  <Badge variant="outline" className={`px-1.5 py-0.5 text-xs ${getRankBadge(row.rank)}`}>
                     #{row.rank}
                   </Badge>
                 </TableCell>

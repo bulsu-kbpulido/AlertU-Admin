@@ -158,7 +158,7 @@ const CountStepper = ({ id, label, hint, value, onChange, disabled = false }) =>
       <label htmlFor={id} className="text-xs font-semibold text-slate-700 dark:text-slate-200">
         {label}
       </label>
-      <p className="text-[11px] text-slate-500 dark:text-slate-400">{hint}</p>
+      <p className="text-xs text-slate-500 dark:text-slate-400">{hint}</p>
       <div className="mt-1.5 flex items-center overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus-within:ring-2 focus-within:ring-emerald-500 transition-shadow">
         <button
           type="button"
@@ -626,7 +626,7 @@ export default function Send_Report() {
         {/* Responsive Header Section */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
           <div className="space-y-1">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
               <Send className="h-7 w-7 text-blue-600 dark:text-blue-400 shrink-0" />
               <span>Send Reports</span>
             </h1>
@@ -783,18 +783,18 @@ export default function Send_Report() {
                               <div className="flex items-start justify-between gap-2 min-w-0">
                                 <div className="flex flex-col items-start gap-1.5 min-w-0">
                                   {/* Display VRID badge */}
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium font-['Roboto',sans-serif] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0">
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0">
                                     <Hash className="h-2.5 w-2.5 text-slate-400" />
                                     {displayId}
                                   </span>
 
                                   {/* Incident type badge: always right below the VRID */}
-                                  <span className={`inline-flex max-w-full items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border shadow-xs transition-colors ${getIncidentBadgeStyle(report.incidentType)}`}>
+                                  <span className={`inline-flex max-w-full items-center px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider border shadow-xs transition-colors ${getIncidentBadgeStyle(report.incidentType)}`}>
                                     <span className="truncate">{report.incidentType || 'General'}</span>
                                   </span>
                                 </div>
 
-                                <div className="flex flex-col items-end text-[10px] text-slate-500 dark:text-slate-400 shrink-0">
+                                <div className="flex flex-col items-end text-xs text-slate-500 dark:text-slate-400 shrink-0">
                                   <span className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
                                     <Calendar className="h-2.5 w-2.5 text-blue-500 shrink-0" />
                                     {dt.date}
@@ -879,11 +879,11 @@ export default function Send_Report() {
 
                               return (
                                 <tr key={report.id || displayId} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                                  <td className="px-5 py-4 font-['Roboto',sans-serif] font-medium text-slate-700 dark:text-slate-300">
+                                  <td className="px-5 py-4 font-medium text-slate-700 dark:text-slate-300">
                                     {displayId}
                                   </td>
                                   <td className="px-5 py-4">
-                                    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border shadow-xs transition-colors ${getIncidentBadgeStyle(report.incidentType)}`}>
+                                    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider border shadow-xs transition-colors ${getIncidentBadgeStyle(report.incidentType)}`}>
                                       <span>{report.incidentType || 'General'}</span>
                                     </span>
                                   </td>
@@ -894,7 +894,7 @@ export default function Send_Report() {
                                     {formatAddress(report.location)}
                                   </td>
                                   <td className="px-5 py-4">
-                                    <div className="flex flex-col text-[11px]">
+                                    <div className="flex flex-col text-xs">
                                       <span className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1">
                                         <Calendar className="h-3 w-3 text-blue-500 shrink-0" />
                                         {dt.date}
@@ -1069,7 +1069,7 @@ export default function Send_Report() {
                     }`}
                   />
                   {notesTouched && !isResolveFormValid && (
-                    <p className="text-[11px] text-red-500 mt-1">Aftermath details are required before this report can be resolved.</p>
+                    <p className="text-xs text-red-500 mt-1">Aftermath details are required before this report can be resolved.</p>
                   )}
                 </div>
               </div>
@@ -1100,16 +1100,16 @@ export default function Send_Report() {
               <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-3.5 space-y-2.5 text-sm">
                 <div className="flex items-center gap-6">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Casualties</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Casualties</p>
                     <p className="font-bold text-slate-900 dark:text-slate-100">{Number(casualtiesCount) || 0}</p>
                   </div>
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Injuries</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Injuries</p>
                     <p className="font-bold text-slate-900 dark:text-slate-100">{Number(injuriesCount) || 0}</p>
                   </div>
                 </div>
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Aftermath Details</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Aftermath Details</p>
                   <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap line-clamp-4">{resolutionNotes.trim()}</p>
                 </div>
               </div>

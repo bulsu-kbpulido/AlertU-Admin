@@ -266,11 +266,11 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
 
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
                   {activeChat ? 'Live Channel' : 'Dispatch Center'}
                 </span>
                 {activeChat?.unreadCountAdmin > 0 && (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
                     New Update
                   </span>
                 )}
@@ -359,7 +359,7 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
                           <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate pr-2">
                             {getRoomTitle(conv)}
                           </h4>
-                          <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 shrink-0 flex items-center gap-1">
+                          <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 shrink-0 flex items-center gap-1">
                             <Clock className="w-3 h-3 text-slate-400" />
                             {conv.lastMessageTimestamp
                               ? dayjs(conv.lastMessageTimestamp).format('h:mm A')
@@ -396,7 +396,7 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
                           <div className="w-full border-t border-slate-200 dark:border-slate-800" />
                         </div>
                         <div className="relative bg-white dark:bg-slate-900 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700 shadow-2xs">
-                          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                             <Clock className="w-3 h-3 text-blue-600" />
                             {dateLabel} Chats
                           </span>
@@ -464,7 +464,7 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
 
                               {/* Message Metadata Tag */}
                               <div
-                                className={`flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 dark:text-slate-500 px-1 ${
+                                className={`flex items-center gap-1.5 text-xs font-semibold text-slate-400 dark:text-slate-500 px-1 ${
                                   isAdmin ? 'justify-end' : 'justify-start'
                                 }`}
 
@@ -510,9 +510,9 @@ export default function MessagesDrawer({ isOpen, onClose, adminUser }) {
                 </div>
 
                 {/* Character Counter & Warnings */}
-                <div className="flex items-center justify-between px-1 text-[11px]">
+                <div className="flex items-center justify-between px-1 text-xs">
                   <span className="text-slate-400 dark:text-slate-500 font-medium">
-                    Press <kbd className="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-[10px] text-slate-600 dark:text-slate-300 font-sans">Enter</kbd> to send
+                    Press <kbd className="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-xs text-slate-600 dark:text-slate-300 font-sans">Enter</kbd> to send
                   </span>
                   
                   <div className="flex items-center gap-1 font-bold">

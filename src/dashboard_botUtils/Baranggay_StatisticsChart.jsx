@@ -434,7 +434,7 @@ export default function Baranggay_StatisticsChart({ reports = [] }) {
           <h3 className="text-xs font-bold tracking-tight text-slate-900 dark:text-slate-100 uppercase">
             Reports per Barangay
           </h3>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Emergency reports by area
           </p>
         </div>
@@ -446,7 +446,7 @@ export default function Baranggay_StatisticsChart({ reports = [] }) {
           <div className="flex items-center bg-slate-100 dark:bg-slate-900 p-0.5 rounded-md border border-slate-200 dark:border-slate-800">
             <button
               onClick={() => setViewMode('weekly')}
-              className={`px-2 py-0.5 text-[11px] font-medium rounded transition-all ${
+              className={`px-2 py-0.5 text-xs font-medium rounded transition-all ${
                 viewMode === 'weekly'
                   ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-sm font-semibold'
                   : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
@@ -456,7 +456,7 @@ export default function Baranggay_StatisticsChart({ reports = [] }) {
             </button>
             <button
               onClick={() => setViewMode('monthly')}
-              className={`px-2 py-0.5 text-[11px] font-medium rounded transition-all ${
+              className={`px-2 py-0.5 text-xs font-medium rounded transition-all ${
                 viewMode === 'monthly'
                   ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-sm font-semibold'
                   : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
@@ -469,7 +469,7 @@ export default function Baranggay_StatisticsChart({ reports = [] }) {
           {/* Range/Single Selector (Weekly Only) */}
           {viewMode === 'weekly' && (
             <select 
-              className="text-[11px] bg-slate-50 border border-slate-200 rounded px-1.5 py-1 text-slate-600 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300 h-7 outline-none"
+              className="text-xs bg-slate-50 border border-slate-200 rounded px-1.5 py-1 text-slate-600 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300 h-7 outline-none"
               value={pickerType}
               onChange={(e) => {
                 const type = e.target.value;
@@ -486,7 +486,7 @@ export default function Baranggay_StatisticsChart({ reports = [] }) {
           {/* Date Picker Dropdown */}
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-7 px-2 gap-1.5 text-[11px] border-slate-200 dark:border-slate-800">
+              <Button variant="outline" size="sm" className="h-7 px-2 gap-1.5 text-xs border-slate-200 dark:border-slate-800">
                 <CalendarIcon className="h-3 w-3 text-slate-500" />
                 <span className="truncate max-w-[110px]">{getDropdownLabel()}</span>
                 <ChevronDown className="h-3 w-3 opacity-50" />
@@ -539,7 +539,7 @@ export default function Baranggay_StatisticsChart({ reports = [] }) {
       </div>
 
       {/* FOOTER STATS INFO */}
-      <div className="border-t border-slate-100 dark:border-slate-800/80 pt-2 text-center z-10 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+      <div className="border-t border-slate-100 dark:border-slate-800/80 pt-2 text-center z-10 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
         <span>
           Active Barangays: <strong className="text-slate-800 dark:text-slate-200">{barangayData.labels.length}</strong>
         </span>

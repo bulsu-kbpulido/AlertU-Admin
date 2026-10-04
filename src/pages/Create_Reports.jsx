@@ -396,7 +396,7 @@ export default function Create_Reports() {
       {/* Header */}
       <header className="mb-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
             Create Emergency Report
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -419,7 +419,7 @@ export default function Create_Reports() {
               <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
                 {successMessage}
               </p>
-              <p className="text-[11px] text-emerald-700 dark:text-emerald-400">
+              <p className="text-xs text-emerald-700 dark:text-emerald-400">
                 Your report was registered into the system alongside spatial telemetry.
               </p>
             </div>
@@ -440,11 +440,11 @@ export default function Create_Reports() {
         <div className="lg:col-span-7 xl:col-span-8 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden flex flex-col h-[calc(100vh-230px)] min-h-[420px]">
           <div className="px-3 py-2 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
             <div className="flex items-center gap-1.5">
-              <h2 className="text-[11px] font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+              <h2 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
                 Map Picker
               </h2>
             </div>
-            <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
+            <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
               Drag map to pinpoint location
             </span>
           </div>
@@ -503,13 +503,13 @@ export default function Create_Reports() {
                           key={idx}
                           type="button"
                           onClick={() => selectSearchResult(result)}
-                          className="w-full px-3 py-1.5 text-left text-[11px] hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800/50 last:border-0 transition-colors truncate block"
+                          className="w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800/50 last:border-0 transition-colors truncate block"
                         >
                           {result.display_name}
                         </button>
                       ))
                     ) : (
-                      <p className="px-2 py-1.5 text-[11px] text-slate-400 text-center">
+                      <p className="px-2 py-1.5 text-xs text-slate-400 text-center">
                         No locations found in Bulacan.
                       </p>
                     )}
@@ -520,14 +520,14 @@ export default function Create_Reports() {
           </div>
 
           {/* Location Coordinate Bar */}
-          <div className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-[11px]">
+          <div className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-xs">
             <div className="flex items-center gap-1.5 overflow-hidden">
               <MapPin className="h-3 w-3 text-rose-500 shrink-0" />
               <span className="text-slate-700 dark:text-slate-300 font-medium truncate">
                 {isLoadingAddress ? 'Retrieving street address...' : formData.address}
               </span>
             </div>
-            <div className="font-mono text-slate-500 dark:text-slate-400 text-[10px] shrink-0">
+            <div className="font-mono text-slate-500 dark:text-slate-400 text-xs shrink-0">
               Lat: <span className="text-slate-800 dark:text-slate-200 font-semibold">{formData.latitude.toFixed(5)}</span> | Lng: <span className="text-slate-800 dark:text-slate-200 font-semibold">{formData.longitude.toFixed(5)}</span>
             </div>
           </div>
@@ -537,18 +537,18 @@ export default function Create_Reports() {
         <div className="lg:col-span-5 xl:col-span-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-xs p-3.5 flex flex-col justify-between h-[calc(100vh-230px)] min-h-[420px] overflow-y-auto">
           <div className="space-y-2.5">
             <div className="border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center justify-between">
-              <h2 className="text-[11px] font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+              <h2 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
                 <FileText className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
                 <span>Incident Parameters</span>
               </h2>
-              <span className="text-[9px] font-bold text-rose-500 uppercase tracking-wider">* Required</span>
+              <span className="text-xs font-bold text-rose-500 uppercase tracking-wider">* Required</span>
             </div>
 
             <form onSubmit={handleCreateReport} id="create-report-form" className="space-y-2.5">
               
               {/* Title Field */}
               <div className="space-y-0.5">
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                   Report Title <span className="text-rose-500">*</span>
                 </label>
                 <input
@@ -563,13 +563,13 @@ export default function Create_Reports() {
                   } text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none`}
                 />
                 {validationErrors.reportTitle && (
-                  <p className="text-[10px] text-rose-500 font-medium">{validationErrors.reportTitle}</p>
+                  <p className="text-xs text-rose-500 font-medium">{validationErrors.reportTitle}</p>
                 )}
               </div>
 
               {/* Incident Type Select */}
               <div className="space-y-0.5">
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                   Incident Type <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
@@ -589,7 +589,7 @@ export default function Create_Reports() {
                   <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
                 </div>
                 {validationErrors.incidentType && (
-                  <p className="text-[10px] text-rose-500 font-medium">{validationErrors.incidentType}</p>
+                  <p className="text-xs text-rose-500 font-medium">{validationErrors.incidentType}</p>
                 )}
               </div>
 
@@ -608,14 +608,14 @@ export default function Create_Reports() {
                     } text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none`}
                   />
                   {validationErrors.customIncidentType && (
-                    <p className="text-[10px] text-rose-500 font-medium">{validationErrors.customIncidentType}</p>
+                    <p className="text-xs text-rose-500 font-medium">{validationErrors.customIncidentType}</p>
                   )}
                 </div>
               )}
 
               {/* Severity Button Group */}
               <div className="space-y-0.5">
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                   Severity Assessment
                 </label>
                 <div className="grid grid-cols-3 gap-1.5">
@@ -624,7 +624,7 @@ export default function Create_Reports() {
                       key={level}
                       type="button"
                       onClick={() => setFormData({ ...formData, severity: level })}
-                      className={`py-1 px-1.5 rounded-md text-[11px] font-bold transition-all border shadow-2xs ${
+                      className={`py-1 px-1.5 rounded-md text-xs font-bold transition-all border shadow-2xs ${
                         formData.severity === level
                           ? level === 'High'
                             ? 'bg-rose-600 text-white border-rose-700'
@@ -642,7 +642,7 @@ export default function Create_Reports() {
 
               {/* Hazard Select */}
               <div className="space-y-0.5">
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                   Associated Secondary Hazard
                 </label>
                 <div className="relative">
@@ -674,7 +674,7 @@ export default function Create_Reports() {
                     } text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none`}
                   />
                   {validationErrors.customHazard && (
-                    <p className="text-[10px] text-rose-500 font-medium">{validationErrors.customHazard}</p>
+                    <p className="text-xs text-rose-500 font-medium">{validationErrors.customHazard}</p>
                   )}
                 </div>
               )}
@@ -682,12 +682,12 @@ export default function Create_Reports() {
               {/* Responder Agency Controls */}
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <label className="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1">
                     <Building2 className="h-3 w-3 text-blue-500" />
                     <span>Assigned Responders</span>
                   </label>
                   {validationErrors.selectedAgencies && (
-                    <span className="text-[9px] text-rose-500 font-bold uppercase">Required</span>
+                    <span className="text-xs text-rose-500 font-bold uppercase">Required</span>
                   )}
                 </div>
                 
@@ -695,7 +695,7 @@ export default function Create_Reports() {
                   <button
                     type="button"
                     onClick={() => setIsAgencyModalOpen(true)}
-                    className={`w-full py-1.5 px-2.5 border border-dashed rounded-md flex items-center justify-center gap-1.5 text-[11px] font-bold uppercase tracking-wider transition-all ${
+                    className={`w-full py-1.5 px-2.5 border border-dashed rounded-md flex items-center justify-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-all ${
                       validationErrors.selectedAgencies
                         ? 'border-rose-400 bg-rose-50/30 text-rose-600'
                         : 'border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-400'
@@ -706,7 +706,7 @@ export default function Create_Reports() {
                   </button>
                 ) : (
                   <div className="p-2 border border-slate-200 dark:border-slate-800 rounded-md bg-slate-50/80 dark:bg-slate-950/40 space-y-1.5">
-                    <div className="flex items-center justify-between text-[10px]">
+                    <div className="flex items-center justify-between text-xs">
                       <span className="font-bold text-slate-500 dark:text-slate-400">
                         {selectedAgencies.length} Agency Channels
                       </span>
@@ -726,7 +726,7 @@ export default function Create_Reports() {
                         return (
                           <span 
                             key={agency.id || agency.name} 
-                            className={`px-1.5 py-0.5 rounded border text-[9px] font-bold flex items-center gap-1 shadow-2xs ${styleClasses}`}
+                            className={`px-1.5 py-0.5 rounded border text-xs font-bold flex items-center gap-1 shadow-2xs ${styleClasses}`}
                           >
                             {agency.icon && <span>{agency.icon}</span>}
                             <span>{agency.id || agency.name}</span>
@@ -740,7 +740,7 @@ export default function Create_Reports() {
 
               {/* Notes Description */}
               <div className="space-y-0.5">
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                   Incident Description <span className="text-rose-500">*</span>
                 </label>
                 <textarea
@@ -755,7 +755,7 @@ export default function Create_Reports() {
                   } text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none`}
                 />
                 {validationErrors.notes && (
-                  <p className="text-[10px] text-rose-500 font-medium">{validationErrors.notes}</p>
+                  <p className="text-xs text-rose-500 font-medium">{validationErrors.notes}</p>
                 )}
               </div>
             </form>
@@ -767,7 +767,7 @@ export default function Create_Reports() {
               type="button"
               variant="outline"
               onClick={handleReset}
-              className="w-full inline-flex items-center justify-center gap-1 text-[11px] font-bold uppercase tracking-wider h-8"
+              className="w-full inline-flex items-center justify-center gap-1 text-xs font-bold uppercase tracking-wider h-8"
             >
               <RotateCcw className="h-3 w-3" />
               <span>Reset</span>
@@ -777,7 +777,7 @@ export default function Create_Reports() {
               type="submit"
               form="create-report-form"
               disabled={isSubmitting}
-              className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white text-[11px] font-bold uppercase tracking-wider shadow-xs h-8"
+              className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider shadow-xs h-8"
             >
               {isSubmitting ? (
                 <>

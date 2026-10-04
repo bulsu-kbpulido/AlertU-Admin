@@ -168,10 +168,10 @@ export default function Citizen_Charts({ reports }) {
         <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 px-3 py-1.5 rounded-lg shrink-0">
           <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           <div className="flex flex-col text-right">
-            <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 leading-none">
+            <span className="text-xs uppercase font-bold text-slate-500 dark:text-slate-400 leading-none">
               Total Active
             </span>
-            <span className="text-sm font-extrabold text-blue-600 dark:text-blue-400 leading-tight">
+            <span className="text-sm font-bold text-blue-600 dark:text-blue-400 leading-tight">
               {activeUsersCount}
             </span>
           </div>

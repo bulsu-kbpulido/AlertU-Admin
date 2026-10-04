@@ -342,7 +342,7 @@ export default function ViewDuplicate_Reports({
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
                   Incident Record Overview
                 </span>
               </div>

@@ -207,7 +207,7 @@ export default function AnswerOrDeclineCall({
               <p className="text-sm font-bold truncate text-slate-100">{resolvedCitizenName}</p>
               <p className="text-xs text-slate-400 font-mono truncate">{channelName}</p>
               {isClaimedByOther && (
-                <span className="inline-block text-[11px] font-semibold text-amber-400 mt-0.5">
+                <span className="inline-block text-xs font-semibold text-amber-400 mt-0.5">
                   Handled by {claimedDisplayName}
                 </span>
               )}
@@ -260,7 +260,7 @@ export default function AnswerOrDeclineCall({
                 <ShieldAlert className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-red-600 block">
+                <span className="text-xs font-bold uppercase tracking-wider text-red-600 block">
                   Emergency Alert
                 </span>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
@@ -331,7 +331,7 @@ export default function AnswerOrDeclineCall({
                 <span>Citizen Dispatch</span>
               </div>
 
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight truncate px-2">
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight truncate px-2">
                 {resolvedCitizenName}
               </h2>
 

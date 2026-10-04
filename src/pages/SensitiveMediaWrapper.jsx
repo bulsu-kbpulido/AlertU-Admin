@@ -42,7 +42,7 @@ export default function SensitiveMediaWrapper({
             <FiAlertTriangle className="text-3xl animate-pulse" />
           </div>
           
-          <h3 className="text-sm font-black uppercase tracking-widest text-white mb-1">
+          <h3 className="text-sm font-bold uppercase tracking-widest text-white mb-1">
             ⚠️ Graphic Content Warning
           </h3>
           <p className="text-xs font-medium text-slate-300 max-w-[240px] mb-6 leading-relaxed">
@@ -51,7 +51,7 @@ export default function SensitiveMediaWrapper({
 
           <button
             onClick={() => setIsRevealed(true)}
-            className="px-6 py-3 bg-white hover:bg-slate-100 text-slate-950 text-[10px] font-black uppercase tracking-widest rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+            className="px-6 py-3 bg-white hover:bg-slate-100 text-slate-950 text-xs font-bold uppercase tracking-widest rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
           >
             <FiEye className="text-sm" /> Click to Reveal
           </button>
@@ -62,7 +62,7 @@ export default function SensitiveMediaWrapper({
       {isRevealed && (
         <button
           onClick={() => setIsRevealed(false)}
-          className="absolute top-4 right-4 z-30 px-3.5 py-2 bg-slate-950/80 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest rounded-xl border border-white/10 shadow-2xl hover:bg-slate-900 transition-all flex items-center gap-1.5 hover:scale-105 active:scale-95"
+          className="absolute top-4 right-4 z-30 px-3.5 py-2 bg-slate-950/80 backdrop-blur-md text-white text-xs font-bold uppercase tracking-widest rounded-xl border border-white/10 shadow-2xl hover:bg-slate-900 transition-all flex items-center gap-1.5 hover:scale-105 active:scale-95"
         >
           <FiEyeOff className="text-xs" /> Hide
         </button>

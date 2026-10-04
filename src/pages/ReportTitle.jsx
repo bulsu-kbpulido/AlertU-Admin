@@ -208,10 +208,10 @@ export default function ReportTitle({
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
                   Verification Step 3
                 </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                   Final Documentation
                 </span>
               </div>
@@ -243,7 +243,7 @@ export default function ReportTitle({
             {/* Title Input */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                Official Report Title <span className="text-[10px] font-medium text-slate-400">(optional)</span>
+                Official Report Title <span className="text-xs font-medium text-slate-400">(optional)</span>
               </label>
               <input 
                 type="text" 
@@ -259,7 +259,7 @@ export default function ReportTitle({
             {/* Operational Notes */}
             <div className="space-y-1.5 flex-1 flex flex-col">
               <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                Admin Notes & Instructions <span className="text-[10px] font-medium text-slate-400">(optional)</span>
+                Admin Notes & Instructions <span className="text-xs font-medium text-slate-400">(optional)</span>
               </label>
               <textarea
                 disabled={isSubmitting}
@@ -280,8 +280,8 @@ export default function ReportTitle({
                 <label className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-1.5">
                   <Shield className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Dispatch Agencies <span className="text-rose-500">*</span>
                 </label>
-                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
-                  <span className="text-blue-600 dark:text-blue-400 font-extrabold">{selectedAgencies.length}</span> / 5 Selected
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
+                  <span className="text-blue-600 dark:text-blue-400 font-bold">{selectedAgencies.length}</span> / 5 Selected
                 </span>
               </div>
 
@@ -294,7 +294,7 @@ export default function ReportTitle({
                   type="button"
                   disabled={isSubmitting}
                   onClick={handleToggleSelectAll}
-                  className="text-[11px] font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {allAgenciesSelected ? 'Clear all' : 'Select all'}
                 </button>
@@ -326,7 +326,7 @@ export default function ReportTitle({
                           <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
                             {agency.name}
                           </p>
-                          <p className="text-[10px] font-mono font-semibold text-slate-400 dark:text-slate-500 uppercase">
+                          <p className="text-xs font-mono font-semibold text-slate-400 dark:text-slate-500 uppercase">
                             {agency.id}
                           </p>
                         </div>
@@ -399,13 +399,13 @@ export default function ReportTitle({
 
               <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm dark:border-slate-700 dark:bg-slate-800/60 space-y-2">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Report Title</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Report Title</p>
                   <p className="font-bold text-slate-900 dark:text-slate-100 break-words">
                     {reportTitle.trim() || <span className="font-medium italic text-slate-400">No title</span>}
                   </p>
                 </div>
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     Agencies ({selectedAgencies.length})
                   </p>
                   <p className="font-semibold text-slate-800 dark:text-slate-200">

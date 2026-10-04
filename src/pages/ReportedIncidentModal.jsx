@@ -318,10 +318,10 @@ export default function ReportedIncidentModal({
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
                   Verification Step 1
                 </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                   Pending Review
                 </span>
               </div>
@@ -613,7 +613,7 @@ export default function ReportedIncidentModal({
                 )}
 
                 {hazardError && (
-                  <p className="text-[11px] font-medium text-red-500">{hazardError}</p>
+                  <p className="text-xs font-medium text-red-500">{hazardError}</p>
                 )}
               </div>
             </div>

@@ -714,7 +714,7 @@ export default function Weekly_ReportCharts({
               Weekly Report Charts
             </h3>
             <span
-              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide border shrink-0 ${
+              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-bold tracking-wide border shrink-0 ${
                 isLive
                   ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'

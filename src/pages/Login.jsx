@@ -319,7 +319,7 @@ export default function Login({ onLoginSuccess }) {
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
 
         <div className="relative z-10 max-w-lg space-y-4">
-          <h2 className="text-4xl xl:text-5xl font-extrabold tracking-tight text-white leading-[1.15] drop-shadow-md">
+          <h2 className="text-4xl xl:text-5xl font-bold tracking-tight text-white leading-[1.15] drop-shadow-md">
             Real-time Monitoring & Response Management.
           </h2>
           <p className="text-base text-slate-100 font-medium leading-relaxed drop-shadow">

@@ -66,7 +66,7 @@ function AdminDashboardShell({
   const handleCloseMessages = () => setIsMessagesOpen(false);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-['Roboto',sans-serif] antialiased transition-colors duration-200">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 antialiased transition-colors duration-200">
       <Sidebar
         currentPage={currentPage}
         setCurrentPage={onNavigate}
@@ -423,7 +423,7 @@ function AppRoutes() {
     } else if (path.startsWith('/admin/citizen-management')) {
       document.title = 'Manage Citizens – AlertU';
     } else if (path.startsWith('/admin/alerts')) {
-      document.title = 'Alerts – AlertU';
+      document.title = 'Announcements – AlertU';
     } else if (path.startsWith('/admin/settings')) {
       document.title = 'Profile Settings – AlertU';
     } else if (path.startsWith('/admin/dashboard')) {

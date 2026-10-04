@@ -91,7 +91,7 @@ export default function Dashboard_Searchbar({
               <span className="hidden sm:inline">Filters</span>
               
               {activeFiltersCount > 0 && (
-                <span className="flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white shadow-sm scale-90">
+                <span className="flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white shadow-sm scale-90">
                   {activeFiltersCount}
                 </span>
               )}
@@ -116,9 +116,9 @@ export default function Dashboard_Searchbar({
                       <Button 
                         variant="ghost"
                         onClick={handleResetFilters}
-                        className="h-7 text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-red-500 flex items-center gap-1 px-2 rounded-lg transition-colors"
+                        className="h-7 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-red-500 flex items-center gap-1 px-2 rounded-lg transition-colors"
                       >
-                        <FiRotateCcw className="text-[10px]" />
+                        <FiRotateCcw className="text-xs" />
                         Reset All
                       </Button>
                     )}
@@ -126,7 +126,7 @@ export default function Dashboard_Searchbar({
 
                   {/* Incident Classification */}
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                       Incident Type
                     </label>
                     <div className="flex flex-wrap gap-1">
@@ -164,7 +164,7 @@ export default function Dashboard_Searchbar({
 
                   {/* Hazard Classification */}
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                       Hazard Classification
                     </label>
                     <div className="flex flex-wrap gap-1">
@@ -202,7 +202,7 @@ export default function Dashboard_Searchbar({
 
                   {/* Severity Priority */}
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                       Severity Level
                     </label>
                     <div className="grid grid-cols-4 gap-1">
@@ -241,10 +241,10 @@ export default function Dashboard_Searchbar({
                   {/* Dispatched Operational Agencies */}
                   <div className="space-y-1.5">
                     <div className="flex justify-between items-center">
-                      <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                      <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                         Assigned Responders
                       </label>
-                      <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-md">
+                      <span className="text-xs font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-md">
                         {filterAgency.length}/5 max
                       </span>
                     </div>

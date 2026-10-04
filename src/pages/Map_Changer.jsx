@@ -270,13 +270,13 @@ export default function MapChanger({
               <FiCompass className="text-xl" />
             </div>
             <div className="space-y-0.5 min-w-0 flex-1">
-              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 block">Selected Operational Location</span>
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 block">Selected Operational Location</span>
               <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{address}</p>
             </div>
           </div>
 
           <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto shrink-0 border-t md:border-0 pt-3 md:pt-0 border-slate-100 dark:border-slate-800">
-            <div className="font-mono text-[11px] font-black px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-800">
+            <div className="font-mono text-xs font-bold px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-800">
               <span>{lat?.toFixed(5)}, {lng?.toFixed(5)}</span>
             </div>
 
@@ -287,7 +287,7 @@ export default function MapChanger({
             <button 
               type="button"
               onClick={handleApplyChanges}
-              className="px-5 py-2.5 text-xs font-black uppercase tracking-wider bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xl flex items-center gap-2 transition-all"
+              className="px-5 py-2.5 text-xs font-bold uppercase tracking-wider bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xl flex items-center gap-2 transition-all"
             >
               <FiCheck className="text-sm" />
               <span>Confirm Location</span>

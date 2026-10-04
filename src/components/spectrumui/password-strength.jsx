@@ -252,7 +252,7 @@ export function PasswordStrengthInput({
             return (
               <li
                 key={rule.label}
-                className={cn("flex items-center gap-2 text-[13px] transition-colors duration-200", done
+                className={cn("flex items-center gap-2 text-sm transition-colors duration-200", done
                   ? "text-neutral-900 dark:text-neutral-100"
                   : "text-neutral-500 dark:text-neutral-400")}>
                 <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 shrink-0" aria-hidden="true">

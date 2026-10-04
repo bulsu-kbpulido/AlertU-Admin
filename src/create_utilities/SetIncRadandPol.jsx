@@ -507,7 +507,7 @@ export default function SetIncRadandPol({
   };
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 lg:p-6 bg-slate-950/80 backdrop-blur-md font-['Roboto',sans-serif] text-slate-800 dark:text-slate-100">
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 lg:p-6 bg-slate-950/80 backdrop-blur-md text-slate-800 dark:text-slate-100">
       <motion.div 
         initial={{ opacity: 0, scale: 0.98, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -526,7 +526,7 @@ export default function SetIncRadandPol({
                 <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 tracking-wide uppercase">
                   Verify Incident
                 </span>
-                <span className="px-2 py-0.5 text-[10px] font-semibold bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-md">
+                <span className="px-2 py-0.5 text-xs font-semibold bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-md">
                   {incidentType}
                 </span>
               </div>
@@ -594,7 +594,7 @@ export default function SetIncRadandPol({
                   <div className="bg-white dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3 shadow-sm">
                     <div className="flex justify-between items-center">
                       <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Route Points</span>
-                      <span className="text-[11px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-md">
+                      <span className="text-xs font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-md">
                         {clickedPoints.length} / 2 Points Selected
                       </span>
                     </div>
@@ -640,7 +640,7 @@ export default function SetIncRadandPol({
                         onChange={(e) => setRadius(Number(e.target.value))} 
                         className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-600" 
                       />
-                      <div className="flex justify-between text-[10px] text-slate-400 font-medium">
+                      <div className="flex justify-between text-xs text-slate-400 font-medium">
                         <span>10m</span>
                         <span>500m</span>
                         <span>1000m</span>
@@ -681,12 +681,12 @@ export default function SetIncRadandPol({
                       <span>Add Photos or Videos</span>
                       <span className="text-rose-500 font-bold text-xs">*</span>
                     </h4>
-                    <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                       {hasExistingMedia ? 'Report contains existing media.' : 'Upload required evidence media before saving.'}
                     </p>
                   </div>
                   {(file || hasExistingMedia) && (
-                    <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                    <span className="px-2 py-0.5 text-xs font-bold uppercase rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
                       Attached
                     </span>
                   )}
@@ -715,7 +715,7 @@ export default function SetIncRadandPol({
                     <p className="text-xs font-bold text-slate-800 dark:text-slate-200 text-center">
                       {isDragging ? 'Drop file here' : 'Click or drop media file here'}
                     </p>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                       MP4, PNG, JPEG or WEBP • Max 100MB
                     </p>
                     <input 
@@ -735,7 +735,7 @@ export default function SetIncRadandPol({
                       </div>
                       <div className="min-w-0">
                         <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{file.name}</p>
-                        <p className="text-[10px] text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB • Ready</p>
+                        <p className="text-xs text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB • Ready</p>
                       </div>
                     </div>
                     {!isUploading && (
@@ -756,7 +756,7 @@ export default function SetIncRadandPol({
                       <EyeOff className={`w-3.5 h-3.5 ${isSensitive ? 'text-rose-500' : 'text-slate-400'}`} />
                       <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Sensitive Content</span>
                     </div>
-                    <p className="text-[10px] text-slate-500">Blur preview thumbnail</p>
+                    <p className="text-xs text-slate-500">Blur preview thumbnail</p>
                   </div>
 
                   <button
@@ -804,7 +804,7 @@ export default function SetIncRadandPol({
 
             {/* LOCATION FOOTER BADGE */}
             <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs font-mono text-slate-500 space-y-1">
-              <span className="font-bold text-emerald-600 dark:text-emerald-400 block uppercase tracking-wider text-[10px] font-sans">
+              <span className="font-bold text-emerald-600 dark:text-emerald-400 block uppercase tracking-wider text-xs font-sans">
                 Reported Location
               </span>
               <p className="truncate text-slate-700 dark:text-slate-300">

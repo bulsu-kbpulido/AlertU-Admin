@@ -337,10 +337,10 @@ export default function LinkPreview({ isOpen, onClose, report }) {
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
                   Verified Report Details
                 </span>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border capitalize ${
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border capitalize ${
                   rawStatus === 'verified' || rawStatus === 'dispatched'
                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                     : 'bg-blue-50 text-blue-700 border-blue-200'
@@ -435,7 +435,7 @@ export default function LinkPreview({ isOpen, onClose, report }) {
                       <Volume2 className="w-4 h-4" />
                     </div>
                     <div className="flex-1">
-                      <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 block mb-1">Emergency Dispatch Voice Note</span>
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-200 block mb-1">Emergency Dispatch Voice Note</span>
                       <audio src={activeAudioUrl} controls className="w-full h-8 accent-blue-600" />
                     </div>
                   </div>
@@ -483,21 +483,21 @@ export default function LinkPreview({ isOpen, onClose, report }) {
                 
                 <div className="space-y-2.5">
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Report Title</span>
+                    <span className="text-xs font-bold text-slate-400 uppercase block mb-0.5">Report Title</span>
                     <div className="text-xs font-bold text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2 rounded-lg truncate flex items-center gap-2">
                       <span className="truncate">{reportTitleText}</span>
                     </div>
                   </div>
 
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Incident Type</span>
+                    <span className="text-xs font-bold text-slate-400 uppercase block mb-0.5">Incident Type</span>
                     <div className="text-xs font-bold text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2 rounded-lg truncate flex items-center gap-2">
                       <span className="truncate capitalize">{incidentCategory}</span>
                     </div>
                   </div>
 
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Hazard Status</span>
+                    <span className="text-xs font-bold text-slate-400 uppercase block mb-0.5">Hazard Status</span>
                     <div className="text-xs font-bold text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2 rounded-lg truncate flex items-center gap-2">
                       <span className="truncate capitalize">{hazardType}</span>
                     </div>
@@ -515,7 +515,7 @@ export default function LinkPreview({ isOpen, onClose, report }) {
                   <div className="flex items-center gap-2.5">
                     <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     <div>
-                      <span className="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">Reporter Name</span>
+                      <span className="text-xs font-bold text-slate-400 uppercase block mb-0.5">Reporter Name</span>
                       <span className="font-bold text-slate-900 dark:text-white block">{reporterName}</span>
                     </div>
                   </div>
@@ -523,7 +523,7 @@ export default function LinkPreview({ isOpen, onClose, report }) {
                   <div className="flex items-center gap-2.5 pt-1">
                     <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     <div className="min-w-0">
-                      <span className="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">Email Address</span>
+                      <span className="text-xs font-bold text-slate-400 uppercase block mb-0.5">Email Address</span>
                       <span className="font-semibold text-slate-800 dark:text-slate-100 block truncate">{reporterEmail}</span>
                     </div>
                   </div>
@@ -531,7 +531,7 @@ export default function LinkPreview({ isOpen, onClose, report }) {
                   <div className="flex items-center gap-2.5 pt-1">
                     <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     <div>
-                      <span className="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">Contact Phone</span>
+                      <span className="text-xs font-bold text-slate-400 uppercase block mb-0.5">Contact Phone</span>
                       <span className="font-bold text-slate-900 dark:text-white block tracking-wide">{reporterPhone}</span>
                     </div>
                   </div>
@@ -544,7 +544,7 @@ export default function LinkPreview({ isOpen, onClose, report }) {
               <div className="flex-1 flex flex-col">
                 <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center justify-between">
                   <span>Incident Details</span>
-                  <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold border uppercase tracking-wider ${
+                  <span className={`px-2.5 py-0.5 rounded-md text-xs font-bold border uppercase tracking-wider ${
                     rawSeverity === 'high' || rawSeverity === 'critical'
                       ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-100 dark:border-rose-800 text-rose-700 dark:text-rose-300'
                       : rawSeverity === 'medium'
@@ -556,7 +556,7 @@ export default function LinkPreview({ isOpen, onClose, report }) {
                 </h4>
 
                 <div className="mt-4 flex-1 flex flex-col">
-                  <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider mb-1.5">Narrative Log</span>
+                  <span className="text-xs font-bold text-slate-400 block uppercase tracking-wider mb-1.5">Narrative Log</span>
                   <div className="text-xs text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-xl leading-relaxed whitespace-pre-line flex-1 min-h-[220px]">
                     {incidentNotes}
                   </div>
@@ -581,8 +581,8 @@ export default function LinkPreview({ isOpen, onClose, report }) {
                       >
                         <span className="text-lg bg-white/70 dark:bg-slate-900/70 px-1.5 py-0.5 rounded border border-black/5 dark:border-slate-700">{agency.icon}</span>
                         <div className="min-w-0">
-                          <p className="truncate text-slate-900 dark:text-white font-extrabold leading-tight">{agency.id}</p>
-                          <p className="text-[9px] opacity-75 dark:opacity-90 truncate font-normal mt-0.5">{agency.name}</p>
+                          <p className="truncate text-slate-900 dark:text-white font-bold leading-tight">{agency.id}</p>
+                          <p className="text-xs opacity-75 dark:opacity-90 truncate font-normal mt-0.5">{agency.name}</p>
                         </div>
                       </div>
                     ))}

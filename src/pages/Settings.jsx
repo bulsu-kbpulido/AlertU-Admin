@@ -414,7 +414,7 @@ export default function Settings() {
           <button
             type="button"
             onClick={() => setStatusMessage({ type: '', text: '' })}
-            className="text-[10px] font-bold tracking-wider uppercase opacity-70 hover:opacity-100 cursor-pointer"
+            className="text-xs font-bold tracking-wider uppercase opacity-70 hover:opacity-100 cursor-pointer"
           >
             Dismiss
           </button>
@@ -425,13 +425,13 @@ export default function Settings() {
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
         <div className="px-6 sm:px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-bold text-slate-900 dark:text-white">Profile Settings</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Profile Settings</h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Manage your administrator account details and contact information.
             </p>
           </div>
           {loadingProfile && (
-            <span className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 animate-pulse">
+            <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 animate-pulse">
               Syncing...
             </span>
           )}
@@ -445,7 +445,7 @@ export default function Settings() {
               {profile.avatar ? (
                 <img src={profile.avatar} alt="User Avatar" className="w-full h-full object-cover" />
               ) : (
-                <span className="text-2xl font-black text-slate-400 dark:text-slate-500">
+                <span className="text-2xl font-bold text-slate-400 dark:text-slate-500">
                   {profile.name ? profile.name.charAt(0).toUpperCase() : 'A'}
                 </span>
               )}
@@ -467,14 +467,14 @@ export default function Settings() {
               >
                 {uploadingAvatar ? 'Uploading image...' : 'Change Avatar'}
               </button>
-              <p className="text-[11px] text-slate-400">JPG, PNG, WEBP or GIF up to 5MB.</p>
+              <p className="text-xs text-slate-400">JPG, PNG, WEBP or GIF up to 5MB.</p>
             </div>
           </div>
 
           {/* Input Fields Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Full Name
               </label>
               <input
@@ -487,7 +487,7 @@ export default function Settings() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Email Address
               </label>
               <input
@@ -500,7 +500,7 @@ export default function Settings() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Phone Number
               </label>
               <input
@@ -513,7 +513,7 @@ export default function Settings() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Department
               </label>
               <input
@@ -526,7 +526,7 @@ export default function Settings() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Address / HQ Location
             </label>
             <input
@@ -622,7 +622,7 @@ export default function Settings() {
                 </p>
 
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     Admin Email Address
                   </label>
                   <div className="relative">
@@ -683,7 +683,7 @@ export default function Settings() {
 
                 {/* 6-Digit Verification Code */}
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     6-Digit Verification Code
                   </label>
                   <div className="relative">
@@ -702,7 +702,7 @@ export default function Settings() {
 
                 {/* New Password */}
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     New Password
                   </label>
                   <div className="relative">
@@ -726,7 +726,7 @@ export default function Settings() {
 
                 {/* Confirm New Password */}
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     Confirm New Password
                   </label>
                   <div className="relative">

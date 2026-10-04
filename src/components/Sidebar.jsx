@@ -68,7 +68,7 @@ export default function Sidebar({
     { id: 'create-reports', label: 'Create Report', icon: FilePlus2 },
     { id: 'send-reports', label: 'Dispatch Report', icon: Send },
     { id: 'report-management', label: 'Verify Reports', icon: FolderKanban },
-    { id: 'alerts', label: 'Alerts', icon: Siren },
+    { id: 'alerts', label: 'Announcements', icon: Siren },
     { id: 'citizen-management', label: 'Manage Citizens', icon: Users },
     { id: 'settings', label: 'Profile Settings', icon: SettingsIcon },
   ];
@@ -252,7 +252,7 @@ export default function Sidebar({
                   key={sub.id}
                   title={isCollapsed ? sub.label : undefined}
                   onClick={() => handleItemClick(sub.id, true)}
-                  className={`group relative flex w-full items-center rounded-xl py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all outline-none duration-200 cursor-pointer overflow-hidden ${
+                  className={`group relative flex w-full items-center rounded-xl py-1.5 text-xs font-bold uppercase tracking-wider transition-all outline-none duration-200 cursor-pointer overflow-hidden ${
                     isCollapsed ? 'justify-center px-0' : 'gap-2.5 px-3'
                   } ${
                     isSubActive

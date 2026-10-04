@@ -195,7 +195,7 @@ export default function ReportsTableFeed({
           return (
             <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60">
               <Hash className="h-3 w-3 text-slate-400 dark:text-slate-500 shrink-0" />
-              <span className="font-mono text-[11px] font-bold text-slate-700 dark:text-slate-200 tracking-tight">
+              <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-200 tracking-tight">
                 {vridStr}
               </span>
             </div>
@@ -234,7 +234,7 @@ export default function ReportsTableFeed({
           const IconComponent = design.icon;
 
           return (
-            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium tracking-tight border ${design.bg} ${design.text} ${design.border}`}>
+            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium tracking-tight border ${design.bg} ${design.text} ${design.border}`}>
               <IconComponent className="h-3.5 w-3.5 shrink-0 opacity-80" />
               <span className="capitalize">{design.label}</span>
             </div>
@@ -255,7 +255,7 @@ export default function ReportsTableFeed({
           const design = severityDesignMap[value] || severityDesignMap.medium;
 
           return (
-            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium tracking-tight border ${design.bg} ${design.text} ${design.border}`}>
+            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium tracking-tight border ${design.bg} ${design.text} ${design.border}`}>
               <span className={`h-1.5 w-1.5 rounded-full ${design.dot}`} />
               <span className="capitalize">{value}</span>
             </div>
@@ -311,7 +311,7 @@ export default function ReportsTableFeed({
           return (
             <div className="text-right max-w-[160px] ml-auto pr-4">
               <p className="font-semibold text-slate-800 dark:text-slate-200 truncate text-xs">{citizenName}</p>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500 font-normal mt-0.5">
+              <p className="text-xs text-slate-400 dark:text-slate-500 font-normal mt-0.5">
                 {activeTab === 'active' ? 'Active Reporter' : `Phone: ${contactPhone}`}
               </p>
             </div>
@@ -351,7 +351,7 @@ export default function ReportsTableFeed({
           <CardTitle className="text-sm font-bold tracking-tight text-slate-900 dark:text-slate-50 uppercase truncate">
             Incident Reports Feed
           </CardTitle>
-          <CardDescription className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 hidden sm:block truncate">
+          <CardDescription className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 hidden sm:block truncate">
             Real-time feed filtered by active criteria and tab context
           </CardDescription>
         </div>
@@ -368,20 +368,20 @@ export default function ReportsTableFeed({
           <TabsList className="h-8 p-0.5 bg-slate-200/60 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg flex items-center gap-0.5">
             <TabsTrigger 
               value="active" 
-              className="text-[11px] font-medium px-3 py-1 rounded-md data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+              className="text-xs font-medium px-3 py-1 rounded-md data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <span>Active Incidents</span>
-              <span className="bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-bold px-1.5 py-0.2 rounded-full text-[10px]">
+              <span className="bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-bold px-1.5 py-0.2 rounded-full text-xs">
                 {activeCount}
               </span>
             </TabsTrigger>
             
             <TabsTrigger 
               value="resolved" 
-              className="text-[11px] font-medium px-3 py-1 rounded-md data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+              className="text-xs font-medium px-3 py-1 rounded-md data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <span>Resolved Log</span>
-              <span className="bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold px-1.5 py-0.2 rounded-full text-[10px]">
+              <span className="bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold px-1.5 py-0.2 rounded-full text-xs">
                 {resolvedCount}
               </span>
             </TabsTrigger>
@@ -399,7 +399,7 @@ export default function ReportsTableFeed({
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id} className="bg-slate-100/60 dark:bg-slate-900/60 border-b border-slate-200/80 dark:border-slate-800 hover:bg-transparent">
                 {headerGroup.headers.map(header => (
-                  <th key={header.id} className="px-5 py-2.5 text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider whitespace-nowrap">
+                  <th key={header.id} className="px-5 py-2.5 text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider whitespace-nowrap">
                     {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                   </th>
                 ))}

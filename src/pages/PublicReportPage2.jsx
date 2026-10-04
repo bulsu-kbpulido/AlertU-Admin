@@ -252,7 +252,7 @@ export default function PublicReportPage() {
 
   if (loading) {
     return (
-      <div className="relative w-screen h-screen flex flex-col items-center justify-center bg-slate-950 text-slate-100 font-['Roboto',sans-serif] overflow-hidden select-none">
+      <div className="relative w-screen h-screen flex flex-col items-center justify-center bg-slate-950 text-slate-100 overflow-hidden select-none">
         <motion.div 
           animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.25, 0.15] }}
           transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
@@ -279,7 +279,7 @@ export default function PublicReportPage() {
             <h3 className="text-sm font-semibold tracking-wide text-slate-200">
               Loading report
             </h3>
-            <p className="text-[12px] text-slate-500 font-normal">
+            <p className="text-xs text-slate-500 font-normal">
               Fetching incident details...
             </p>
           </div>
@@ -290,7 +290,7 @@ export default function PublicReportPage() {
 
   if (error) {
     return (
-      <div className="w-screen h-screen flex items-center justify-center bg-slate-950 text-slate-100 p-6 font-['Roboto',sans-serif]">
+      <div className="w-screen h-screen flex items-center justify-center bg-slate-950 text-slate-100 p-6">
         <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center shadow-2xl">
           <div className="inline-flex p-3 bg-red-500/10 text-red-500 rounded-full mb-4">
             <AlertTriangle className="h-8 w-8" />
@@ -320,7 +320,7 @@ export default function PublicReportPage() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5, ease: "easeInOut" }}
-      className="min-h-screen w-full bg-slate-50 text-slate-900 font-['Roboto',sans-serif] flex flex-col"
+      className="min-h-screen w-full bg-slate-50 text-slate-900 flex flex-col"
     >
       
       {/* Centered Map Marker Pulse System */}
@@ -347,7 +347,7 @@ export default function PublicReportPage() {
           {displayId && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-semibold border border-blue-100">
               <Shield className="h-3.5 w-3.5 shrink-0" />
-              <span className="font-mono text-[11px] truncate max-w-[120px] sm:max-w-none">ID: {displayId}</span>
+              <span className="font-mono text-xs truncate max-w-[120px] sm:max-w-none">ID: {displayId}</span>
             </div>
           )}
         </div>
@@ -466,7 +466,7 @@ export default function PublicReportPage() {
                   <Play className="h-3.5 w-3.5 fill-current text-blue-400" />
                   <span>Primary Evidentiary Capture</span>
                 </h4>
-                <p className="text-[11px] text-slate-300">Logged via verified source channel</p>
+                <p className="text-xs text-slate-300">Logged via verified source channel</p>
               </div>
             </div>
           </div>
@@ -527,7 +527,7 @@ export default function PublicReportPage() {
                   <AlertTriangle className="h-5 w-5" />
                 </div>
                 <div>
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Hazard</span>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Hazard</span>
                   <span className="text-sm font-bold text-slate-900">{report.hazard}</span>
                 </div>
               </div>
@@ -577,7 +577,7 @@ export default function PublicReportPage() {
             <p className="text-slate-400 leading-relaxed max-w-sm">
               Disaster risk tracking and telemetry portal channel. Access and information updates are licensed for public emergency usage only.
             </p>
-            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-emerald-950/40 text-emerald-400 font-bold border border-emerald-900/40 text-[10px] tracking-wider uppercase">
+            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-emerald-950/40 text-emerald-400 font-bold border border-emerald-900/40 text-xs tracking-wider uppercase">
               <span className="h-1.5 w-1.5 bg-emerald-500 rounded-full animate-ping" />
               Gateway Status: Online
             </div>
@@ -603,7 +603,7 @@ export default function PublicReportPage() {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto pt-6 text-center text-slate-500 text-[11px] tracking-wide">
+        <div className="max-w-7xl mx-auto pt-6 text-center text-slate-500 text-xs tracking-wide">
           © 2026 <span className="font-bold text-slate-400">ALERT-U</span> · Disaster Risk and Incident Reporting System. All rights protected.
         </div>
       </footer>

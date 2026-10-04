@@ -155,7 +155,7 @@ export default function GeneratedLink({
               {target === 'citizen' ? <Globe className="w-5 h-5" /> : <ShieldCheck className="w-5 h-5" />}
             </div>
             <div>
-              <span className={`block text-[11px] font-bold uppercase tracking-wider ${
+              <span className={`block text-xs font-bold uppercase tracking-wider ${
                 target === 'citizen'                 ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400'
               }`}>
                 {target === 'citizen' ? 'Public View Link' : 'Internal Team Link'}
@@ -185,7 +185,7 @@ export default function GeneratedLink({
 
           {/* Link Input and Buttons */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide block">
+            <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide block">
               Shareable Web Link
             </label>
             <div className="flex items-center gap-2">
@@ -247,7 +247,7 @@ export default function GeneratedLink({
                 </>
               )}
             </div>
-            <p className="text-[11px] font-semibold leading-normal">
+            <p className="text-xs font-semibold leading-normal">
               {isLoading 
                 ? 'Connecting to the database...' 
                 : `The link is active and properly restricted for ${target === 'citizen' ? 'citizens' : 'department staff'}.`}

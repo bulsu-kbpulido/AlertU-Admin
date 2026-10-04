@@ -650,12 +650,12 @@ export default function Archived_Routes({ cachedData = null, onDataFetched, onCo
                       </button>
                     </td>
 
-                    <td className="px-5 py-4 font-['Roboto',sans-serif] font-medium text-slate-700 dark:text-slate-300">
+                    <td className="px-5 py-4 font-medium text-slate-700 dark:text-slate-300">
                       {report.reportID || report.reportId || report.id || 'N/A'}
                     </td>
 
                     <td className="px-5 py-4">
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border shadow-xs transition-colors ${getIncidentBadgeStyle(incidentType)}`}>
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider border shadow-xs transition-colors ${getIncidentBadgeStyle(incidentType)}`}>
                         <span>{incidentType}</span>
                       </span>
                     </td>
@@ -665,7 +665,7 @@ export default function Archived_Routes({ cachedData = null, onDataFetched, onCo
                     </td>
 
                     <td className="px-5 py-4">
-                      <div className="flex flex-col text-[11px]">
+                      <div className="flex flex-col text-xs">
                         <span className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1">
                           <Calendar className="h-3 w-3 text-blue-500 shrink-0" />
                           {date}
