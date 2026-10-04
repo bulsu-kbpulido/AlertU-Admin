@@ -1,3 +1,5 @@
+import useNewRows from '../hooks/useNewRows';
+import NewBadge from '../components/NewBadge';
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchFromBackend } from '../api';
@@ -505,6 +507,10 @@ const CitizenManagement = () => {
     }
   }, [totalPages, currentPage]);
 
+  const { isNew, markSeen } = useNewRows('citizens', citizens, {
+    getTime: (item) => item.createdAt,
+  });
+
   const paginatedCitizens = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
     return filteredCitizens.slice(start, start + itemsPerPage);
@@ -712,9 +718,9 @@ const CitizenManagement = () => {
                     const isOnline = Boolean(citizen.isActive || citizen.isOnline);
 
                     return (
-                      <tr key={citizenId || citizen.email} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
+                      <tr key={citizenId || citizen.email} onClickCapture={() => markSeen(citizen)} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
                         <td className="px-6 py-4 font-medium text-slate-700 dark:text-slate-300">
-                          {citizenId || 'N/A'}
+                          {citizenId || 'N/A'}{isNew(citizen) && <NewBadge className="ml-2" />}
                         </td>
 
                         <td className="px-6 py-4">

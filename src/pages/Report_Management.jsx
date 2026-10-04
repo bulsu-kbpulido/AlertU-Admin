@@ -1,3 +1,5 @@
+import useNewRows from '../hooks/useNewRows';
+import NewBadge from '../components/NewBadge';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { io } from 'socket.io-client';
@@ -728,6 +730,10 @@ export default function Report_Management() {
   }, [reports, searchQuery, severityFilter]);
 
   const totalPages = Math.ceil(filteredReports.length / itemsPerPage) || 1;
+  const { isNew, markSeen } = useNewRows('reports-active', reports, {
+    getTime: (item) => item.timestamp || item.submittedAt || item.createdAt,
+  });
+
   const paginatedReports = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
     return filteredReports.slice(start, start + itemsPerPage);
@@ -929,7 +935,7 @@ export default function Report_Management() {
 
                           return (
                             <motion.tr
-                              key={report.id || report.reportID}
+                              key={report.id || report.reportID} onClickCapture={() => markSeen(report)}
                               initial={{ opacity: 0, y: 4 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -4 }}
@@ -937,7 +943,7 @@ export default function Report_Management() {
                               className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors"
                             >
                               <td className="px-6 py-4 font-medium text-slate-700 dark:text-slate-300">
-                                {report.reportID || report.id}
+                                {report.reportID || report.id}{isNew(report) && <NewBadge className="ml-2" />}
                               </td>
 
                               <td className="px-6 py-4">

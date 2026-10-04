@@ -1,3 +1,5 @@
+import useNewRows from '../hooks/useNewRows';
+import NewBadge from '../components/NewBadge';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -462,6 +464,10 @@ export default function Send_Report() {
   }, [reports, searchTerm]);
 
   const totalPages = Math.ceil(filteredReports.length / ITEMS_PER_PAGE) || 1;
+  const { isNew, markSeen } = useNewRows('dispatch-approved', reports, {
+    getTime: (item) => item.timestamp || item.createdAt || item.resolvedAt,
+  });
+
   const paginatedReports = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredReports.slice(start, start + ITEMS_PER_PAGE);
@@ -773,7 +779,7 @@ export default function Send_Report() {
 
                         return (
                           <div
-                            key={report.id || displayId}
+                            key={report.id || displayId} onClickCapture={() => markSeen(report)}
                             className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex flex-col overflow-hidden group min-w-0"
                           >
                             <ReportMapPreview report={report} isTerminalState={false} />
@@ -786,6 +792,7 @@ export default function Send_Report() {
                                     <Hash className="h-2.5 w-2.5 text-slate-400" />
                                     {displayId}
                                   </span>
+                                  {isNew(report) && <NewBadge />}
 
                                   {/* Incident type badge: always right below the VRID */}
                                   <span className={`inline-flex max-w-full items-center px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider border shadow-xs transition-colors ${getIncidentBadgeStyle(report.incidentType)}`}>
@@ -877,9 +884,9 @@ export default function Send_Report() {
                               const displayId = getDisplayId(report);
 
                               return (
-                                <tr key={report.id || displayId} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                                <tr key={report.id || displayId} onClickCapture={() => markSeen(report)} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                                   <td className="px-5 py-4 font-medium text-slate-700 dark:text-slate-300">
-                                    {displayId}
+                                    {displayId} {isNew(report) && <NewBadge className="ml-2" />}
                                   </td>
                                   <td className="px-5 py-4">
                                     <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider border shadow-xs transition-colors ${getIncidentBadgeStyle(report.incidentType)}`}>

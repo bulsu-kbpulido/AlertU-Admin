@@ -1,3 +1,5 @@
+import useNewRows from '../hooks/useNewRows';
+import NewBadge from '../components/NewBadge';
 import React from 'react';
 import { Button } from "@/components/ui/button"; 
 import { FiLoader, FiBell } from 'react-icons/fi';
@@ -34,7 +36,7 @@ const cleanToStreetAndBarangay = (addressStr) => {
   return tokens.slice(0, 2).join(', ');
 };
 
-function ReportItem({ report, selectedReport, setSelectedReport, onViewClick }) {
+function ReportItem({ report, selectedReport, setSelectedReport, onViewClick, isNew, markSeen }) {
   const rawType = report?.incidentType || report?.type || 'Incident';
   const category = getIncidentCategory(rawType);
   const theme = incidentThemeMap[category];
@@ -53,7 +55,7 @@ function ReportItem({ report, selectedReport, setSelectedReport, onViewClick }) 
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.15 } }}
       transition={{ type: 'spring', stiffness: 400, damping: 38 }}
-      onClick={() => setSelectedReport?.(report)}
+      onClick={() => { markSeen?.(report); setSelectedReport?.(report); }}
       className={`w-full flex items-center justify-between gap-4 p-3.5 rounded-xl border select-none group/item ${
         isSelected 
           ? 'bg-slate-50 dark:bg-slate-800/60 border-slate-300 dark:border-slate-700 shadow-sm' 
@@ -75,6 +77,7 @@ function ReportItem({ report, selectedReport, setSelectedReport, onViewClick }) 
           >
             {rawType}
           </span>
+          {isNew?.(report) && <NewBadge className="self-start 2xl:self-center" />}
           <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 truncate leading-normal 2xl:text-right flex-1 min-w-0">
             {compactAddress}
           </p>
@@ -113,6 +116,10 @@ export default function ReportDetailsPanel({
       return filterAgency.every(requiredId => agencies.includes(requiredId));
     });
   }, [reportsList, filterAgency]);
+
+  const { isNew, markSeen } = useNewRows('dashboard-live-feed', displayReports, {
+    getTime: (item) => item.timestamp || item.submittedAt || item.createdAt,
+  });
 
   return (
     <div className="flex-1 min-h-0 w-full flex flex-col border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-xl font-sans">
@@ -157,6 +164,8 @@ export default function ReportDetailsPanel({
                 selectedReport={selectedReport} 
                 setSelectedReport={setSelectedReport}
                 onViewClick={onViewClick}
+                isNew={isNew}
+                markSeen={markSeen}
               />
             ))
           ) : (

@@ -1,3 +1,5 @@
+import useNewRows from '../hooks/useNewRows';
+import NewBadge from '../components/NewBadge';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { getAuth } from 'firebase/auth';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -264,6 +266,10 @@ export default function Duplicate_Reports({ onCountChange } = {}) {
       setCurrentPage(totalPages);
     }
   }, [totalPages, currentPage]);
+
+  const { isNew, markSeen } = useNewRows('reports-duplicate', duplicateReports, {
+    getTime: (item) => item.flaggedAt || item.createdAt || item.updatedAt || item.timestamp || item.date,
+  });
 
   const paginatedReports = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
@@ -593,7 +599,7 @@ export default function Duplicate_Reports({ onCountChange } = {}) {
 
                 return (
                   <motion.tr
-                    key={reportId}
+                    key={reportId} onClickCapture={() => markSeen(report)}
                     onDoubleClick={() => handleRowDoubleClick(report)}
                     animate={{
                       backgroundColor: isSelected ? 'rgba(59, 130, 246, 0.08)' : 'rgba(0,0,0,0)',
@@ -619,7 +625,7 @@ export default function Duplicate_Reports({ onCountChange } = {}) {
                     </td>
 
                     <td className="px-5 py-4 font-medium text-slate-700 dark:text-slate-300">
-                      {report.reportID || report.reportId || report.id || 'N/A'}
+                      {report.reportID || report.reportId || report.id || 'N/A'}{isNew(report) && <NewBadge className="ml-2" />}
                     </td>
 
                     <td className="px-5 py-4">

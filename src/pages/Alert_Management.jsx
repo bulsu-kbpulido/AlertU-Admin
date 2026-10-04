@@ -1,3 +1,5 @@
+import useNewRows from '../hooks/useNewRows';
+import NewBadge from '../components/NewBadge';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Bell,
@@ -347,6 +349,10 @@ export default function Alert_Management() {
   }, []);
 
   // Filtered lists
+  const { isNew, markSeen } = useNewRows('announcements', alerts, {
+    getTime: (item) => item.createdAt,
+  });
+
   const nonArchivedAlerts = useMemo(() => {
     return alerts.filter((a) => !a.isArchived);
   }, [alerts]);
@@ -1243,7 +1249,7 @@ export default function Alert_Management() {
 
                   return (
                     <div
-                      key={item.id}
+                      key={item.id} onClickCapture={() => markSeen(item)}
                       className="group relative rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 p-4 sm:p-5 shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-all"
                     >
                       <div className="flex flex-col sm:flex-row sm:items-start gap-4">
@@ -1262,6 +1268,7 @@ export default function Alert_Management() {
                               {item.title}
                             </h3>
                             {renderStatusBadge(item.status, item.expiresAt)}
+                            {isNew(item) && <NewBadge />}
                           </div>
 
                           {/* Message Body */}

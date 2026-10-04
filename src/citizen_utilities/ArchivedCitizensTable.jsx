@@ -1,3 +1,5 @@
+import useNewRows from '../hooks/useNewRows';
+import NewBadge from '../components/NewBadge';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchFromBackend } from '../api';
@@ -201,6 +203,10 @@ const ArchivedCitizensTable = ({
       setCurrentPage(totalPages);
     }
   }, [totalPages, currentPage]);
+
+  const { isNew, markSeen } = useNewRows('citizens-archived', archivedCitizens, {
+    getTime: (item) => item.archivedAt || item.updatedAt || item.createdAt,
+  });
 
   const paginatedCitizens = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
@@ -448,7 +454,7 @@ const ArchivedCitizensTable = ({
 
                 return (
                   <motion.tr
-                    key={citizenId}
+                    key={citizenId} onClickCapture={() => markSeen(citizen)}
                     onDoubleClick={() => handleRowDoubleClick(citizen)}
                     animate={{
                       backgroundColor: isSelected ? 'rgba(59, 130, 246, 0.08)' : 'rgba(0,0,0,0)',
@@ -474,7 +480,7 @@ const ArchivedCitizensTable = ({
                     </td>
 
                     <td className="px-6 py-4 font-medium text-slate-700 dark:text-slate-300">
-                      {citizenId || 'N/A'}
+                      {citizenId || 'N/A'}{isNew(citizen) && <NewBadge className="ml-2" />}
                     </td>
 
                     <td className="px-6 py-4">

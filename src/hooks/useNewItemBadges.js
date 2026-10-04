@@ -26,6 +26,7 @@ export const toMillis = (raw) => {
   if (typeof raw.toMillis === 'function') return raw.toMillis();
   if (typeof raw.toDate === 'function') return raw.toDate().getTime();
   if (typeof raw === 'object' && raw.seconds) return raw.seconds * 1000;
+  if (typeof raw === 'object' && raw._seconds) return raw._seconds * 1000;
   const parsed = new Date(raw).getTime();
   return Number.isNaN(parsed) ? 0 : parsed;
 };

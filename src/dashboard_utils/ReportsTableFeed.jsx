@@ -1,3 +1,5 @@
+import useNewRows from '../hooks/useNewRows';
+import NewBadge from '../components/NewBadge';
 import React, { useMemo, useEffect, useState } from 'react';
 import {
   useReactTable,
@@ -184,6 +186,10 @@ export default function ReportsTableFeed({
     });
   }, [filteredReports, activeTab]);
 
+  const { isNew, markSeen } = useNewRows(`dashboard-feed-${activeTab}`, contextualReports, {
+    getTime: (item) => item.timestamp || item.submittedAt || item.createdAt,
+  });
+
   const columns = useMemo(() => {
     return [
       {
@@ -198,6 +204,7 @@ export default function ReportsTableFeed({
               <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-200 tracking-tight">
                 {vridStr}
               </span>
+              {isNew(rep) && <NewBadge className="ml-1" />}
             </div>
           );
         }
@@ -319,7 +326,7 @@ export default function ReportsTableFeed({
         }
       }
     ];
-  }, [activeTab]);
+  }, [activeTab, isNew]);
 
   // Initialize table with onPaginationChange handler
   const table = useReactTable({
@@ -425,7 +432,7 @@ export default function ReportsTableFeed({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -3 }}
                     transition={{ duration: 0.16, ease: 'easeInOut' }}
-                    onClick={() => setSelectedReport?.(row.original)}
+                    onClick={() => { markSeen(row.original); setSelectedReport?.(row.original); }}
                     className="hover:bg-slate-50/80 dark:hover:bg-slate-900/40 cursor-pointer border-b border-slate-100 dark:border-slate-800/60 transition-colors duration-150"
                   >
                     {row.getVisibleCells().map(cell => (
