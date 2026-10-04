@@ -626,11 +626,10 @@ export default function Send_Report() {
         {/* Responsive Header Section */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
-              <Send className="h-7 w-7 text-blue-600 dark:text-blue-400 shrink-0" />
-              <span>Send Reports</span>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Send Reports
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               {activeTab === 'approved' && 'View verified incident reports and share updates.'}
               {activeTab === 'resolved' && 'View reports that have been completed and resolved.'}
               {activeTab === 'archived' && 'View older archived incident records.'}
