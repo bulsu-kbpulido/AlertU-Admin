@@ -20,6 +20,26 @@ import {
 } from 'lucide-react';
 import { auth } from '../firebase'; // Adjust path to your firebase config
 import useAuditLog from '../useAuditLog'; // Adjust path if needed
+import useNewItemBadges from '../hooks/useNewItemBadges';
+
+const isPendingReport = (r) =>
+  !r.isDuplicate &&
+  !r.isResolved &&
+  !r.isArchived &&
+  !['duplicate', 'resolved', 'verified', 'dispatched', 'rejected', 'archived'].includes(r.status);
+
+const reportTime = (r) => r.timestamp || r.submittedAt || r.createdAt || r.reportTimestamp;
+
+// Sidebar items that show a red badge when something new arrives
+const NEW_ITEM_SOURCES = [
+  {
+    pageId: 'report-management',
+    collectionName: 'reports',
+    max: 100,
+    include: isPendingReport,
+    getTime: reportTime,
+  },
+];
 
 export default function Sidebar({
   currentPage = 'dashboard',
@@ -32,6 +52,7 @@ export default function Sidebar({
   setIsOpen,
 }) {
   const currentUser = auth.currentUser;
+  const newCounts = useNewItemBadges(NEW_ITEM_SOURCES, currentPage, currentUser?.uid);
 
   // Initialize Audit Log Hook with current Admin context
   const { logMovement } = useAuditLog({
@@ -285,6 +306,7 @@ export default function Sidebar({
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentPage === item.id;
+          const count = newCounts[item.id] || 0;
 
           return (
             <button
@@ -318,6 +340,14 @@ export default function Sidebar({
               >
                 {item.label}
               </span>
+              {count > 0 && !isCollapsed && (
+                <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-xs font-bold leading-none text-white">
+                  {count > 99 ? '99+' : count}
+                </span>
+              )}
+              {count > 0 && isCollapsed && (
+                <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900" />
+              )}
             </button>
           );
         })}
