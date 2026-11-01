@@ -509,7 +509,7 @@ export default function Report_Management() {
         status: 'verified',
         verifiedReportID: verifiedReportID,
         incidentType: verifiedIncidentType.toLowerCase(),
-        // Send state flags retrieved directly from Zustand store
+        // 🛠️ Explicitly passing accident flags retrieved from Zustand store
         isPropertyDamage: Boolean(isPropertyDamage),
         isMedicalAssistance: Boolean(isMedicalAssistance),
         ...(!isAccident ? { verifiedSeverity } : {}),
