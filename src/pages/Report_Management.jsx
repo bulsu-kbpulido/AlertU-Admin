@@ -509,8 +509,8 @@ export default function Report_Management() {
         verifiedReportID: verifiedReportID,
         incidentType: verifiedIncidentType.toLowerCase(),
         ...(isAccident ? {
-          isPropertyDamage,
-          isMedicalAssistance,
+          isPropertyDamage,       // 👈 Updated to match backend
+          isMedicalAssistance,    // 👈 Updated to match backend
         } : {
           verifiedSeverity,
         }),
