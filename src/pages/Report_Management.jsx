@@ -509,9 +509,11 @@ export default function Report_Management() {
         status: 'verified',
         verifiedReportID: verifiedReportID,
         incidentType: verifiedIncidentType.toLowerCase(),
-        // 🛠️ Explicitly passing accident flags retrieved from Zustand store
+        
+        // 🛠️ EXPLICIT ACCIDENT FLAGS INCLUDED HERE:
         isPropertyDamage: Boolean(isPropertyDamage),
         isMedicalAssistance: Boolean(isMedicalAssistance),
+
         ...(!isAccident ? { verifiedSeverity } : {}),
         hazard: secondaryHazard === 'Others' ? customSecondaryHazard.trim() : secondaryHazard,
         adminNotes: (adminNotes || '').trim(),
