@@ -189,9 +189,9 @@ export default function Report_Management() {
   const [customSecondaryHazard, setCustomSecondaryHazard] = useState('');
   const [isRejecting, setIsRejecting] = useState(false);
 
-  // Accident specific states
-  const [hasPropertyDamage, setHasPropertyDamage] = useState(false);
-  const [needsMedicalAssistance, setNeedsMedicalAssistance] = useState(false);
+  // Accident specific states (standardized to isPropertyDamage / isMedicalAssistance)
+  const [isPropertyDamage, setIsPropertyDamage] = useState(false);
+  const [isMedicalAssistance, setIsMedicalAssistance] = useState(false);
 
   // Data & Refetch Loading States
   const [reports, setReports] = useState([]);
@@ -402,8 +402,8 @@ export default function Report_Management() {
     setReportTitle(getResidentDetailsTitle(report));
     setSelectedAgencies([]);
     setIsSensitive(report.isSensitive || false);
-    setHasPropertyDamage(report.hasPropertyDamage || false);
-    setNeedsMedicalAssistance(report.needsMedicalAssistance || false);
+    setIsPropertyDamage(report.isPropertyDamage || report.hasPropertyDamage || false);
+    setIsMedicalAssistance(report.isMedicalAssistance || report.needsMedicalAssistance || false);
     
     const initialLat = Number(report?.location?.latitude || report?.latitude || 14.75);
     const initialLng = Number(report?.location?.longitude || report?.longitude || 120.95);
@@ -509,8 +509,8 @@ export default function Report_Management() {
         verifiedReportID: verifiedReportID,
         incidentType: verifiedIncidentType.toLowerCase(),
         ...(isAccident ? {
-          hasPropertyDamage,
-          needsMedicalAssistance,
+          isPropertyDamage,
+          isMedicalAssistance,
         } : {
           verifiedSeverity,
         }),
@@ -1067,10 +1067,10 @@ export default function Report_Management() {
               setCustomSecondaryHazard={setCustomSecondaryHazard}
               isSensitive={isSensitive}
               setIsSensitive={setIsSensitive}
-              hasPropertyDamage={hasPropertyDamage}
-              setHasPropertyDamage={setHasPropertyDamage}
-              needsMedicalAssistance={needsMedicalAssistance}
-              setNeedsMedicalAssistance={setNeedsMedicalAssistance}
+              isPropertyDamage={isPropertyDamage}
+              setIsPropertyDamage={setIsPropertyDamage}
+              isMedicalAssistance={isMedicalAssistance}
+              setIsMedicalAssistance={setIsMedicalAssistance}
               socketInstance={socketRef.current}
             />
           )}
