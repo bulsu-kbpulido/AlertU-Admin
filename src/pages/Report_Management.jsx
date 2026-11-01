@@ -189,6 +189,10 @@ export default function Report_Management() {
   const [customSecondaryHazard, setCustomSecondaryHazard] = useState('');
   const [isRejecting, setIsRejecting] = useState(false);
 
+  // Accident specific states
+  const [hasPropertyDamage, setHasPropertyDamage] = useState(false);
+  const [needsMedicalAssistance, setNeedsMedicalAssistance] = useState(false);
+
   // Data & Refetch Loading States
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -346,8 +350,6 @@ export default function Report_Management() {
   };
 
   // Prefill the official title from what the resident wrote when reporting.
-  // Uses the same fields the View modal shows as the resident's details.
-  // Returns '' when the resident added nothing, so the admin can leave it blank.
   const getResidentDetailsTitle = (report) => {
     const raw = [report?.notes, report?.description, report?.incidentDetails, report?.citizenNotes]
       .find((v) => typeof v === 'string' && v.trim());
@@ -400,6 +402,8 @@ export default function Report_Management() {
     setReportTitle(getResidentDetailsTitle(report));
     setSelectedAgencies([]);
     setIsSensitive(report.isSensitive || false);
+    setHasPropertyDamage(report.hasPropertyDamage || false);
+    setNeedsMedicalAssistance(report.needsMedicalAssistance || false);
     
     const initialLat = Number(report?.location?.latitude || report?.latitude || 14.75);
     const initialLng = Number(report?.location?.longitude || report?.longitude || 120.95);
@@ -431,7 +435,6 @@ export default function Report_Management() {
     const reportIdentifier = selectedReport?.reportID || selectedReport?.id;
     const abandonedAtStep = currentStep;
 
-    // Preserve the close event and close the modal immediately.
     if (reportIdentifier && socketRef.current) {
       socketRef.current.emit('ADMIN_ACTION_EVENT', {
         action: 'CLOSE_VERIFY_MODAL',
@@ -443,7 +446,6 @@ export default function Report_Management() {
 
     resetModalState();
 
-    // Do not await audit logging; it must not block modal closing.
     if (reportIdentifier) {
       void logAdminAction(
         'CLOSE_VERIFY_MODAL',
@@ -477,15 +479,12 @@ export default function Report_Management() {
         description: 'The report document ID is missing. Please reopen the report and try again.',
         duration: TOAST_DURATION,
       });
-      // Throw so the modal knows the save failed and does not dispatch or close
       throw new Error('Missing report document ID');
     }
 
     const reportIdentifier = selectedReport?.reportID || sourceDocumentId;
     const verifiedReportID = generateVerifiedReportID(selectedReport);
 
-    // Resolve the Firebase UID and citizen ID separately. The Flutter
-    // notification socket normally joins the Firebase UID room.
     const targetAuthUid =
       selectedReport?.authUid ||
       selectedReport?.uid ||
@@ -504,11 +503,17 @@ export default function Report_Management() {
     let failureHandled = false;
 
     try {
+      const isAccident = verifiedIncidentType.toLowerCase() === 'accident';
       const payload = {
         status: 'verified',
         verifiedReportID: verifiedReportID,
         incidentType: verifiedIncidentType.toLowerCase(),
-        verifiedSeverity,
+        ...(isAccident ? {
+          hasPropertyDamage,
+          needsMedicalAssistance,
+        } : {
+          verifiedSeverity,
+        }),
         hazard: secondaryHazard === 'Others' ? customSecondaryHazard.trim() : secondaryHazard,
         adminNotes: (adminNotes || '').trim(),
         reportTitle: (reportTitle || '').trim(),
@@ -537,16 +542,15 @@ export default function Report_Management() {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        // ⚡ Prepare complete payload for Flutter client socket listener
         const realtimeSocketPayload = {
-          action: 'REPORT_VERIFIED',             // Matches Flutter isApprovedAction
-          status: 'APPROVED',                    // Fallback status match
+          action: 'REPORT_VERIFIED',
+          status: 'APPROVED',
           reportId: reportIdentifier,
           reportID: reportIdentifier,
           verifiedReportID: verifiedReportID,
-          userId: targetAuthUid,                  // Firebase UID room
+          userId: targetAuthUid,
           authUid: targetAuthUid,
-          citizenID: targetCitizenId,              // Legacy citizenID room
+          citizenID: targetCitizenId,
           title: reportTitle.trim() || verifiedIncidentType,
           severity: verifiedSeverity,
           agencies: selectedAgencies,
@@ -561,7 +565,6 @@ export default function Report_Management() {
           realtimeSocketPayload
         );
 
-        // ⚡ Emit across all real-time channels Flutter listens to
         if (socketRef.current) {
           socketRef.current.emit('ADMIN_ACTION_EVENT', realtimeSocketPayload);
           socketRef.current.emit('DISPATCH_VERIFIED_INCIDENT', realtimeSocketPayload);
@@ -569,8 +572,6 @@ export default function Report_Management() {
         }
 
         reportCacheRef.current[activeTab] = null;
-
-        // 🛑 Unmount/reset modal ONLY AFTER emitting socket events
         resetModalState();
 
         toast.success('Report verified and dispatched', {
@@ -583,12 +584,10 @@ export default function Report_Management() {
           description: result.message || 'The report could not be saved. Please try again.',
           duration: TOAST_DURATION,
         });
-        // Throw so the modal does not dispatch or close when saving failed
         throw new Error(result.message || 'Failed to save report');
       }
     } catch (err) {
       console.error("Final submission error:", err);
-      // Server rejections already showed a toast above; this covers network / unexpected errors
       if (!failureHandled) {
         toast.error('Unable to verify report', {
           description: 'An error occurred during submission. Please try again.',
@@ -668,8 +667,6 @@ export default function Report_Management() {
           eventId: `rejected_${reportToReject}_${Date.now()}`,
         };
 
-        // Use the authenticated backend relay so the server resolves the citizen
-        // rooms and forwards ADMIN_ACTION_EVENT/CITIZEN_REPORT_UPDATED safely.
         await logAdminAction(
           'REPORT_REJECTED',
           `Report_#${reportToReject}`,
@@ -1070,6 +1067,10 @@ export default function Report_Management() {
               setCustomSecondaryHazard={setCustomSecondaryHazard}
               isSensitive={isSensitive}
               setIsSensitive={setIsSensitive}
+              hasPropertyDamage={hasPropertyDamage}
+              setHasPropertyDamage={setHasPropertyDamage}
+              needsMedicalAssistance={needsMedicalAssistance}
+              setNeedsMedicalAssistance={setNeedsMedicalAssistance}
               socketInstance={socketRef.current}
             />
           )}
