@@ -11,7 +11,9 @@ import {
   Plus, 
   Sliders, 
   Loader2,
-  ChevronDown
+  ChevronDown,
+  Car,
+  HeartPulse
 } from 'lucide-react';
 import 'ol/ol.css';
 import Map from 'ol/Map';
@@ -45,11 +47,11 @@ const INCIDENT_TYPES = ['Fire', 'Flood', 'Accident', 'Earthquake', 'Others'];
 export default function Create_Reports() {
   useDocumentTitle('Create Reports – AlertU');
 
-  // Active Admin / Dispatcher Session (Replace with Auth context if available)
+  // Active Admin / Dispatcher Session
   const currentAdminId = "ADMIN-004";
   const currentAdminName = "Dispatch Admin";
 
-  // Audit Logger Hook initialized with default admin session info
+  // Audit Logger Hook
   const { logAction, logMovement } = useAuditLog({
     adminId: currentAdminId,
     adminName: currentAdminName,
@@ -69,6 +71,10 @@ export default function Create_Reports() {
     notes: '',
     reportTitle: '',
   });
+
+  // Accident specific states
+  const [isPropertyDamage, setIsPropertyDamage] = useState(false);
+  const [isMedicalAssistance, setIsMedicalAssistance] = useState(false);
 
   const [isDragging, setIsDragging] = useState(false);
   const [isLoadingAddress, setIsLoadingAddress] = useState(false);
@@ -115,7 +121,6 @@ export default function Create_Reports() {
       }),
     });
 
-    // Map interaction handlers
     map.on('movestart', () => {
       setIsDragging(true);
       setMarkerScale(1.15);
@@ -135,11 +140,8 @@ export default function Create_Reports() {
     });
 
     mapInstance.current = map;
-
-    // Fetch initial location address
     syncNominatimAddress(BULACAN_INITIAL.lat, BULACAN_INITIAL.lng);
 
-    // Handle window resize
     const handleResize = () => {
       if (mapInstance.current) mapInstance.current.updateSize();
     };
@@ -156,7 +158,6 @@ export default function Create_Reports() {
     };
   }, []);
 
-  // --- Location Update Handler ---
   const updateLocation = (lat, lng) => {
     setFormData(prev => ({
       ...prev,
@@ -170,7 +171,6 @@ export default function Create_Reports() {
     }, 600);
   };
 
-  // --- Reverse Geocoding ---
   const syncNominatimAddress = async (lat, lng) => {
     setIsLoadingAddress(true);
     try {
@@ -199,7 +199,6 @@ export default function Create_Reports() {
     }
   };
 
-  // --- Search Places ---
   const searchPlaces = async (query) => {
     if (query.trim().length < 2) {
       setSearchResults([]);
@@ -215,7 +214,6 @@ export default function Create_Reports() {
 
       if (response.ok) {
         const data = await response.json();
-        
         const filteredResults = data.filter(place => {
           const lat = parseFloat(place.lat);
           const lng = parseFloat(place.lon);
@@ -235,7 +233,6 @@ export default function Create_Reports() {
     }
   };
 
-  // --- Debounced Search Handler ---
   const handleSearchChange = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
@@ -252,7 +249,6 @@ export default function Create_Reports() {
     }
   };
 
-  // --- Select Search Result ---
   const selectSearchResult = (place) => {
     const lat = parseFloat(place.lat);
     const lng = parseFloat(place.lon);
@@ -277,7 +273,6 @@ export default function Create_Reports() {
     }
   };
 
-  // --- Form Validation ---
   const validateForm = () => {
     const errors = {};
     if (!formData.reportTitle.trim()) errors.reportTitle = 'Report title is required';
@@ -298,25 +293,23 @@ export default function Create_Reports() {
     return Object.keys(errors).length === 0;
   };
 
-  // --- Open Modal Handler ---
   const handleCreateReport = (e) => {
     e.preventDefault();
     if (!validateForm()) return;
     setIsSetIncidentModalOpen(true);
   };
 
-  // Derived Effective Incident Type for Modal Pass-Through and Audit Logging
   const effectiveIncidentType = formData.incidentType === 'Others' && formData.customIncidentType.trim() 
     ? formData.customIncidentType.trim() 
     : formData.incidentType;
 
-  // --- Called when SetIncRadandPol successfully submits ---
+  const isAccident = effectiveIncidentType.toLowerCase() === 'accident';
+
   const handleIncidentConfirmed = (reportIdOrData, payloadData) => {
     setIsSetIncidentModalOpen(false);
     setIsSubmitting(false);
     setSubmitSuccess(true);
     
-    // Prioritize VRID / verifiedReportId over raw Firestore Document UID
     const resolvedReportId = 
       (typeof reportIdOrData === 'object' ? reportIdOrData?.verifiedReportId || reportIdOrData?.verifiedReportID || reportIdOrData?.vrid : null) ||
       payloadData?.verifiedReportId ||
@@ -327,7 +320,6 @@ export default function Create_Reports() {
 
     const resolvedHazard = formData.hazard === 'Others' ? formData.customHazard : formData.hazard;
 
-    // --- Record System Audit Log Entry ---
     (logAction || logMovement)({
       action: 'CREATE_INCIDENT_REPORT',
       actorId: currentAdminId,
@@ -340,7 +332,8 @@ export default function Create_Reports() {
         reportTitle: formData.reportTitle,
         incidentType: effectiveIncidentType,
         hazard: resolvedHazard,
-        severity: formData.severity,
+        severity: isAccident ? 'Medium' : formData.severity,
+        ...(isAccident ? { isPropertyDamage, isMedicalAssistance } : {}),
         notes: formData.notes,
         location: {
           address: formData.address,
@@ -357,7 +350,6 @@ export default function Create_Reports() {
     handleReset();
   };
 
-  // --- Reset Handler ---
   const handleReset = () => {
     setFormData({
       incidentType: 'Fire',
@@ -372,6 +364,8 @@ export default function Create_Reports() {
       notes: '',
       reportTitle: '',
     });
+    setIsPropertyDamage(false);
+    setIsMedicalAssistance(false);
     setSearchQuery('');
     setSearchResults([]);
     setShowSearchResults(false);
@@ -412,7 +406,7 @@ export default function Create_Reports() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="mb-3 p-2.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-md flex items-start gap-2.5 shadow-xs"
+            className="mb-3 p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-start gap-3 shadow-xs"
           >
             <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
             <div className="space-y-0.5 flex-1">
@@ -437,8 +431,8 @@ export default function Create_Reports() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
         
         {/* Spatial Mapping Section */}
-        <div className="lg:col-span-7 xl:col-span-8 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden flex flex-col h-[calc(100vh-230px)] min-h-[420px]">
-          <div className="px-3 py-2 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
+        <div className="lg:col-span-7 xl:col-span-8 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden flex flex-col h-[calc(100vh-220px)] min-h-[460px]">
+          <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900/80">
             <div className="flex items-center gap-1.5">
               <h2 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
                 Map Picker
@@ -471,23 +465,23 @@ export default function Create_Reports() {
             </div>
 
             {/* Map Search Bar Overlay */}
-            <div className="absolute top-2.5 left-2.5 right-2.5 z-20 pointer-events-none">
-              <div className="max-w-sm mx-auto bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-md border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden pointer-events-auto">
-                <div className="flex items-center px-2.5 py-0.5">
-                  <Search className="h-3.5 w-3.5 text-slate-400 shrink-0 ml-0.5" />
+            <div className="absolute top-3 left-3 right-3 z-20 pointer-events-none">
+              <div className="max-w-sm mx-auto bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden pointer-events-auto">
+                <div className="flex items-center px-3 py-1.5">
+                  <Search className="h-4 w-4 text-slate-400 shrink-0 ml-0.5" />
                   <input
                     type="text"
                     placeholder="Search location in Bulacan..."
                     value={searchQuery}
                     onChange={handleSearchChange}
-                    className="w-full bg-transparent px-2 py-1.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none"
+                    className="w-full bg-transparent px-2.5 py-1 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none"
                   />
-                  {isSearching && <Loader2 className="h-3.5 w-3.5 text-blue-500 animate-spin shrink-0 mr-1.5" />}
+                  {isSearching && <Loader2 className="h-4 w-4 text-blue-500 animate-spin shrink-0 mr-1" />}
                   {searchQuery && !isSearching && (
                     <button 
                       type="button" 
                       onClick={() => { setSearchQuery(''); setSearchResults([]); setShowSearchResults(false); }} 
-                      className="p-0.5 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                      className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
@@ -496,20 +490,20 @@ export default function Create_Reports() {
                 
                 {/* Search Dropdown */}
                 {showSearchResults && (
-                  <div className="border-t border-slate-100 dark:border-slate-800 max-h-40 overflow-y-auto">
+                  <div className="border-t border-slate-100 dark:border-slate-800 max-h-48 overflow-y-auto">
                     {searchResults.length > 0 ? (
                       searchResults.map((result, idx) => (
                         <button
                           key={idx}
                           type="button"
                           onClick={() => selectSearchResult(result)}
-                          className="w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800/50 last:border-0 transition-colors truncate block"
+                          className="w-full px-3.5 py-2 text-left text-xs hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800/50 last:border-0 transition-colors truncate block"
                         >
                           {result.display_name}
                         </button>
                       ))
                     ) : (
-                      <p className="px-2 py-1.5 text-xs text-slate-400 text-center">
+                      <p className="px-3 py-2 text-xs text-slate-400 text-center">
                         No locations found in Bulacan.
                       </p>
                     )}
@@ -520,9 +514,9 @@ export default function Create_Reports() {
           </div>
 
           {/* Location Coordinate Bar */}
-          <div className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-xs">
-            <div className="flex items-center gap-1.5 overflow-hidden">
-              <MapPin className="h-3 w-3 text-rose-500 shrink-0" />
+          <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-2 overflow-hidden">
+              <MapPin className="h-3.5 w-3.5 text-rose-500 shrink-0" />
               <span className="text-slate-700 dark:text-slate-300 font-medium truncate">
                 {isLoadingAddress ? 'Retrieving street address...' : formData.address}
               </span>
@@ -534,9 +528,9 @@ export default function Create_Reports() {
         </div>
 
         {/* Form Control Section */}
-        <div className="lg:col-span-5 xl:col-span-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-xs p-3.5 flex flex-col justify-between h-[calc(100vh-230px)] min-h-[420px] overflow-y-auto">
-          <div className="space-y-2.5">
-            <div className="border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center justify-between">
+        <div className="lg:col-span-5 xl:col-span-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs p-4 flex flex-col justify-between h-[calc(100vh-220px)] min-h-[460px] overflow-y-auto">
+          <div className="space-y-3">
+            <div className="border-b border-slate-100 dark:border-slate-800 pb-2.5 flex items-center justify-between">
               <h2 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
                 <FileText className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
                 <span>Incident Parameters</span>
@@ -544,10 +538,10 @@ export default function Create_Reports() {
               <span className="text-xs font-bold text-rose-500 uppercase tracking-wider">* Required</span>
             </div>
 
-            <form onSubmit={handleCreateReport} id="create-report-form" className="space-y-2.5">
+            <form onSubmit={handleCreateReport} id="create-report-form" className="space-y-3">
               
               {/* Title Field */}
-              <div className="space-y-0.5">
+              <div className="space-y-1">
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                   Report Title <span className="text-rose-500">*</span>
                 </label>
@@ -556,7 +550,7 @@ export default function Create_Reports() {
                   placeholder="e.g., Structure Fire on Market Street..."
                   value={formData.reportTitle}
                   onChange={(e) => setFormData({ ...formData, reportTitle: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-md border text-xs font-medium transition-all ${
+                  className={`w-full px-3 py-2 rounded-xl border text-xs font-medium transition-all ${
                     validationErrors.reportTitle
                       ? 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/20'
                       : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 focus:border-blue-500'
@@ -568,7 +562,7 @@ export default function Create_Reports() {
               </div>
 
               {/* Incident Type Select */}
-              <div className="space-y-0.5">
+              <div className="space-y-1">
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                   Incident Type <span className="text-rose-500">*</span>
                 </label>
@@ -576,7 +570,7 @@ export default function Create_Reports() {
                   <select
                     value={formData.incidentType}
                     onChange={(e) => setFormData({ ...formData, incidentType: e.target.value, customIncidentType: '' })}
-                    className={`w-full px-2.5 py-1.5 rounded-md border text-xs font-semibold transition-all appearance-none ${
+                    className={`w-full px-3 py-2 rounded-xl border text-xs font-semibold transition-all appearance-none ${
                       validationErrors.incidentType
                         ? 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/20'
                         : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 focus:border-blue-500'
@@ -586,7 +580,7 @@ export default function Create_Reports() {
                       <option key={type} value={type} className="bg-white dark:bg-slate-900">{type}</option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
                 </div>
                 {validationErrors.incidentType && (
                   <p className="text-xs text-rose-500 font-medium">{validationErrors.incidentType}</p>
@@ -595,13 +589,13 @@ export default function Create_Reports() {
 
               {/* Custom Incident Field */}
               {formData.incidentType === 'Others' && (
-                <div className="space-y-0.5">
+                <div className="space-y-1">
                   <input
                     type="text"
                     placeholder="Specify custom incident classification..."
                     value={formData.customIncidentType}
                     onChange={(e) => setFormData({ ...formData, customIncidentType: e.target.value })}
-                    className={`w-full px-2.5 py-1.5 rounded-md border text-xs font-medium transition-all ${
+                    className={`w-full px-3 py-2 rounded-xl border text-xs font-medium transition-all ${
                       validationErrors.customIncidentType
                         ? 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/20'
                         : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 focus:border-blue-500'
@@ -613,35 +607,68 @@ export default function Create_Reports() {
                 </div>
               )}
 
-              {/* Severity Button Group */}
-              <div className="space-y-0.5">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                  Severity Assessment
-                </label>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {SEVERITY_LEVELS.map(level => (
-                    <button
-                      key={level}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, severity: level })}
-                      className={`py-1 px-1.5 rounded-md text-xs font-bold transition-all border shadow-2xs ${
-                        formData.severity === level
-                          ? level === 'High'
-                            ? 'bg-rose-600 text-white border-rose-700'
-                            : level === 'Medium'
-                            ? 'bg-amber-500 text-white border-amber-600'
-                            : 'bg-emerald-600 text-white border-emerald-700'
-                          : 'bg-slate-100 dark:bg-slate-800/70 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
-                      }`}
-                    >
-                      {level}
-                    </button>
-                  ))}
+              {/* Dynamic Assessment: Severity (Standard) OR Accident Checkboxes */}
+              {isAccident ? (
+                <div className="space-y-1.5 p-3 rounded-xl border border-violet-200 dark:border-violet-900/50 bg-violet-50/40 dark:bg-violet-950/10">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-violet-900 dark:text-violet-300">
+                    Accident Status Assessment
+                  </label>
+                  <div className="grid grid-cols-1 gap-2 pt-0.5">
+                    <label className="flex items-center gap-2.5 p-2 rounded-lg bg-white dark:bg-slate-900 border border-violet-100 dark:border-violet-950 shadow-2xs cursor-pointer hover:border-violet-300 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={isPropertyDamage}
+                        onChange={(e) => setIsPropertyDamage(e.target.checked)}
+                        className="w-4 h-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                      />
+                      <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
+                        <Car className="w-3.5 h-3.5 text-violet-600" /> Property Damage Reported
+                      </span>
+                    </label>
+
+                    <label className="flex items-center gap-2.5 p-2 rounded-lg bg-white dark:bg-slate-900 border border-violet-100 dark:border-violet-950 shadow-2xs cursor-pointer hover:border-violet-300 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={isMedicalAssistance}
+                        onChange={(e) => setIsMedicalAssistance(e.target.checked)}
+                        className="w-4 h-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                      />
+                      <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
+                        <HeartPulse className="w-3.5 h-3.5 text-rose-600" /> Medical Assistance Needed
+                      </span>
+                    </label>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Severity Assessment
+                  </label>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {SEVERITY_LEVELS.map(level => (
+                      <button
+                        key={level}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, severity: level })}
+                        className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all border shadow-2xs ${
+                          formData.severity === level
+                            ? level === 'High'
+                              ? 'bg-rose-600 text-white border-rose-700'
+                              : level === 'Medium'
+                              ? 'bg-amber-500 text-white border-amber-600'
+                              : 'bg-emerald-600 text-white border-emerald-700'
+                            : 'bg-slate-100 dark:bg-slate-800/70 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                        }`}
+                      >
+                        {level}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Hazard Select */}
-              <div className="space-y-0.5">
+              <div className="space-y-1">
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                   Associated Secondary Hazard
                 </label>
@@ -649,25 +676,25 @@ export default function Create_Reports() {
                   <select
                     value={formData.hazard}
                     onChange={(e) => setFormData({ ...formData, hazard: e.target.value, customHazard: '' })}
-                    className="w-full px-2.5 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-xs font-medium focus:border-blue-500 focus:outline-none appearance-none"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-xs font-medium focus:border-blue-500 focus:outline-none appearance-none"
                   >
                     {HAZARD_TYPES.map(type => (
                       <option key={type} value={type} className="bg-white dark:bg-slate-900">{type}</option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
                 </div>
               </div>
 
               {/* Custom Hazard Field */}
               {formData.hazard === 'Others' && (
-                <div className="space-y-0.5">
+                <div className="space-y-1">
                   <input
                     type="text"
                     placeholder="Specify custom secondary hazard..."
                     value={formData.customHazard}
                     onChange={(e) => setFormData({ ...formData, customHazard: e.target.value })}
-                    className={`w-full px-2.5 py-1.5 rounded-md border text-xs font-medium transition-all ${
+                    className={`w-full px-3 py-2 rounded-xl border text-xs font-medium transition-all ${
                       validationErrors.customHazard
                         ? 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/20'
                         : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 focus:border-blue-500'
@@ -683,7 +710,7 @@ export default function Create_Reports() {
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1">
-                    <Building2 className="h-3 w-3 text-blue-500" />
+                    <Building2 className="h-3.5 w-3.5 text-blue-500" />
                     <span>Assigned Responders</span>
                   </label>
                   {validationErrors.selectedAgencies && (
@@ -695,17 +722,17 @@ export default function Create_Reports() {
                   <button
                     type="button"
                     onClick={() => setIsAgencyModalOpen(true)}
-                    className={`w-full py-1.5 px-2.5 border border-dashed rounded-md flex items-center justify-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-all ${
+                    className={`w-full py-2 px-3 border border-dashed rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-all ${
                       validationErrors.selectedAgencies
                         ? 'border-rose-400 bg-rose-50/30 text-rose-600'
                         : 'border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-400'
                     }`}
                   >
-                    <Plus className="h-3 w-3" />
+                    <Plus className="h-3.5 w-3.5" />
                     <span>Set Agencies For Dispatch</span>
                   </button>
                 ) : (
-                  <div className="p-2 border border-slate-200 dark:border-slate-800 rounded-md bg-slate-50/80 dark:bg-slate-950/40 space-y-1.5">
+                  <div className="p-2.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/80 dark:bg-slate-950/40 space-y-2">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-bold text-slate-500 dark:text-slate-400">
                         {selectedAgencies.length} Agency Channels
@@ -713,9 +740,9 @@ export default function Create_Reports() {
                       <button
                         type="button"
                         onClick={() => setIsAgencyModalOpen(true)}
-                        className="font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-0.5"
+                        className="font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
                       >
-                        <Sliders className="h-2.5 w-2.5" />
+                        <Sliders className="h-3 w-3" />
                         <span>Modify</span>
                       </button>
                     </div>
@@ -726,7 +753,7 @@ export default function Create_Reports() {
                         return (
                           <span 
                             key={agency.id || agency.name} 
-                            className={`px-1.5 py-0.5 rounded border text-xs font-bold flex items-center gap-1 shadow-2xs ${styleClasses}`}
+                            className={`px-2 py-0.5 rounded-lg border text-xs font-bold flex items-center gap-1 shadow-2xs ${styleClasses}`}
                           >
                             {agency.icon && <span>{agency.icon}</span>}
                             <span>{agency.id || agency.name}</span>
@@ -739,7 +766,7 @@ export default function Create_Reports() {
               </div>
 
               {/* Notes Description */}
-              <div className="space-y-0.5">
+              <div className="space-y-1">
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                   Incident Description <span className="text-rose-500">*</span>
                 </label>
@@ -748,7 +775,7 @@ export default function Create_Reports() {
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   placeholder="Provide concise details on current situation..."
                   rows={2}
-                  className={`w-full px-2.5 py-1.5 rounded-md border text-xs font-medium transition-all resize-none ${
+                  className={`w-full px-3 py-2 rounded-xl border text-xs font-medium transition-all resize-none ${
                     validationErrors.notes
                       ? 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/20'
                       : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 focus:border-blue-500'
@@ -762,14 +789,14 @@ export default function Create_Reports() {
           </div>
 
           {/* Action Trigger Buttons */}
-          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 mt-2">
+          <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 dark:border-slate-800 mt-2">
             <Button
               type="button"
               variant="outline"
               onClick={handleReset}
-              className="w-full inline-flex items-center justify-center gap-1 text-xs font-bold uppercase tracking-wider h-8"
+              className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-bold uppercase tracking-wider h-9 rounded-xl"
             >
-              <RotateCcw className="h-3 w-3" />
+              <RotateCcw className="h-3.5 w-3.5" />
               <span>Reset</span>
             </Button>
 
@@ -777,16 +804,16 @@ export default function Create_Reports() {
               type="submit"
               form="create-report-form"
               disabled={isSubmitting}
-              className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider shadow-xs h-8"
+              className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider shadow-xs h-9 rounded-xl"
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
                   <span>Creating...</span>
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                  <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
                   <span>Proceed</span>
                 </>
               )}
@@ -812,7 +839,8 @@ export default function Create_Reports() {
         reportData={{
           ...formData,
           incidentType: effectiveIncidentType,
-          hazard: formData.hazard === 'Others' ? formData.customHazard : formData.hazard
+          hazard: formData.hazard === 'Others' ? formData.customHazard : formData.hazard,
+          ...(isAccident ? { isPropertyDamage, isMedicalAssistance } : {})
         }}
         verifiedIncidentType={effectiveIncidentType}
         selectedAgencies={selectedAgencies}
