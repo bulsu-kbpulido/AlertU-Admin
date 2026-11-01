@@ -103,10 +103,10 @@ export default function ReportedIncidentModal({
   setCustomSecondaryHazard,
   isSensitive,
   setIsSensitive,
-  hasPropertyDamage = false,
-  setHasPropertyDamage = () => {},
-  needsMedicalAssistance = false,
-  setNeedsMedicalAssistance = () => {},
+  isPropertyDamage = false,
+  setIsPropertyDamage = () => {},
+  isMedicalAssistance = false,
+  setIsMedicalAssistance = () => {},
 }) {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
@@ -576,8 +576,8 @@ export default function ReportedIncidentModal({
                       <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-semibold text-slate-700 dark:text-slate-300">
                         <input
                           type="checkbox"
-                          checked={hasPropertyDamage}
-                          onChange={(e) => setHasPropertyDamage(e.target.checked)}
+                          checked={isPropertyDamage}
+                          onChange={(e) => setIsPropertyDamage(e.target.checked)}
                           className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 accent-blue-600 cursor-pointer"
                         />
                         <span>Has Property Damage</span>
@@ -585,8 +585,8 @@ export default function ReportedIncidentModal({
                       <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-semibold text-slate-700 dark:text-slate-300">
                         <input
                           type="checkbox"
-                          checked={needsMedicalAssistance}
-                          onChange={(e) => setNeedsMedicalAssistance(e.target.checked)}
+                          checked={isMedicalAssistance}
+                          onChange={(e) => setIsMedicalAssistance(e.target.checked)}
                           className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 accent-blue-600 cursor-pointer"
                         />
                         <span>Needs Medical Assistance</span>
