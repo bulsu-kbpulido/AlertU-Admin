@@ -153,7 +153,7 @@ export default function Report_Management() {
     archived: null,
   });
 
-  // Global State for Verification Workflow
+  // Global State for Verification Workflow (Including Accident Booleans)
   const {
     isVerifyModalOpen,
     currentStep,
@@ -166,6 +166,8 @@ export default function Report_Management() {
     tempSpatialData,
     selectedAgencies,
     isSensitive,
+    isPropertyDamage,
+    isMedicalAssistance,
     setVerifyModalOpen,
     setCurrentStep,
     setSelectedReport,
@@ -177,6 +179,8 @@ export default function Report_Management() {
     setReportTitle,
     setSelectedAgencies,
     setTempSpatialData,
+    setIsPropertyDamage,
+    setIsMedicalAssistance,
     resetModalState,
   } = useReportStore();
 
@@ -188,10 +192,6 @@ export default function Report_Management() {
   const [secondaryHazard, setSecondaryHazard] = useState('None');
   const [customSecondaryHazard, setCustomSecondaryHazard] = useState('');
   const [isRejecting, setIsRejecting] = useState(false);
-
-  // Accident specific states (standardized to isPropertyDamage / isMedicalAssistance)
-  const [isPropertyDamage, setIsPropertyDamage] = useState(false);
-  const [isMedicalAssistance, setIsMedicalAssistance] = useState(false);
 
   // Data & Refetch Loading States
   const [reports, setReports] = useState([]);
@@ -402,7 +402,7 @@ export default function Report_Management() {
     setReportTitle(getResidentDetailsTitle(report));
     setSelectedAgencies([]);
     setIsSensitive(report.isSensitive || false);
-    // Preserve explicit false values and fall back to legacy field names only when absent.
+    // Sync accident flags into Zustand store state
     setIsPropertyDamage(report.isPropertyDamage ?? report.hasPropertyDamage ?? false);
     setIsMedicalAssistance(report.isMedicalAssistance ?? report.needsMedicalAssistance ?? false);
     
@@ -509,7 +509,7 @@ export default function Report_Management() {
         status: 'verified',
         verifiedReportID: verifiedReportID,
         incidentType: verifiedIncidentType.toLowerCase(),
-        // Always send booleans so the backend can persist false as well as true.
+        // Send state flags retrieved directly from Zustand store
         isPropertyDamage: Boolean(isPropertyDamage),
         isMedicalAssistance: Boolean(isMedicalAssistance),
         ...(!isAccident ? { verifiedSeverity } : {}),
