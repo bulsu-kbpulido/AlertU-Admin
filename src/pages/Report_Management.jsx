@@ -402,8 +402,9 @@ export default function Report_Management() {
     setReportTitle(getResidentDetailsTitle(report));
     setSelectedAgencies([]);
     setIsSensitive(report.isSensitive || false);
-    setIsPropertyDamage(report.isPropertyDamage || report.hasPropertyDamage || false);
-    setIsMedicalAssistance(report.isMedicalAssistance || report.needsMedicalAssistance || false);
+    // Preserve explicit false values and fall back to legacy field names only when absent.
+    setIsPropertyDamage(report.isPropertyDamage ?? report.hasPropertyDamage ?? false);
+    setIsMedicalAssistance(report.isMedicalAssistance ?? report.needsMedicalAssistance ?? false);
     
     const initialLat = Number(report?.location?.latitude || report?.latitude || 14.75);
     const initialLng = Number(report?.location?.longitude || report?.longitude || 120.95);
@@ -508,12 +509,10 @@ export default function Report_Management() {
         status: 'verified',
         verifiedReportID: verifiedReportID,
         incidentType: verifiedIncidentType.toLowerCase(),
-        ...(isAccident ? {
-          isPropertyDamage,       // 👈 Updated to match backend
-          isMedicalAssistance,    // 👈 Updated to match backend
-        } : {
-          verifiedSeverity,
-        }),
+        // Always send booleans so the backend can persist false as well as true.
+        isPropertyDamage: Boolean(isPropertyDamage),
+        isMedicalAssistance: Boolean(isMedicalAssistance),
+        ...(!isAccident ? { verifiedSeverity } : {}),
         hazard: secondaryHazard === 'Others' ? customSecondaryHazard.trim() : secondaryHazard,
         adminNotes: (adminNotes || '').trim(),
         reportTitle: (reportTitle || '').trim(),
