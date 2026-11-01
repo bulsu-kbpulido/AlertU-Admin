@@ -17,6 +17,10 @@ export const useReportStore = create((set) => ({
   reportTitle: '',
   selectedAgencies: [],
   tempSpatialData: {},
+  
+  // 🚨 NEW: Accident specific states
+  isPropertyDamage: false,
+  isMedicalAssistance: false,
 
   // Actions
   setVerifyModalOpen: (isOpen) => set({ isVerifyModalOpen: isOpen }),
@@ -35,6 +39,10 @@ export const useReportStore = create((set) => ({
   })),
   setTempSpatialData: (data) => set({ tempSpatialData: data }),
 
+  // 🚨 NEW: Actions for accident flags
+  setIsPropertyDamage: (val) => set({ isPropertyDamage: val }),
+  setIsMedicalAssistance: (val) => set({ isMedicalAssistance: val }),
+
   // Full Form Reset Helper
   resetModalState: () => set({
     currentStep: 1,
@@ -46,5 +54,8 @@ export const useReportStore = create((set) => ({
     adminNotes: '',
     customLocation: { lat: null, lng: null, address: '' },
     isVerifyModalOpen: false,
+    // 🚨 Reset accident flags
+    isPropertyDamage: false,
+    isMedicalAssistance: false,
   }),
 }));
