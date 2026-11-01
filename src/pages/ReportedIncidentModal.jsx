@@ -182,11 +182,19 @@ export default function ReportedIncidentModal({
   useEffect(() => {
     if (isOpen && selectedReport) {
       const initialType = selectedReport?.verifiedIncidentType || selectedReport?.incidentType || selectedReport?.hazard || 'Fire';
-      const predefined = ['Fire', 'Flood', 'Accident', 'Earthquake'];
+      const typeByLowercase = {
+        fire: 'Fire',
+        flood: 'Flood',
+        accident: 'Accident',
+        earthquake: 'Earthquake',
+      };
+      const canonicalType = typeByLowercase[String(initialType).trim().toLowerCase()];
       
-      if (predefined.includes(initialType)) {
-        setSelectionMode(initialType);
-        setVerifiedIncidentType(initialType);
+      if (canonicalType) {
+        // Normalize values such as 'accident' to 'Accident' so the Accident
+        // Details checkboxes are displayed for existing lowercase records.
+        setSelectionMode(canonicalType);
+        setVerifiedIncidentType(canonicalType);
         setCustomName('');
       } else {
         setSelectionMode('Others');
