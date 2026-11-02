@@ -511,9 +511,11 @@ export default function Report_Management() {
         verifiedReportID: verifiedReportID,
         incidentType: verifiedIncidentType.toLowerCase(),
         
-        // 🛠️ EXPLICIT ACCIDENT FLAGS INCLUDED HERE:
+        // 🚨 CRITICAL: Explicitly pass accident boolean checkboxes from Zustand store to Firestore
         isPropertyDamage: Boolean(isPropertyDamage),
         isMedicalAssistance: Boolean(isMedicalAssistance),
+        hasPropertyDamage: Boolean(isPropertyDamage),
+        needsMedicalAssistance: Boolean(isMedicalAssistance),
 
         ...(!isAccident ? { verifiedSeverity } : {}),
         hazard: secondaryHazard === 'Others' ? customSecondaryHazard.trim() : secondaryHazard,
