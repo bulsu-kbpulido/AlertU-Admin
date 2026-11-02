@@ -17,6 +17,7 @@ import VerifyIncidentModal from './VerifyIncidentModal';
 import ReportTitle from './ReportTitle'; 
 import Archived_Routes from '@/report_utilities/Archived_Routes';
 import DuplicateReports from '@/report_utilities/Duplicate_Reports';
+import MedAssPropertyDamageWrapper from './MedAssPropertyDamageWrapper';
 
 // Shadcn UI Skeleton & Dialog Components
 import { Skeleton } from "@/components/ui/skeleton";
@@ -901,7 +902,7 @@ export default function Report_Management() {
                   <tr className="border-b border-slate-200 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-800/50 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     <th className="px-6 py-4">Report ID</th>
                     <th className="px-6 py-4">Type</th>
-                    <th className="px-6 py-4">Severity</th>
+                    <th className="px-6 py-4">Severity / Details</th>
                     <th className="px-6 py-4">Location (Street & Brgy)</th>
                     <th className="px-6 py-4">Date & Time</th>
                     <th className="px-6 py-4 text-right">Actions</th>
@@ -951,15 +952,17 @@ export default function Report_Management() {
                               </td>
 
                               <td className="px-6 py-4">
-                                <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold capitalize ${
-                                  severity === 'critical' ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-400' :
-                                  severity === 'high' ? 'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-900/50 dark:bg-orange-950/40 dark:text-orange-400' :
-                                  severity === 'medium' ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-400' :
-                                  'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-400'
-                                }`}>
-                                  <AlertTriangle className="h-3 w-3" />
-                                  {severity}
-                                </span>
+                                <MedAssPropertyDamageWrapper report={report}>
+                                  <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold capitalize ${
+                                    severity === 'critical' ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-400' :
+                                    severity === 'high' ? 'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-900/50 dark:bg-orange-950/40 dark:text-orange-400' :
+                                    severity === 'medium' ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-400' :
+                                    'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-400'
+                                  }`}>
+                                    <AlertTriangle className="h-3 w-3" />
+                                    {severity}
+                                  </span>
+                                </MedAssPropertyDamageWrapper>
                               </td>
 
                               <td className="px-6 py-4 text-slate-600 dark:text-slate-300 max-w-xs xl:max-w-md truncate">
