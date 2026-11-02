@@ -62,8 +62,6 @@ export default function SetIncRadandPol({
   currentReportLng,
   verifiedIncidentType
 }) {
-  if (!isOpen) return null;
-
   // FILE / EVIDENCE STAGING STATES
   const [file, setFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -72,6 +70,8 @@ export default function SetIncRadandPol({
   const [isDragging, setIsDragging] = useState(false);
   const [uploadStep, setUploadStep] = useState('idle');
   const [isSensitive, setIsSensitive] = useState(false);
+  const [isPropertyDamage, setIsPropertyDamage] = useState(false);
+  const [isMedicalAssistance, setIsMedicalAssistance] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -89,8 +89,23 @@ export default function SetIncRadandPol({
   const incidentType = verifiedIncidentType || activeReport?.incidentType || 'Fire';
   const isFire = incidentType === 'Fire';
   const isFlood = incidentType === 'Flood';
-  const isAccident = incidentType === 'Accident';
+  const isAccident = String(incidentType || '').trim().toLowerCase() === 'accident';
   const isOthers = !isFire && !isFlood && !isAccident;
+
+  // Populate values when opening an existing report; defaults stay false for new reports.
+  useEffect(() => {
+    if (!isOpen) return;
+    setIsPropertyDamage(Boolean(activeReport?.isPropertyDamage ?? activeReport?.hasPropertyDamage ?? false));
+    setIsMedicalAssistance(Boolean(activeReport?.isMedicalAssistance ?? activeReport?.needsMedicalAssistance ?? false));
+  }, [
+    isOpen,
+    activeReport?.id,
+    activeReport?.reportID,
+    activeReport?.isPropertyDamage,
+    activeReport?.hasPropertyDamage,
+    activeReport?.isMedicalAssistance,
+    activeReport?.needsMedicalAssistance,
+  ]);
 
   const [radius, setRadius] = useState(300);
   const [othersMode, setOthersMode] = useState('radius');
@@ -425,6 +440,10 @@ export default function SetIncRadandPol({
           routeCoords: routeCoordsPayload,
           selectedMarkerIcon: markerMap[isOthers ? 'Others' : incidentType] || 'warnicon.png',
           isSensitive: isSensitive,
+          isPropertyDamage: isAccident && Boolean(isPropertyDamage),
+          hasPropertyDamage: isAccident && Boolean(isPropertyDamage),
+          isMedicalAssistance: isAccident && Boolean(isMedicalAssistance),
+          needsMedicalAssistance: isAccident && Boolean(isMedicalAssistance),
           mediaUrl: uploadedMediaUrl,
           mediaFileName: uploadedStoragePath,
           mediaType: uploadedMediaType
@@ -463,6 +482,10 @@ export default function SetIncRadandPol({
           mediaType: uploadedMediaType,
           mediaFileName: uploadedStoragePath,
           isSensitive: isSensitive,
+          isPropertyDamage: isAccident && Boolean(isPropertyDamage),
+          hasPropertyDamage: isAccident && Boolean(isPropertyDamage),
+          isMedicalAssistance: isAccident && Boolean(isMedicalAssistance),
+          needsMedicalAssistance: isAccident && Boolean(isMedicalAssistance),
           selectedAgencies: selectedAgencies,
           timestamp: new Date().toISOString(),
           routeCoords: routeCoordsPayload,
@@ -505,6 +528,8 @@ export default function SetIncRadandPol({
       setUploadProgress(0);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 lg:p-6 bg-slate-950/80 backdrop-blur-md text-slate-800 dark:text-slate-100">
@@ -672,6 +697,42 @@ export default function SetIncRadandPol({
                   </div>
                 )}
               </div>
+
+              {/* ACCIDENT DETAILS */}
+              {isAccident && (
+                <section className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800" aria-labelledby="accident-details-heading">
+                  <div>
+                    <h4 id="accident-details-heading" className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Accident Details
+                    </h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                      Select any details that apply to this accident.
+                    </p>
+                  </div>
+
+                  <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isPropertyDamage}
+                      onChange={(e) => setIsPropertyDamage(e.target.checked)}
+                      disabled={isUploading}
+                      className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                    />
+                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">Has property damage</span>
+                  </label>
+
+                  <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isMedicalAssistance}
+                      onChange={(e) => setIsMedicalAssistance(e.target.checked)}
+                      disabled={isUploading}
+                      className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+                    />
+                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">Needs medical assistance</span>
+                  </label>
+                </section>
+              )}
 
               {/* EVIDENCE UPLOAD SECTION */}
               <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800">
