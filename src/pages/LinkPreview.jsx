@@ -276,6 +276,10 @@ export default function LinkPreview({ isOpen, onClose, report }) {
   const hazardType = report.hazard || 'Not Specified';
 
   const rawSeverity = (report.severity || 'Medium').toLowerCase();
+  const isAccidentReport = String(incidentCategory).trim().toLowerCase() === 'accident';
+  const toFlagBoolean = (value) => value === true || value === 1 || String(value).toLowerCase() === 'true';
+  const hasPropertyDamage = toFlagBoolean(report?.isPropertyDamage ?? report?.hasPropertyDamage ?? false);
+  const needsMedicalAssistance = toFlagBoolean(report?.isMedicalAssistance ?? report?.needsMedicalAssistance ?? false);
   const rawStatus = (report.status || 'Pending').toLowerCase();
   
   const currentAddress = report?.location?.address || report?.address || 'Location details unavailable';
@@ -542,17 +546,42 @@ export default function LinkPreview({ isOpen, onClose, report }) {
             {/* Column 2: Incident Narrative Logs */}
             <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between space-y-4">
               <div className="flex-1 flex flex-col">
-                <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center justify-between">
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <span>Incident Details</span>
-                  <span className={`px-2.5 py-0.5 rounded-md text-xs font-bold border uppercase tracking-wider ${
-                    rawSeverity === 'high' || rawSeverity === 'critical'
-                      ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-100 dark:border-rose-800 text-rose-700 dark:text-rose-300'
-                      : rawSeverity === 'medium'
-                      ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-100 dark:border-amber-800 text-amber-700 dark:text-amber-300'
-                      : 'bg-blue-50 dark:bg-blue-950/40 border-blue-100 dark:border-blue-800 text-blue-700 dark:text-blue-300'
-                  }`}>
-                    {rawSeverity} Severity
-                  </span>
+                  {isAccidentReport ? (
+                    <span className="flex flex-wrap items-center gap-1.5 normal-case tracking-normal">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-bold whitespace-nowrap ${
+                        hasPropertyDamage
+                          ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'
+                          : 'bg-slate-50 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400'
+                      }`}>
+                        {hasPropertyDamage
+                          ? <CheckCircle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                          : <X className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />}
+                        <span>Property damage</span>
+                      </span>
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-bold whitespace-nowrap ${
+                        needsMedicalAssistance
+                          ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300'
+                          : 'bg-slate-50 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400'
+                      }`}>
+                        {needsMedicalAssistance
+                          ? <CheckCircle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                          : <X className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />}
+                        <span>Medical assistance</span>
+                      </span>
+                    </span>
+                  ) : (
+                    <span className={`px-2.5 py-0.5 rounded-md text-xs font-bold border uppercase tracking-wider ${
+                      rawSeverity === 'high' || rawSeverity === 'critical'
+                        ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-100 dark:border-rose-800 text-rose-700 dark:text-rose-300'
+                        : rawSeverity === 'medium'
+                        ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-100 dark:border-amber-800 text-amber-700 dark:text-amber-300'
+                        : 'bg-blue-50 dark:bg-blue-950/40 border-blue-100 dark:border-blue-800 text-blue-700 dark:text-blue-300'
+                    }`}>
+                      {rawSeverity} Severity
+                    </span>
+                  )}
                 </h4>
 
                 <div className="mt-4 flex-1 flex flex-col">
