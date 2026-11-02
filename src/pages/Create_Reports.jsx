@@ -12,8 +12,6 @@ import {
   Sliders, 
   Loader2,
   ChevronDown,
-  Car,
-  HeartPulse
 } from 'lucide-react';
 import 'ol/ol.css';
 import Map from 'ol/Map';
@@ -71,10 +69,6 @@ export default function Create_Reports() {
     notes: '',
     reportTitle: '',
   });
-
-  // Accident specific states
-  const [isPropertyDamage, setIsPropertyDamage] = useState(false);
-  const [isMedicalAssistance, setIsMedicalAssistance] = useState(false);
 
   const [isDragging, setIsDragging] = useState(false);
   const [isLoadingAddress, setIsLoadingAddress] = useState(false);
@@ -333,7 +327,10 @@ export default function Create_Reports() {
         incidentType: effectiveIncidentType,
         hazard: resolvedHazard,
         severity: isAccident ? 'Medium' : formData.severity,
-        ...(isAccident ? { isPropertyDamage, isMedicalAssistance } : {}),
+        ...(isAccident ? {
+          isPropertyDamage: Boolean(payloadData?.isPropertyDamage ?? payloadData?.hasPropertyDamage),
+          isMedicalAssistance: Boolean(payloadData?.isMedicalAssistance ?? payloadData?.needsMedicalAssistance),
+        } : {}),
         notes: formData.notes,
         location: {
           address: formData.address,
@@ -364,8 +361,6 @@ export default function Create_Reports() {
       notes: '',
       reportTitle: '',
     });
-    setIsPropertyDamage(false);
-    setIsMedicalAssistance(false);
     setSearchQuery('');
     setSearchResults([]);
     setShowSearchResults(false);
@@ -607,39 +602,8 @@ export default function Create_Reports() {
                 </div>
               )}
 
-              {/* Dynamic Assessment: Severity (Standard) OR Accident Checkboxes */}
-              {isAccident ? (
-                <div className="space-y-1.5 p-3 rounded-xl border border-violet-200 dark:border-violet-900/50 bg-violet-50/40 dark:bg-violet-950/10">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-violet-900 dark:text-violet-300">
-                    Accident Status Assessment
-                  </label>
-                  <div className="grid grid-cols-1 gap-2 pt-0.5">
-                    <label className="flex items-center gap-2.5 p-2 rounded-lg bg-white dark:bg-slate-900 border border-violet-100 dark:border-violet-950 shadow-2xs cursor-pointer hover:border-violet-300 transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={isPropertyDamage}
-                        onChange={(e) => setIsPropertyDamage(e.target.checked)}
-                        className="w-4 h-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
-                      />
-                      <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
-                        <Car className="w-3.5 h-3.5 text-violet-600" /> Property Damage Reported
-                      </span>
-                    </label>
-
-                    <label className="flex items-center gap-2.5 p-2 rounded-lg bg-white dark:bg-slate-900 border border-violet-100 dark:border-violet-950 shadow-2xs cursor-pointer hover:border-violet-300 transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={isMedicalAssistance}
-                        onChange={(e) => setIsMedicalAssistance(e.target.checked)}
-                        className="w-4 h-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
-                      />
-                      <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
-                        <HeartPulse className="w-3.5 h-3.5 text-rose-600" /> Medical Assistance Needed
-                      </span>
-                    </label>
-                  </div>
-                </div>
-              ) : (
+              {/* Severity Assessment (accident details are selected in the map-confirm modal) */}
+              {!isAccident && (
                 <div className="space-y-1">
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                     Severity Assessment
@@ -840,7 +804,6 @@ export default function Create_Reports() {
           ...formData,
           incidentType: effectiveIncidentType,
           hazard: formData.hazard === 'Others' ? formData.customHazard : formData.hazard,
-          ...(isAccident ? { isPropertyDamage, isMedicalAssistance } : {})
         }}
         verifiedIncidentType={effectiveIncidentType}
         selectedAgencies={selectedAgencies}
