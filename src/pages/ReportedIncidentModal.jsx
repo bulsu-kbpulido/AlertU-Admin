@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { getAuth } from 'firebase/auth'; // 👈 Needed to resolve 401 Unauthorized
 import { FcGoogle } from "react-icons/fc";
@@ -201,8 +201,16 @@ export default function ReportedIncidentModal({
         setCustomName(initialType);
         setVerifiedIncidentType(initialType);
       }
+
+      // Sync initial accident flags from selectedReport if available
+      if (selectedReport.isPropertyDamage !== undefined || selectedReport.hasPropertyDamage !== undefined) {
+        setIsPropertyDamage(Boolean(selectedReport.isPropertyDamage ?? selectedReport.hasPropertyDamage));
+      }
+      if (selectedReport.isMedicalAssistance !== undefined || selectedReport.needsMedicalAssistance !== undefined) {
+        setIsMedicalAssistance(Boolean(selectedReport.isMedicalAssistance ?? selectedReport.needsMedicalAssistance));
+      }
     }
-  }, [isOpen, selectedReport, setVerifiedIncidentType]);
+  }, [isOpen, selectedReport, setVerifiedIncidentType, setIsPropertyDamage, setIsMedicalAssistance]);
 
   if (!isOpen || !selectedReport) return null;
 
